@@ -1,7 +1,7 @@
-"""KalenderApi: build public/ka-data/kalteng_2019_season.json for the "Play the season" page (#/season).
+"""KalenderApi: build public/ka-data/kalteng_<year>_season.json for the "Play the season" page (#/season).
 
-Reads the public NASA FIRMS country-year archive (VIIRS S-NPP 375 m, standard processing, Indonesia 2019),
-keeps 1 Aug to 31 Oct 2019 inside a bounding box around Central Kalimantan, and writes one entry per day
+Reads the public NASA FIRMS country-year archive (VIIRS S-NPP 375 m, standard processing, Indonesia <year>),
+keeps 1 Aug to 31 Oct <year> inside a bounding box around Central Kalimantan, and writes one entry per day
 (every day of the range, days with no points included). Nothing is interpolated: each day holds only the points
 FIRMS reports for that acq_date.
 
@@ -9,7 +9,8 @@ Also marks "re-appeared after a gap" points with the rule in REAPPEAR_RULE (comp
 into that day's pts, so the page only counts what is in the file).
 
 Usage (run with an isolated interpreter):
-  python -I build_season.py <csv> <out.json> <download_utc>
+  python -I build_season.py <csv> <out.json> <download_utc> [year]
+  year defaults to 2019 (the v1.0 behaviour, output byte-for-byte unchanged); project 4 also builds 2015 and 2023.
 """
 import csv
 import hashlib
@@ -18,30 +19,37 @@ import os
 import sys
 from datetime import date, timedelta
 
-URL = 'https://firms.modaps.eosdis.nasa.gov/data/country/viirs-snpp/2019/viirs-snpp_2019_Indonesia.csv'
-START = date(2019, 8, 1)
-END = date(2019, 10, 31)
+YEAR = 2019            # default; main() overrides it from the optional 4th argument
 BBOX = (110.7, -3.6, 115.9, 0.9)  # w, s, e, n
 CONF_KEEP = {'n', 'h', 'nominal', 'high'}
 RADIUS = 0.03          # degrees
 GAP_MIN = 2            # consecutive empty days right before today
 LOOK_MIN, LOOK_MAX = 3, 14
 
-FILTER_TEXT = (
-    'acq_date (UTC) from 2019-08-01 to 2019-10-31 inclusive; longitude 110.7 to 115.9 and latitude -3.6 to 0.9 '
-    '(a bounding box around Central Kalimantan, NOT the province polygon: it also takes in edges of West, South and '
-    'East Kalimantan); type == 0 (presumed vegetation fire); confidence in {n, h, nominal, high} (low dropped). '
-    'lon/lat rounded to 3 decimals, frp (MW) to 1 decimal; isNight = 1 when daynight == "N".'
-)
-REAPPEAR_RULE = (
-    'A point on day t is "re-appeared after a gap" when the most recent earlier point within 0.03 degrees '
-    '(plain Euclidean distance in lon/lat degrees, about 3.3 km) was seen 3 to 14 days before t. That means '
-    '(a) a point within 0.03 degrees existed 3 to 14 days earlier, and (b) on the days in between (at least the '
-    '2 consecutive days right before t) no point existed within 0.03 degrees. Only days inside this file are '
-    'looked at (nothing before 2019-08-01), so the first possible re-appearance is on 2019-08-04. '
-    'Stored per day in "re" as indices into that day\'s "pts". It says the record had a gap there, '
-    'not why (smoke, cloud, a missed pass or a fire that went out and restarted are all possible).'
-)
+
+def url_for(year):
+    return f'https://firms.modaps.eosdis.nasa.gov/data/country/viirs-snpp/{year}/viirs-snpp_{year}_Indonesia.csv'
+
+
+def filter_text(year):
+    return (
+        f'acq_date (UTC) from {year}-08-01 to {year}-10-31 inclusive; longitude 110.7 to 115.9 and latitude -3.6 to 0.9 '
+        '(a bounding box around Central Kalimantan, NOT the province polygon: it also takes in edges of West, South and '
+        'East Kalimantan); type == 0 (presumed vegetation fire); confidence in {n, h, nominal, high} (low dropped). '
+        'lon/lat rounded to 3 decimals, frp (MW) to 1 decimal; isNight = 1 when daynight == "N".'
+    )
+
+
+def reappear_rule(year):
+    return (
+        'A point on day t is "re-appeared after a gap" when the most recent earlier point within 0.03 degrees '
+        '(plain Euclidean distance in lon/lat degrees, about 3.3 km) was seen 3 to 14 days before t. That means '
+        '(a) a point within 0.03 degrees existed 3 to 14 days earlier, and (b) on the days in between (at least the '
+        '2 consecutive days right before t) no point existed within 0.03 degrees. Only days inside this file are '
+        f'looked at (nothing before {year}-08-01), so the first possible re-appearance is on {year}-08-04. '
+        "Stored per day in \"re\" as indices into that day's \"pts\". It says the record had a gap there, "
+        'not why (smoke, cloud, a missed pass or a fire that went out and restarted are all possible).'
+    )
 
 
 def sha256_of(path):
@@ -54,6 +62,8 @@ def sha256_of(path):
 
 def main():
     src, out, downloaded = sys.argv[1], sys.argv[2], sys.argv[3]
+    year = int(sys.argv[4]) if len(sys.argv) > 4 else YEAR
+    START, END = date(year, 8, 1), date(year, 10, 31)
     days = {}
     d = START
     while d <= END:
@@ -126,21 +136,23 @@ def main():
     rows_kept = sum(x['n'] for x in out_days)
     doc = {
         'source': {
-            'url': URL,
+            'url': url_for(year),
             'downloaded_utc': downloaded,
             'sha256': sha256_of(src),
             'bytes': os.path.getsize(src),
             'rows_total': rows_total,
             'rows_kept': rows_kept,
-            'filter_text': FILTER_TEXT,
+            'filter_text': filter_text(year),
             'product': 'VIIRS S-NPP 375 m (NASA FIRMS, standard processing)',
             'day_is': 'FIRMS acq_date in UTC (one frame = one acq_date)',
             'pts_columns': ['lon', 'lat', 'frp_MW', 'isNight'],
-            'built_by': 'kalenderapi/scripts/build_season.py',
+            'built_by': ('kalenderapi/scripts/build_season.py' if year == 2019 else
+                         'kalenderapi-v4-integrated/pipeline/visibility/build_season.py '
+                         '(year-parameterised copy of kalenderapi/scripts/build_season.py)'),
         },
         'bbox': list(BBOX),
         'bbox_note': 'Bounding box around Central Kalimantan (Kalteng), not the province polygon.',
-        'reappear_rule': REAPPEAR_RULE,
+        'reappear_rule': reappear_rule(year),
         'days': out_days,
     }
     os.makedirs(os.path.dirname(out), exist_ok=True)

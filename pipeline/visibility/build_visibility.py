@@ -1,23 +1,27 @@
 """KalenderApi: build the "what could the satellites see?" layer for "Play the season" (#/season).
 
-Central Kalimantan, 1 Aug to 31 Oct 2019, one entry per day (UTC), nothing interpolated.
+Central Kalimantan, 1 Aug to 31 Oct <year> (default 2019), one entry per day (UTC), nothing interpolated.
 
 Inputs
 - NASA MODIS daily fire mask (the FireMask layer of MOD14A1 = Terra and MYD14A1 = Aqua, Collection 6.1, tiles h29v08
   and h29v09). Read as the Cloud Optimized GeoTIFF copies on Microsoft Planetary Computer (STAC collection
   modis-14A1-061; free, no login). Each file holds 8 days; the file's own "Dates" metadata says which band is which day.
-- The VIIRS S-NPP 375 m hotspots the page already draws (public/ka-data/kalteng_2019_season.json).
+- The VIIRS S-NPP 375 m hotspots the page already draws (public/ka-data/kalteng_<year>_season.json).
 - District polygons: geoBoundaries gbOpen IDN ADM2, simplified (CC BY 3.0 IGO; source BPS, WFP, OCHA ROAP).
 
 Outputs (into <ka_data_dir>)
-- visibility_kalteng_2019.json: the rule, season totals, per-district totals and per-day totals.
-- vis2019/<YYYY-MM-DD>.png: one image per day on a 0.01 degree grid over the season box, drawn only inside the 14
+- visibility_kalteng_<year>.json: the rule, season totals, per-district totals and per-day totals.
+- vis<year>/<YYYY-MM-DD>.png: one image per day on a 0.01 degree grid over the season box, drawn only inside the 14
   districts: hatching = blind zero, dots = no data, transparent = fire, trusted zero, water or outside.
-- kalteng_districts.json: the 14 district outlines, for drawing their borders.
+- kalteng_districts.json: the 14 district outlines, for drawing their borders. Written for 2019 (the v1.0 behaviour)
+  and, for any other year, only when it does not exist yet (the outlines do not depend on the year).
 
 Usage
-  python build_visibility.py <raw_dir> <ka_data_dir> <geoboundaries_geojson>
-  (needs numpy, Pillow and tifffile; downloads the 48 MODIS files into <raw_dir>/modis14a1 once, then reuses them)
+  python build_visibility.py <raw_dir> <ka_data_dir> <geoboundaries_geojson> [year]
+  year defaults to 2019 (the v1.0 behaviour, output unchanged). Run build_season.py for the same year first: this
+  script reads <ka_data_dir>/kalteng_<year>_season.json for the VIIRS hotspots.
+  (needs numpy, Pillow and tifffile; downloads the MODIS files of that season into <raw_dir>/modis14a1 once, then
+  reuses them. Files of different years do not collide: the file name carries the acquisition date.)
 """
 import hashlib
 import json
@@ -34,7 +38,8 @@ import numpy as np
 import tifffile
 from PIL import Image, ImageDraw
 
-START, END = date(2019, 8, 1), date(2019, 10, 31)
+YEAR = 2019   # default; main() overrides it from the optional 4th argument
+START, END = date(YEAR, 8, 1), date(YEAR, 10, 31)
 W, S, E, N = 110.7, -3.6, 115.9, 0.9          # the same box as kalteng_2019_season.json
 STEP = 0.01
 NX, NY = round((E - W) / STEP), round((N - S) / STEP)
@@ -213,7 +218,10 @@ def pct(a, b):
 
 
 def main():
+    global YEAR, START, END
     raw, ka, geo = sys.argv[1], sys.argv[2], sys.argv[3]
+    YEAR = int(sys.argv[4]) if len(sys.argv) > 4 else YEAR
+    START, END = date(YEAR, 8, 1), date(YEAR, 10, 31)
     items = fetch_items(raw)
     print(f'{len(items)} MODIS files', file=sys.stderr)
     v, r, c = grid_index()
@@ -221,7 +229,7 @@ def main():
     dist, outlines = district_raster(geo)
     inside = dist > 0
 
-    with open(os.path.join(ka, 'kalteng_2019_season.json'), encoding='utf-8') as f:
+    with open(os.path.join(ka, f'kalteng_{YEAR}_season.json'), encoding='utf-8') as f:
         season = json.load(f)
     viirs = {}
     for d in season['days']:
@@ -237,7 +245,7 @@ def main():
     n5 = sum((T[d] == 5).astype(int) + (A[d] == 5) for d in days)
     land = inside & ~(n3 > n5)
 
-    os.makedirs(os.path.join(ka, 'vis2019'), exist_ok=True)
+    os.makedirs(os.path.join(ka, f'vis{YEAR}'), exist_ok=True)
     jj, ii = np.mgrid[0:NY, 0:NX]
     hatch_dark = (ii + jj) % 5 == 0
     hatch_light = (ii + jj) % 5 == 1
@@ -278,7 +286,7 @@ def main():
         idx[(st == U_) & hatch_dark] = 1
         idx[(st == U_) & hatch_light] = 2
         idx[(st == N_) & dots] = 3
-        write_png(os.path.join(ka, 'vis2019', f'{d}.png'), idx)
+        write_png(os.path.join(ka, f'vis{YEAR}', f'{d}.png'), idx)
 
         usable = lambda g: round(100 * float((land & np.isin(g, (4, 5, 7, 8, 9))).sum()) / max(1, int(land.sum())), 1)
         out_days.append({'date': d, **counts, 'blind': pct(counts['U'], counts['T'] + counts['U']),
@@ -288,7 +296,7 @@ def main():
     daily = np.array([x['blind'] for x in out_days if x['blind'] is not None])
     zero_days = tot['T'] + tot['U']
     result = {
-        'title': 'What could Terra and Aqua see? Central Kalimantan, 1 Aug to 31 Oct 2019',
+        'title': f'What could Terra and Aqua see? Central Kalimantan, 1 Aug to 31 Oct {YEAR}',
         'rule': RULE,
         'grid': {'bbox': [W, S, E, N], 'step_deg': STEP, 'width': NX, 'height': NY, 'land_cells': int(land.sum()),
                  'note': 'Images are drawn only inside the 14 districts; water cells are left out.'},
@@ -313,7 +321,7 @@ def main():
                 'read_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'items': items,
             },
-            'hotspots': 'kalteng_2019_season.json (NASA FIRMS VIIRS S-NPP 375 m), the points the map draws',
+            'hotspots': f'kalteng_{YEAR}_season.json (NASA FIRMS VIIRS S-NPP 375 m), the points the map draws',
             'districts': {
                 'name': 'geoBoundaries gbOpen IDN ADM2 (simplified), build 12 Dec 2023, from BPS, WFP and OCHA ROAP',
                 'license': 'CC BY 3.0 IGO',
@@ -323,12 +331,14 @@ def main():
             },
         },
     }
-    with open(os.path.join(ka, 'visibility_kalteng_2019.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(ka, f'visibility_kalteng_{YEAR}.json'), 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',', ':'))
-    with open(os.path.join(ka, 'kalteng_districts.json'), 'w', encoding='utf-8') as f:
-        json.dump({'source': result['source']['districts'],
-                   'districts': [{k: o[k] for k in ('name', 'shapeID', 'type', 'rings')} for o in outlines]},
-                  f, separators=(',', ':'))
+    districts_path = os.path.join(ka, 'kalteng_districts.json')
+    if YEAR == 2019 or not os.path.exists(districts_path):   # the outlines do not depend on the year
+        with open(districts_path, 'w', encoding='utf-8') as f:
+            json.dump({'source': result['source']['districts'],
+                       'districts': [{k: o[k] for k in ('name', 'shapeID', 'type', 'rings')} for o in outlines]},
+                      f, separators=(',', ':'))
     print(json.dumps(result['season']), file=sys.stderr)
     for x in result['districts']:
         print(f"{x['name']:20s} blind {x['blind']}%  F {x['F']} T {x['T']} U {x['U']} N {x['N']}", file=sys.stderr)
