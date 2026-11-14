@@ -215,10 +215,12 @@ export const SEAM_YEAR = 2012;
 
 export const isProvisional = (r: MonthRow) => !!r.flag_nrt || !!r.flag_partial;
 
-/** A month converted from VIIRS that carries no 90% interval (H_lo = H_hi = H). In this bundle that is every province
- *  month from 2022 on: Second Sight's export falls back to one pooled national ratio there (docs/DATA.md 8.1). Aqua-era
- *  months also have H_lo = H_hi, but they are Aqua's own count, not a conversion, so they are not flagged. */
-export const noInterval = (r: MonthRow) => r.H != null && isViirs(r.sensor_used) && r.H_lo != null && r.H_lo === r.H_hi;
+/** A month converted from VIIRS with some fire but no 90% interval (H_lo = H_hi = H > 0). Second Sight's own export
+ *  produced these for every province from 2022 (one pooled national ratio, docs/DATA.md 8.1); project 4's re-export
+ *  (docs/DATA.md 9.1) has none, but the app still checks rather than assume. Not flagged: Aqua-era months (Aqua's own
+ *  count, no conversion) and months with no VIIRS fire at all (0 converts to exactly 0). */
+export const noInterval = (r: MonthRow) =>
+  r.H != null && r.H > 0 && isViirs(r.sensor_used) && r.H_lo != null && r.H_lo === r.H_hi;
 
 /** The single VIIRS-to-MODIS ratio behind those months (median of H / V_raw over the S-NPP months without an
  *  interval), or null when there are none. */

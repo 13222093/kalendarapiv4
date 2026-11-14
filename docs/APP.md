@@ -29,12 +29,20 @@ line each, in the style of `app/NOTICE.md`, so the integrator can carry them int
 
 - `src/lib/record.ts`: `noInterval` (a month converted from VIIRS with `H_lo` = `H_hi` = `H`; Aqua-era months, which are Aqua's own count, are not flagged), `pooledRatio` (the single VIIRS-to-MODIS ratio behind them, median of `H / V_raw`), `YearPoint.noBand`, `blindShare` (`f_cloud`), and the validation status "not applicable" kept apart from "not run".
 - `src/lib/record.test.ts`: tests of those rules (10 tests).
-- `src/components/record/BeforeAfter.tsx`: no 90% band for the years with such months (a province from 2022), a rule and "no 90% range from 2022" at that year (the words only on wide charts), "no interval" in the table and the tooltip, a note naming the national ratio used (read from the data: 0.193 Aqua MODIS fire cell-days per VIIRS one for Central Kalimantan), and the stat tile says it; Indonesia and the island regions keep their bands.
+- `src/components/record/BeforeAfter.tsx`: no 90% band for the years with such months (a province from 2022), a rule and "no 90% range from 2022" at that year (the words only on wide charts), "no interval" in the table and the tooltip, a note naming the national ratio used (read from the data; before the data patch it was 0.193 Aqua MODIS fire cell-days per VIIRS one for Central Kalimantan), and the stat tile says it; Indonesia and the island regions keep their bands. Since the patch (third round) no month needs this.
 - `src/components/record/RecordCalendar.tsx`: a computed month shows its blind share as a hatched strip along the foot of its cell (against a track of the full width) and in its label; under the calendar, each computed month with its blind share links to Play the season at its first day; "no 90% range" in the label of a month without an interval.
 - `src/components/record/ThisMonth.tsx`: "Seen clearly (O = 0.82). Still, 17.4% of the no-fire cell-days were blind zeros..." (one decimal), and "no 90% range: converted with one national ratio" for such a month.
 - `src/components/record/HowSure.tsx`: "not applicable" counted and labelled on its own (4 tests), with its notes.
 - `src/pages/Record.tsx`: passes the pooled ratio and the season links; the season cards and the month-versus-day note give the blind share with one decimal.
 - `src/styles/record.css`: the strip and its track, its legend key, the list of computed months, link colours.
+
+## Third round (after the data patch cb0be2e, `docs/DATA.md` 9.1)
+
+The re-exported province files have a 90% band from 2022 (island strata), so the app now draws the band there and says
+nothing about a missing range: the second-round handling is driven by the data (`noInterval`) and found no such month.
+- `src/lib/record.ts`: `noInterval` no longer flags months with no VIIRS fire (H = 0 converts to exactly 0; 37 province months, e.g. in Bali); it still guards against a converted month with fire and no interval.
+- `src/lib/record.test.ts`: a test for that zero case.
+- `src/pages/Record.tsx`: for a province, the source line says that its values from 2022 come from project 4's fix to the export (island-region ratios with a range) and differ from Second Sight's own export for those months.
 
 ## Checked
 
@@ -48,8 +56,9 @@ line each, in the style of `app/NOTICE.md`, so the integrator can carry them int
   passed, 11 failed, 9 not run, 4 not applicable (55 descriptive). All nine Central Kalimantan months with
   observability (Aug to Oct 2015, 2019, 2023) are "seen clearly" (O 0.82 to 0.98) with blind shares of 2.0% to 17.4%
   (October 2019): the calendar shows each share and links each month to its days in Play the season.
-- Central Kalimantan from 2022 is drawn without a band and says so (58 S-NPP months with H / V_raw = 0.192959);
-  Indonesia keeps its band (checked at 1440 light).
+- After the data patch (cb0be2e): Central Kalimantan raw +35%, harmonized -71% (was -72% with the pooled ratio), its
+  2022-on band drawn and no "no 90% range" text; September 2023 reads 1,743 (likely 1,657 to 1,800); Bali and Indonesia
+  show no missing-range text either; the province source line appears for provinces only (checked at 1440 and 390).
 
 ## Known, not changed
 

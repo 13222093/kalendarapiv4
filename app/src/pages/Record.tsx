@@ -155,7 +155,12 @@ export function Record() {
 
   const built = dateOnly(idx?.generated_at);
   const version = shortVersion(idx?.data_version);
-  const source = `Source: NASA FIRMS archives (MODIS C6.1 Terra and Aqua, VIIRS 375 m S-NPP and NOAA-20), counted and harmonized by Second Sight (MIT).${version ? ` Bundle ${version}` : ''}${built ? `, built ${built}` : ''}${version || built ? '.' : ''}`;
+  // a province's values from 2022 come from project 4's re-export with a fix to the province ratios (docs/DATA.md 9.1):
+  // they are not the numbers Second Sight's own export gives for those months
+  const provNote = aoi?.level === 'province'
+    ? ' Province values from 2022 use the island-region ratios with a 90% range, from project 4\'s fix to the export; Second Sight\'s own export gives other numbers for those months (one national ratio, no range).'
+    : '';
+  const source = `Source: NASA FIRMS archives (MODIS C6.1 Terra and Aqua, VIIRS 375 m S-NPP and NOAA-20), counted and harmonized by Second Sight (MIT).${version ? ` Bundle ${version}` : ''}${built ? `, built ${built}` : ''}${version || built ? '.' : ''}${provNote}`;
   const unit = 'Fire cell-days a month: 0.01 degree cells (about 1 km) with a hotspot on a local date, counted per satellite and per day or night pass. Harmonized values are on the Aqua MODIS scale.';
   const calSource = `${source} Observability: NASA MODIS MOD14A1 and MYD14A1 C6.1 daily FireMask, classed with Second Sight's rule TRI-04.`;
 

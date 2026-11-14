@@ -96,6 +96,7 @@ describe('noInterval and pooledRatio', () => {
     expect(noInterval(aqua)).toBe(false);
     expect(noInterval(snppBand)).toBe(false);
     expect(noInterval(snppPooled)).toBe(true);
+    expect(noInterval(row(2023, 2, { H: 0, H_lo: 0, H_hi: 0, V_raw: 0, sensor_used: 'SNPP' }))).toBe(false);   // a true zero
     expect(pooledRatio([aqua, snppBand, snppPooled])).toEqual({ ratio: 0.2, from: 2023 });
     expect(pooledRatio([aqua, snppBand])).toBeNull();
     const ba = beforeAfter([row(2003, 9, { A_raw: 1, H: 1 }), aqua, snppPooled])!;
