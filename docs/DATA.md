@@ -7,7 +7,7 @@ machine in this session; nothing is copied from another run. Paths are relative 
 
 | Item | Where | Status |
 |---|---|---|
-| Second Sight bundle (40 areas x 313 months, 2000-11 to 2026-11) | `app/public/ss-data/index.json`, `monthly_<aoi_id>.json`, `grid005/*.parquet` | built, `harmonized: true` |
+| Second Sight bundle (40 areas x 313 months, 2000-11 to 2026-11) | `app/public/ss-data/index.json`, `monthly_<aoi_id>.json`, `grid005/*.parquet` | built, `harmonized: true`; province series after 2021 use the one patch in 9.1 |
 | Validation (94 entries, **1000 bootstrap resamples**) | `app/public/ss-data/validation_results.json` | 15 pass, 11 fail, 55 descriptive, 4 not applicable, 9 not run |
 | Finding (n_boot 300, the script's own default) | `app/public/ss-data/finding.json` | built, marked PRELIMINARY by Second Sight |
 | Central Kalimantan season files 2015, 2023 | `app/public/ka-data/kalteng_{2015,2023}_season.json` | built |
@@ -64,6 +64,7 @@ that folder with the project 4 venv.
 | 19 | `python pipeline/visibility/monthly_observability.py --bundle-src data-raw/ss/bundle --out app/public/ss-data --ka-data app/public/ka-data --report data-raw/obs_months.json` (writes the Kalteng monthly file, then `index.json` last) | not timed | |
 | 20 | `python -I pipeline/visibility/build_season.py data-raw/ss/raw_csv/viirs-snpp/viirs-snpp_<Y>_Indonesia.csv app/public/ka-data/kalteng_<Y>_season.json <download_utc> <Y>` for Y = 2015, 2023 | 17.5 s, 3.7 s | |
 | 21 | `python -I pipeline/visibility/build_visibility.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson <Y>` for Y = 2015, 2023 (each downloads 48 FireMask files) | 2 min 02 s, 2 min 11 s | `data-raw/vis2015.log`, `data-raw/vis2023.log` |
+| 22 | **After the user approved the province-kappa patch (9.1):** step 16 again (`python -m pipeline.export.bundle`), then steps 18 and 19 again, then step 13 again. The bundle, the nine observability rows and `index.json` published before the patch (commit `7843238`) were replaced. | 13 s (bundle), 37 s (tests) | `bundle_patched.log`, `pytest_patched.log` |
 
 Steps 4 to 11 are `bash scripts/run_ss_stage2.sh` (5 min 37 s in total). Steps 12 to 16 are
 `bash scripts/run_ss_stage3.sh`. From scratch: steps 1 to 3, then the two stage scripts, then 17 to 21.
@@ -123,10 +124,10 @@ size and sha256 of every file are inside `visibility_kalteng_<Y>.json` under `so
 
 | File | sha256 |
 |---|---|
-| `app/public/ss-data/index.json` | `8589edc39ce8777bc30fb5f2dbaae9bc6f261d0c0077887c989cb1ce9b4f13f0` |
+| `app/public/ss-data/index.json` | `6a389dc0b2f717fd5c5b6a53d6cdebb01756d2219928b963886ef043e3ad867a` |
 | `app/public/ss-data/validation_results.json` | `b3b90902a33d1c2847b191a712c857bd30038ee7c0344a063fd52b8f15f4adaf` |
 | `app/public/ss-data/finding.json` | `e07af24bd7fef585d248121e43c4d5a137320458c8b6ae346d6b1db03cb2df8c` |
-| `app/public/ss-data/monthly_prov-kalimantan-tengah.json` | `459827b22e45684d105f46487d6b934a902c7e5fb42c1a1495da8e4fd31e5a3c` |
+| `app/public/ss-data/monthly_prov-kalimantan-tengah.json` | `f59de969d5f5642e449b7e72e63c87c1f122f79489ef6517fc241c8033dc22c4` |
 | `app/public/ka-data/kalteng_2015_season.json` | `dad60b028d1f39a56944d5c7831c8ec67ee342f5da31fc36217a55bdccb724c9` |
 | `app/public/ka-data/kalteng_2023_season.json` | `54faf709b974f25a76eb9d4dd5ccc421acbed82842227ad0986364b87710f0ac` |
 | `app/public/ka-data/visibility_kalteng_2015.json` | `de0577686d88cbeb6135e9893a109202ceef4810827dba82d6ffa475bc26be68` |
@@ -147,7 +148,7 @@ size and sha256 of every file are inside `visibility_kalteng_<Y>.json` under `so
 | 2026 labels | 266,350 cells | 98.28% labelled |
 
 Bundle (`app/public/ss-data/`): 40 `monthly_*.json` files (IDN, 5 regions, 34 provinces), each 313 rows (2000-11 to 2026-11),
-`index.json`, `validation_results.json` and `finding.json` (43 JSON files, 3,541,183 bytes) and `grid005/` with 27 yearly
+`index.json`, `validation_results.json` and `finding.json` (43 JSON files, 3,546,392 bytes) and `grid005/` with 27 yearly
 Parquet files (10,693,349 bytes). The app does not read `grid005/`; the root `.gitignore` rule `*.parquet` keeps those files
 out of git, and `bash scripts/publish_ss_data.sh` re-creates them.
 
@@ -160,8 +161,9 @@ out of git, and `bash scripts/publish_ss_data.sh` re-creates them.
 | empty scratch data dir (probe, before any data) | 169 passed, 37 skipped, 72 s |
 | real data, no bundle yet (two runs) | 180 passed, 25 skipped, 1 xfailed, 59 to 65 s |
 | real data, bundle present, no CSV export | 192 passed, **1 failed**, 12 skipped, 1 xfailed, 75 s. The failure is `tests/blackbox/test_cli.py::test_bundle_csv_header_comments_and_columns`: it expects `bundle/csv/*.csv`, which only the separate EXP-02 export creates (step 17). Not a pipeline defect. |
-| after step 17 (**final run**) | **193 passed, 12 skipped, 1 xfailed, 64 s** |
-| the 12 skipped (`tests/agent/*`) with `SECOND_SIGHT_BUNDLE=data-raw/ss/bundle` | 10 passed, **2 failed**: `test_eval_rule_planner` (plan accuracy 0.78 < 0.90) and `test_resolve_alias_and_typo` ("sumatera selatan" resolves to `prov-sumatera-selatan`, the test expects `region-sumatra`). These are the same two failures Second Sight lists as bug B9 in its own `docs/test_report.md`; the agent package is not used by project 4. |
+| after step 17 | 193 passed, 12 skipped, 1 xfailed, 64 s |
+| after the province-kappa patch, bundle re-exported (**final run**) | **193 passed, 12 skipped, 1 xfailed, 37 s** (no test touches the patched branch) |
+| the 12 skipped (`tests/agent/*`) with `SECOND_SIGHT_BUNDLE=data-raw/ss/bundle` | 10 passed, **2 failed**: `test_eval_rule_planner` (plan accuracy 0.78 < 0.90) and `test_resolve_alias_and_typo` ("sumatera selatan" resolves to `prov-sumatera-selatan`, the test expects `region-sumatra`). These are the same two failures Second Sight lists as bug B9 in its own `docs/test_report.md`; the agent package is not used by project 4. Same result before and after the patch. |
 
 Without that environment variable the agent tests look for the bundle in a hard-coded Second Sight location and skip.
 
@@ -185,12 +187,16 @@ months are Jan to Oct.
 ### 6.4 Central Kalimantan in the bundle (`monthly_prov-kalimantan-tengah.json`, `area_km2` 154,166)
 
 Sensor used by era: Terra x factor (2000-11 to 2002-06), Aqua native (2002-07 to 2021-12), S-NPP x kappa (2022-01 on),
-NOAA-20 for 2026-11 only. August to October sums of the harmonized series `H` (fire cell-days, Aqua-equivalent scale):
+NOAA-20 for 2026-11 only. August to October sums of the harmonized series `H` (fire cell-days, Aqua-equivalent scale;
+bands are the 5th to 95th percentile of the kappa bootstrap, summed over the months as `H_lo` and `H_hi`):
 
-| Season | H | Raw Aqua | Raw S-NPP | Sensor |
-|---|---:|---:|---:|---|
-| Aug-Oct 2015 | 18,302 | 18,302 | 103,976 | Aqua (no calibration uncertainty) |
-| Aug-Oct 2023 | 3,375.6 | 4,139 | 17,494 | S-NPP x pooled kappa, **no interval** (see 8.1) |
+| Season | H | H_lo to H_hi | Raw Aqua | Raw S-NPP | Sensor |
+|---|---:|---|---:|---:|---|
+| Aug-Oct 2015 | 18,302 | no interval (Aqua native) | 18,302 | 103,976 | Aqua |
+| Aug-Oct 2023 | 3,830.4 | 3,632.8 to 3,962.7 | 4,139 | 17,494 | S-NPP x island kappa (after the patch in 9.1) |
+
+Before the province-kappa patch the 2023 value was 3,375.6 with no interval (S-NPP x the pooled national ratio, see 8.1).
+After it, the S-NPP-era `H / V_raw` of this province runs from 0.147 to 0.273 over the 58 months (stratified kappa).
 
 ## 7. FireMask products for Central Kalimantan (1 Aug to 31 Oct)
 
@@ -238,16 +244,18 @@ unrounded O.
 
 ## 8. Caveats in what was produced
 
-1. **Province series after 2021 use the pooled national kappa and have no interval.** In Second Sight's own
-   `bundle._science_adapter`, the province table carries `is_peat` values `peat` and `mineral`, but kappa is fitted on the
-   unlabelled table (`is_peat` = `unknown`). The strata keys then do not match, and `series._lookup` falls back to the
-   pooled ratio. Checked on `prov-kalimantan-tengah`: in all 58 S-NPP-era months `H / V_raw` is exactly 0.192959 (the
-   pooled national kappa) and `H_lo = H_hi = H`; the code path is the same for every province. The national and island
-   series use stratified kappa (ratios 0.15 to 0.27) and do have bands. The documented design ("provinces use the parent
-   island_region kappa strata") is not what the export does. **Not patched** (it changes the method; it is not needed to
-   make anything run). It does not touch 2015 and 2019 (Aqua era, `H = A_raw`); it does touch Central Kalimantan 2023
-   and 2026. The app should not draw a band for a province after 2021 and should say those values use the national ratio.
-   A likely fix is in `bundle.to_science_schema` (give the province table the `is_peat` value used in the fit); not tried.
+1. **Province series after 2021 differ from what Second Sight's own export writes (patched, 9.1).** Second Sight's
+   `bundle._science_adapter` gave the province table `is_peat` values `peat` and `mineral`, while kappa is fitted on the
+   unlabelled table (`is_peat` = `unknown`, checked: 100% of province rows had no matching stratum). Unmatched rows fell
+   back to the pooled national ratio with no interval: in the first export, `prov-kalimantan-tengah` had `H / V_raw`
+   exactly 0.192959 in all 58 S-NPP-era months and `H_lo = H_hi = H`. The export's own comment and `index.json`
+   (`province_kappa`) say provinces use the parent island strata. With the patch they do. The patched bundle therefore
+   **no longer equals what the Second Sight repository would write**; anyone comparing with Second Sight's published
+   province numbers after 2021 must expect this difference. What changed, checked against the first export (commit
+   `7843238`) for all 34 provinces: the S-NPP-era (2022 on) `H`, `H_lo`, `H_hi` (every such row now has a band, 0 without);
+   and `baseline_median` in the earlier rows (the 2003-2022 baseline window contains 2022, whose `H` changed). `H`,
+   `H_lo`, `H_hi`, `pct_rank` and the raw columns of the Aqua- and Terra-era rows are identical to before, and the
+   national and island files are identical to before.
 2. `index.json` has one key that Second Sight's bundle does not write, `obs_source_note`, besides the requested
    `obs_months`. Its `not_yet_filled` still lists `obs_class` as Second Sight wrote it; `obs_months` says which months are filled.
 3. `validation_results.json` is Second Sight's file with one change: `meta.data_dir` held this machine's absolute path, so
@@ -264,9 +272,21 @@ unrounded O.
 
 ## 9. Changes to code
 
-### 9.1 Patches to `vendor/second-sight/`: **none**
+### 9.1 Patches to `vendor/second-sight/`: **one, made on the user's request ("Yes, patch it")**
 
-`git diff -- vendor` is empty. Every Second Sight module ran unmodified on Python 3.12.8 with pandas 3.1.1 and numpy 2.5.4
+`vendor/second-sight/pipeline/export/bundle.py`, `_science_adapter`, province branch, 7 lines added after
+`pms["province"] = pt["province"].to_numpy()` (four comment lines and three lines of code):
+
+```python
+fit_peat = kappa.table["is_peat"].unique() if "is_peat" in kappa.table else []
+if len(fit_peat) == 1:
+    pms["is_peat"] = fit_peat[0]
+```
+
+It gives the province table the single `is_peat` key the kappa fit used, so province rows match the island x season x
+day/night strata and get the bootstrap band. Nothing else in `vendor/` was touched (`git diff --stat -- vendor`: one file,
+7 insertions). It is a method change, not a change needed to make the code run, which is why it waited for approval;
+see 8.1 for the effect. Every other Second Sight module ran unmodified on Python 3.12.8 with pandas 3.1.1 and numpy 2.5.4
 (newer than the lower bounds in its requirements; the 193 tests and the full run showed no incompatibility).
 
 ### 9.2 Project-owned code (not vendor)
@@ -306,6 +326,8 @@ unrounded O.
   after publishing printed some Central Kalimantan 2019 rows (and August to October sums) to confirm that the file had been
   written; nothing was derived from them and they are not reported.
 - Second Sight's leave-one-year-out results (related to v1.1's H3) were already public in its repository.
+- The province-kappa patch (9.1) re-exported all 34 provinces. In their pre-2022 rows only `baseline_median` changed (it uses
+  2022); no 2019 `H`, `H_lo`, `H_hi`, `pct_rank` or raw value moved, and no new analysis of those months was made.
 
 ## 12. FIRMS raw files and checksums (as recorded by `pipeline.data.manifest`)
 

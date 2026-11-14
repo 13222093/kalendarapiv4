@@ -287,6 +287,13 @@ def _science_adapter(stratum: pd.DataFrame, province_table: pd.DataFrame | None 
             pt = province_table[province_table["island_region"].notna()]
             pms = to_science_schema(pt, common.SEASON_OF_MONTH)
             pms["province"] = pt["province"].to_numpy()
+            # PROJECT 4 PATCH (see docs/DATA.md 9.1): kappa was fitted on the unlabelled stratum table, so its
+            # is_peat key has one value ('unknown'), while province rows carry 'peat' / 'mineral'. Those rows matched
+            # no fitted stratum and fell back to the pooled ratio with no interval. Give them the fit's key so they
+            # use the parent island strata, as the comment above and index.json "province_kappa" say.
+            fit_peat = kappa.table["is_peat"].unique() if "is_peat" in kappa.table else []
+            if len(fit_peat) == 1:
+                pms["is_peat"] = fit_peat[0]
             prov = series.build_series(pms, kappa, ta, ns, by=["province"])
             for name in prov["province"].unique():
                 per_aoi[province_id(name)] = prov[prov["province"] == name].drop(
