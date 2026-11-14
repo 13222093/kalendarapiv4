@@ -1,0 +1,5 @@
+# Dependencies for pipeline/physics and pipeline/decision (Second Sight).
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+pytest>=8.0

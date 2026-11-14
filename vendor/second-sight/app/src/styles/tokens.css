@@ -1,0 +1,29 @@
+/* Design tokens. Source of truth: docs/design.md and docs/10-ui-ux-second-sight.md section 4.2.
+   Colour rules: UI chrome is neutral; colour is reserved for data. The UI accent is ink blue so
+   controls never read as fire data. Zero, unobserved, partial and provisional never share a look. */
+:root {
+  --bg: #f6f7f8;
+  --surface: #ffffff;
+  --ink: #1b1f24;
+  --ink-2: #56606b;
+  --hairline: #d8dde3;
+  --accent-ui: #1f5f8b;
+  --zero: #eceff2;
+  --unobserved: #9aa4af;
+  --el-nino: #b4462e;
+  --current-year: #111111;
+  --neutral-mid: #e6e8eb;
+
+  --font-head: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  --font-body: 'Source Sans 3 Variable', system-ui, sans-serif;
+
+  --fs-13: 13px;
+  --fs-15: 15px;
+  --fs-18: 18px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+
+  --radius-panel: 6px;
+  --radius-dialog: 10px;
+  --gutter: 16px;
+}

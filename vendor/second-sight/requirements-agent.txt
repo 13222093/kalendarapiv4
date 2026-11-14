@@ -1,0 +1,2 @@
+anthropic>=0.40  # optional: AnthropicClient planner (ANTHROPIC_API_KEY)
+openai>=1.40     # optional: OpenAIClient planner (OPENAI_API_KEY)

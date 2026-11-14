@@ -1,0 +1,41 @@
+/* "Seberapa yakin" screen (FE-15). */
+.yakin { display: grid; gap: 20px; min-width: 0; }
+.yakin .panel { padding: 24px; min-width: 0; }
+.yakin h2, .yakin h3 { font-family: var(--font-head, 'Plus Jakarta Sans', sans-serif); margin: 0 0 12px; line-height: 1.3; }
+.yakin h2 { font-size: 1.25rem; }
+.yakin h3 { font-size: 1.05rem; }
+.yakin figure { margin: 0; max-width: 100%; }
+.yakin figure > h2 { font-size: 1.1rem; margin: 0 0 8px; }
+.yakin figcaption { color: #56606B; font-size: 0.8rem; margin-top: 6px; }
+.yakin svg { max-width: 100%; height: auto; }
+.yakin table, .yakin .num { font-variant-numeric: tabular-nums; }
+.yakin .tests-scroll { overflow-x: auto; max-width: 100%; }
+.yakin table.tests { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.yakin table.tests caption { text-align: left; font-weight: 600; padding: 0 0 8px; color: #1B1F24; }
+.yakin table.tests th { text-align: left; font-weight: 600; color: #56606B; border-bottom: 1px solid #D5DAE0; padding: 8px 10px; }
+.yakin table.tests td { border-bottom: 1px solid #ECEFF2; padding: 8px 10px; vertical-align: top; }
+.yakin table.tests td.num { text-align: right; white-space: nowrap; }
+.yakin table.tests td.strong { font-weight: 700; color: #1F5F8B; }
+.yakin table.seam { margin-top: 20px; max-width: 520px; }
+.yakin td.st { white-space: nowrap; font-size: 0.8rem; font-weight: 600; }
+.yakin td.st-pass { color: #2E6B3F; }
+.yakin td.st-fail { color: #9E3A26; }
+.yakin td.st-not_run { color: #56606B; }
+.yakin td.st-pass::before, .yakin td.st-fail::before, .yakin td.st-not_run::before {
+  content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; box-sizing: border-box;
+}
+.yakin td.st-pass::before { background: #2E6B3F; }
+.yakin td.st-fail::before { background: #9E3A26; }
+.yakin td.st-not_run::before { border: 1.5px solid #8A939C; }
+.yakin tr[data-status='fail'] td { background: #FBF3F1; }
+.yakin .trust-pending { font-weight: 600; }
+.yakin .disc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.yakin .disc-list li { display: flex; gap: 12px; align-items: flex-start; line-height: 1.45; }
+.yakin .disc-list svg { flex: none; margin-top: 1px; }
+.yakin .lim-list { margin: 0; padding-left: 1.25em; display: grid; gap: 6px; line-height: 1.5; max-width: 72ch; }
+.yakin .muted { color: #56606B; }
+@media (max-width: 480px) {
+  .yakin .panel { padding: 16px; }
+  .yakin table.tests { font-size: 0.8rem; }
+  .yakin table.tests th, .yakin table.tests td { padding: 6px; }
+}

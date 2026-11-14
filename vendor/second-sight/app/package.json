@@ -1,0 +1,27 @@
+{
+  "name": "second-sight-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "5.3.0",
+    "@fontsource-variable/source-sans-3": "5.3.1",
+    "@observablehq/plot": "^0.6.19",
+    "@protomaps/basemaps": "5.7.2",
+    "@turf/area": "^7.4.0",
+    "d3-scale-chromatic": "3.1.1",
+    "maplibre-gl": "~6.17.0",
+    "pmtiles": "4.5.0",
+    "tinykeys": "4.0.1"
+  },
+  "devDependencies": {
+    "@types/d3-scale-chromatic": "^3.1.0",
+    "typescript": "~5.9.0",
+    "vite": "^7.1.0"
+  }
+}

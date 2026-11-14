@@ -1,0 +1,13 @@
+# pipeline/support (DAT-03, DAT-05, DAT-10, DAT-11)
+numpy>=1.26
+pandas>=2.1
+requests>=2.31
+shapely>=2.0
+scipy>=1.11
+h5py>=3.10          # DAT-10 (HDF5 inputs, optional)
+Pillow>=10          # DAT-11 (climate.read_chirps_tif GeoTIFF reading)
+# Optional, only for real CHIRPS GeoTIFFs (climate.read_chirps_tif):
+# rasterio>=1.3
+# Optional, only for MOD14CMQ HDF4 files (cloud.read_cmg_hdf4):
+# pyhdf>=0.11
+pytest>=7

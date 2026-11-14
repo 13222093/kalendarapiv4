@@ -1,0 +1,235 @@
+/* KalenderApi (new file, not from Fire Harmony): "Play the season" page (#/season, src/pages/Season.tsx).
+   Same dark cinematic look as .ka-story (brand.css): #04090a ground, teal #2fd1b2 accent, ember fires. */
+/* Layout: a grid over the full-bleed map. Header on top, the day's panel (HUD) as a left column, the playback dock at
+   the bottom across. The panel scrolls inside its column when a window is short, so it never runs into the dock; the
+   map itself (canvas, vignette) is absolute behind the grid, and Season.tsx fits the camera to the room left. */
+.ka-season { --gut: 28px; --hud-w: 340px;
+  position: fixed; inset: 0; background: #04090a; color: #e6efec; overflow: hidden; font-family: var(--font-sans);
+  display: grid; grid-template-columns: calc(var(--gut) + var(--hud-w)) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+.ka-season-canvas { position: absolute; inset: 0; }
+/* the still photo for a browser that draws no frames (Season.tsx, NO_FRAME_MS): the whole data box, never cropped */
+.ka-season-still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 62% 50%; }
+.ka-season-vignette { position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to right, rgba(4, 9, 10, 0.86), rgba(4, 9, 10, 0.62) calc(var(--gut) + var(--hud-w) - 40px), rgba(4, 9, 10, 0.18) calc(var(--gut) + var(--hud-w) + 60px), transparent calc(var(--gut) + var(--hud-w) + 180px)),
+    linear-gradient(to bottom, rgba(4, 9, 10, 0.8), transparent 14%, transparent 62%, rgba(4, 9, 10, 0.94)),
+    radial-gradient(ellipse at 62% 46%, transparent 52%, rgba(4, 9, 10, 0.55) 100%); }
+
+.ka-season-top { grid-column: 1 / -1; grid-row: 1; position: relative; display: flex; gap: 16px; align-items: baseline; padding: 20px var(--gut) 14px; }
+.ka-season-brand { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: #e6efec; text-decoration: none; }
+.ka-season-tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: #7f908c; text-transform: uppercase; }
+.ka-season-links { margin-left: auto; display: flex; gap: 18px; }
+.ka-season-links a { color: #a6b6b2; font-size: 14px; }
+.ka-season-links a:hover { color: #e6efec; }
+
+.ka-season-hud { grid-column: 1; grid-row: 2; position: relative; min-height: 0; display: flex; flex-direction: column;
+  padding: 0 0 14px var(--gut); overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: rgba(160, 230, 215, 0.22) transparent; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65); }
+.ka-season-hud > * { flex: none; }
+.ka-season-kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #2fd1b2; margin: 0; }
+.ka-season-date { font-family: var(--font-mono); font-size: clamp(38px, 4.6vw, 60px); font-weight: 500; line-height: 1; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums; margin: 10px 0 6px; }
+.ka-season-weekday { font-family: var(--font-mono); font-size: 12px; color: #7f908c; margin: 0; }
+.ka-season-stats { margin: 20px 0 0; display: grid; gap: 12px; }
+.ka-season-stats > div { padding-left: 12px; border-left: 2px solid #ff8a3d; }
+.ka-season-stats > .ka-season-stat-re { border-left-color: #2fd1b2; }
+.ka-season-stats dt { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #9fb2ad; }
+.ka-season-stats dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; color: #f3f7f6; }
+.ka-season-stats dd small { font-size: 12px; color: #9fb2ad; letter-spacing: 0; }
+.ka-season-caption { margin-top: 18px; font-size: 15.5px; line-height: 1.45; color: #d6e2df; }
+.ka-season-caption p { margin: 0 0 8px; }
+/* the key sits at the foot of the column (a caption of one or two lines never moves it) */
+.ka-season-legend { list-style: none; padding: 12px 0 0; margin: auto 0 0; display: grid; gap: 7px; font-size: 12px; color: #9fb2ad; }
+.ka-season-legend li { display: flex; align-items: center; gap: 10px; }
+.ka-sw { flex: none; display: inline-block; width: 14px; height: 14px; border-radius: 50%; }
+.ka-sw-today { width: 9px; height: 9px; margin: 0 2.5px; background: #ffb070; box-shadow: 0 0 8px 2px rgba(255, 120, 40, 0.65); }
+.ka-sw-ghost { width: 6px; height: 6px; margin: 0 4px; background: rgba(190, 70, 30, 0.75); }
+.ka-sw-ring { border: 1.5px solid #2fd1b2; background: transparent; }
+.ka-sw-box { height: 0; border-radius: 0; border-top: 1px solid rgba(47, 209, 178, 0.6); }
+/* blind zeros (Season.tsx, vis2019 images): the same two-tone hatching as the map, dots for no data */
+.ka-sw-blind { border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(214, 228, 224, 0.35);
+  background: repeating-linear-gradient(135deg, #1e2a33 0 1.4px, #f3eedf 1.4px 2.8px, transparent 2.8px 5px); }
+.ka-sw-nodata { border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(214, 228, 224, 0.2);
+  background: radial-gradient(circle, #98a0a3 0.9px, transparent 1.2px) 0 0 / 4px 4px; }
+.ka-season-stats > .ka-season-stat-blind { border-left-color: #c9d4dc; }
+/* the numbers' labels: long on wide screens, short on narrow ones (where the season totals wait in the table) */
+.ka-season-narrow { display: none; }
+.ka-season-stats dt .ka-sw { width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+.ka-season-dist { margin-top: 10px; font-size: 12.5px; color: #c7d3d0; }
+.ka-season-dist summary { cursor: pointer; color: #a6b6b2; font-size: 13px; text-decoration: underline dotted; text-underline-offset: 3px; }
+.ka-season-dist summary:focus-visible { outline: 2px solid #2fd1b2; outline-offset: 2px; border-radius: 2px; }
+.ka-season-dist table { margin-top: 6px; width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ka-season-dist th, .ka-season-dist td { padding: 2px 8px 2px 0; text-align: right; font-weight: 400; white-space: nowrap; }
+.ka-season-dist th[scope="row"], .ka-season-dist thead th:first-child { text-align: left; white-space: normal; }
+.ka-season-dist thead th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: #7f908c; }
+.ka-season-dist td { font-family: var(--font-mono); }
+.ka-season-dist tfoot th, .ka-season-dist tfoot td { border-top: 1px solid rgba(160, 230, 215, 0.2); padding-top: 4px; color: #e6efec; }
+.ka-season-dist p { margin: 6px 0 0; font-size: 11.5px; line-height: 1.4; color: #7f908c; }
+.ka-season-error p { margin: 0 0 12px; color: #f0c4b4; }
+
+.ka-season-dock { grid-column: 1 / -1; grid-row: 3; position: relative; min-width: 0; padding: 0 var(--gut) 14px; }
+.ka-season-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ka-season-play, .ka-season-step { display: inline-grid; place-items: center; border: none; cursor: pointer; padding: 0; }
+.ka-season-play { width: 44px; height: 44px; border-radius: 50%; background: #2fd1b2; color: #04110f; }
+.ka-season-play svg { width: 18px; height: 18px; fill: currentColor; }
+.ka-season-step { width: 34px; height: 34px; border-radius: 50%; background: rgba(160, 230, 215, 0.08); color: #c7d3d0;
+  border: 1px solid rgba(160, 230, 215, 0.22); }
+.ka-season-step svg { width: 14px; height: 14px; }
+.ka-season-play:disabled, .ka-season-step:disabled { opacity: 0.4; cursor: default; }
+.ka-season-play:focus-visible, .ka-season-step:focus-visible, .ka-season-speed button:focus-visible, .ka-season-scrub:focus-visible,
+.ka-season-links a:focus-visible, .ka-season-brand:focus-visible { outline: 2px solid #2fd1b2; outline-offset: 3px; }
+.ka-season-speed { display: inline-flex; margin-left: 6px; border: 1px solid rgba(160, 230, 215, 0.25); border-radius: 10px; overflow: hidden; }
+.ka-season-speed button { background: transparent; color: #c7d3d0; border: none; padding: 8px 12px; font-family: var(--font-mono); font-size: 13px; cursor: pointer; }
+.ka-season-speed button + button { border-left: 1px solid rgba(160, 230, 215, 0.18); }
+.ka-season-speed button[aria-pressed="true"] { background: rgba(47, 209, 178, 0.18); color: #2fd1b2; }
+.ka-season-rate { font-family: var(--font-mono); font-size: 11.5px; color: #7f908c; }
+.ka-season-blindbtn { display: inline-flex; align-items: center; gap: 7px; background: transparent; color: #c7d3d0; cursor: pointer;
+  border: 1px solid rgba(160, 230, 215, 0.25); border-radius: 10px; padding: 7px 11px; font-family: var(--font-mono); font-size: 12.5px; }
+.ka-season-blindbtn[aria-pressed="true"] { background: rgba(201, 212, 220, 0.12); color: #e6efec; }
+.ka-season-blindbtn[aria-pressed="false"] .ka-sw { opacity: 0.35; }
+.ka-season-blindbtn:focus-visible { outline: 2px solid #2fd1b2; outline-offset: 3px; }
+.ka-season-status { font-family: var(--font-mono); font-size: 11.5px; color: #e9c58a; padding: 3px 8px; border-radius: 999px;
+  background: rgba(233, 197, 138, 0.1); border: 1px solid rgba(233, 197, 138, 0.25); }
+.ka-season-hint { margin-left: auto; font-family: var(--font-mono); font-size: 11.5px; color: #7f908c; }
+.ka-season-hint kbd { font: inherit; padding: 1px 5px; margin: 0 2px; border-radius: 4px; border: 1px solid rgba(160, 230, 215, 0.25); color: #c7d3d0; }
+
+.ka-season-scrubwrap { position: relative; }
+.ka-season-scrub-read { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono); font-size: 11.5px; color: #9fb2ad;
+  margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.ka-season-scrub-read b { color: #e6efec; font-weight: 500; }
+.ka-season-scrub { position: relative; height: 48px; cursor: pointer; touch-action: none; border-radius: 4px; }
+.ka-season-scrub-empty { background: rgba(160, 230, 215, 0.05); }
+.ka-season-scrub svg { display: block; width: 100%; height: 100%; }
+.ka-season-scrub rect.is-past { fill: rgba(255, 138, 61, 0.62); }
+.ka-season-scrub rect.is-next { fill: rgba(166, 182, 178, 0.3); }
+.ka-season-scrub rect.is-cur { fill: #2fd1b2; }
+.ka-season-scrub .ka-season-head { fill: rgba(47, 209, 178, 0.14); }
+.ka-season-scrub .ka-season-base { stroke: rgba(160, 230, 215, 0.25); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ka-season-axis { position: relative; height: 16px; margin-top: 3px; font-family: var(--font-mono); font-size: 11px; color: #7f908c; }
+.ka-season-axis span { position: absolute; top: 0; padding-left: 4px; border-left: 1px solid rgba(160, 230, 215, 0.25); }
+
+.ka-season-foot { margin-top: 6px; max-width: 1040px; font-size: 11.5px; line-height: 1.45; color: #7f908c; }
+.ka-season-foot code { font-family: var(--font-mono); color: #a6b6b2; }
+.ka-season-rule { display: inline; }
+.ka-season-rule summary { display: inline; cursor: pointer; color: #a6b6b2; text-decoration: underline dotted; margin-left: 4px; }
+.ka-season-rule[open] { display: block; margin-top: 4px; color: #a6b6b2; }
+/* the narrow-screen toggles ("More" under the caption, "Sources and method" in the foot): wide screens show it all */
+.ka-season-more, .ka-season-src { display: none; background: none; border: none; padding: 0; font: inherit; color: #a6b6b2;
+  text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.ka-season-more:focus-visible, .ka-season-src:focus-visible { outline: 2px solid #2fd1b2; outline-offset: 2px; border-radius: 2px; }
+.ka-season-foot-body { display: contents; }
+/* the debug readout ('&debug=1' in the address) */
+.ka-season-debug { position: absolute; z-index: 5; right: 12px; top: 48px; margin: 0; max-width: calc(100% - 24px); padding: 8px 10px;
+  border-radius: 8px; background: rgba(0, 0, 0, 0.78); border: 1px solid rgba(233, 197, 138, 0.4); color: #e9c58a;
+  font: 11px/1.45 var(--font-mono); white-space: pre-wrap; pointer-events: none; }
+
+/* wide screens: the three numbers side by side, so the panel keeps room for the caption, the table and the key */
+@media (min-width: 900px) {
+  .ka-season-stats { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; }
+  .ka-season-stats > div { padding-left: 9px; }
+  .ka-season-stats dt { font-size: 10.5px; letter-spacing: 0.04em; }
+  .ka-season-stats dd { font-size: 24px; }
+  .ka-season-stats dd small { display: block; font-size: 11px; }
+}
+/* wide but not tall: the caption's first paragraph only, with "More" for the rest */
+@media (min-width: 900px) and (max-height: 900px) {
+  .ka-season-capwrap { display: flex; align-items: flex-end; gap: 10px; }
+  .ka-season-caption { flex: 1; min-width: 0; }
+  .ka-season-caption:not(.is-open) p + p { display: none; }
+  .ka-season-caption:not(.is-open) p:first-child { margin: 0; }
+  .ka-season-more { display: inline-block; flex: none; font-size: 12.5px; padding: 2px 0; }
+}
+/* laptop heights (768, 800): a little tighter, so the whole panel shows without scrolling */
+@media (min-width: 900px) and (max-height: 820px) {
+  .ka-season-top { padding-top: 16px; padding-bottom: 10px; }
+  .ka-season-date { font-size: clamp(36px, 6.4vh, 54px); margin: 6px 0 4px; }
+  .ka-season-stats { margin-top: 14px; gap: 10px; }
+  .ka-season-stats dd { font-size: 22px; }
+  .ka-season-caption { margin-top: 12px; font-size: 14.5px; }
+  .ka-season-legend { gap: 5px; padding-top: 8px; }
+  .ka-season-controls { margin-bottom: 6px; }
+  .ka-season-scrub { height: 40px; }
+}
+@media (max-height: 640px) and (min-width: 900px) {
+  .ka-season-legend { display: none; }
+}
+/* narrow (tablets, small laptop windows, phones): the map is the page. A compact band on top (the date beside its
+   month and weekday, the two numbers, two lines of caption with "More"), the map in the middle with at least about 60%
+   of the height, and a slim dock at the bottom (sources folded under one link). */
+@media (max-width: 899px) {
+  .ka-season { --gut: 16px; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, auto) minmax(0, 1fr) auto; }
+  .ka-season-vignette { background: linear-gradient(to bottom, rgba(4, 9, 10, 0.92), rgba(4, 9, 10, 0.62) 18%, transparent 32%, transparent 70%, rgba(4, 9, 10, 0.94)); }
+  .ka-season-top { padding: 10px var(--gut) 4px; flex-wrap: wrap; gap: 12px; }
+  .ka-season-brand { font-size: 17px; }
+  .ka-season-links { gap: 14px; }
+  .ka-season-links a { font-size: 13px; }
+  .ka-season-tag { display: none; }
+  .ka-season-hud { grid-column: 1; grid-row: 2; padding: 0 var(--gut) 4px; display: grid; column-gap: 12px; align-items: center;
+    grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "date kick" "date week" "stats stats" "cap cap" "dist dist"; }
+  /* the table by district opens with the caption's "More" */
+  .ka-season-dist { grid-area: dist; display: none; margin-top: 6px; }
+  .ka-season-hud:has(.ka-season-caption.is-open) .ka-season-dist { display: block; }
+  /* opened, the panel lies over the map: give it a ground so it stays readable */
+  .ka-season-hud:has(.ka-season-caption.is-open) { z-index: 2; background: rgba(4, 9, 10, 0.9); padding-bottom: 10px; }
+  .ka-season-hud > .ka-season-kicker { grid-area: kick; align-self: end; font-size: 10.5px; letter-spacing: 0.06em; }
+  .ka-season-hud > .ka-season-kicker[role="status"], .ka-season-error { grid-column: 1 / -1; grid-row: auto; }
+  .ka-season-date { grid-area: date; font-size: 28px; margin: 0; }
+  .ka-season-weekday { grid-area: week; align-self: start; font-size: 11px; }
+  .ka-season-stats { grid-area: stats; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; }
+  .ka-season-stats > div { padding-left: 10px; }
+  .ka-season-stats dt { font-size: 10px; letter-spacing: 0.04em; }
+  .ka-season-stats dd { font-size: 19px; }
+  .ka-season-stats dd small { font-size: 11px; }
+  .ka-season-wide, .ka-season-stat-re dd small, .ka-season-stat-blind dd small { display: none; }
+  .ka-season-narrow { display: inline; }
+  .ka-season-capwrap { grid-area: cap; display: flex; align-items: flex-end; gap: 10px; margin-top: 8px; }
+  .ka-season-caption { flex: 1; min-width: 0; margin-top: 0; font-size: 13.5px; line-height: 1.38; }
+  .ka-season-caption p { margin: 0 0 4px; }
+  .ka-season-caption:not(.is-open) p:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+    overflow: hidden; margin: 0; }
+  .ka-season-caption:not(.is-open) p + p { display: none; }
+  .ka-season-more { display: inline-block; flex: none; font-size: 12.5px; padding: 2px 0; }
+  .ka-season-legend, .ka-season-hint, .ka-season-rate { display: none; }
+
+  .ka-season-dock { grid-row: 4; padding: 0 var(--gut) 8px; }
+  .ka-season-controls { gap: 8px; margin-bottom: 4px; }
+  /* the photo's loading note floats over the map just above the dock, so the dock never changes height */
+  .ka-season-status { position: absolute; left: var(--gut); bottom: calc(100% + 8px); }
+  .ka-season-scrub-read { font-size: 11px; margin-bottom: 2px; }
+  .ka-season-scrub-read > span + span { display: none; }
+  .ka-season-scrub { height: 30px; }
+  .ka-season-axis { height: 14px; margin-top: 2px; font-size: 10.5px; }
+  .ka-season-foot { margin-top: 4px; font-size: 10.5px; line-height: 1.4; }
+  .ka-season-src { display: inline; }
+  .ka-season-foot:not(.is-open) .ka-season-foot-body { display: none; }
+  .ka-season-foot.is-open .ka-season-foot-body { display: block; margin-top: 2px; }
+}
+/* 600 to 899 px wide: the date, its month and the two numbers on one line, and the day bars beside the play buttons */
+@media (min-width: 600px) and (max-width: 899px) {
+  .ka-season-hud { grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "date kick stats" "date week stats" "cap cap cap" "dist dist dist"; }
+  .ka-season-stats { margin: 0 0 0 8px; }
+  .ka-season-dock { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 18px; align-items: center; }
+  .ka-season-controls { margin-bottom: 0; flex-wrap: nowrap; }
+  .ka-season-scrub-read { display: none; }
+  .ka-season-foot { grid-column: 1 / -1; }
+}
+/* phones: the month line and the weekday stay one line each beside the date; the foot's second sentence waits in the
+   opened sources */
+@media (max-width: 599px) {
+  .ka-season-date { font-size: 26px; }
+  .ka-season-hud > .ka-season-kicker { font-size: 10px; letter-spacing: 0.02em; }
+  .ka-season-short { display: none; }
+  .ka-season-foot.is-open .ka-season-short { display: inline; }
+  /* each number as wide as its label, so no label breaks */
+  .ka-season-stats { grid-auto-columns: max-content; justify-content: space-between; }
+  .ka-season-stats dt { white-space: nowrap; }
+}
+/* small phones: the speed buttons share the row with the play buttons */
+@media (max-width: 420px) {
+  .ka-season-controls { gap: 6px; }
+  .ka-season-speed { margin-left: 2px; }
+  .ka-season-speed button { padding: 8px 10px; }
+  /* the blind-zero toggle keeps its swatch; its words stay for screen readers */
+  .ka-season-blindbtn { padding: 8px 10px; }
+  .ka-season-blindtxt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

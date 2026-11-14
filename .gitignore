@@ -1,0 +1,13 @@
+# dependencies and builds
+node_modules/
+dist/
+.venv/
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+*.local
+# raw and intermediate data (sources and checksums are recorded in docs/DATA.md)
+data-raw/
+*.parquet
+*.csv
+!vendor/second-sight/pipeline/support/*.csv

@@ -1,0 +1,19 @@
+/* Dark theme (P2, docs/10-ui-ux-second-sight.md section 4.2). Overrides tokens only; no glow, no #000. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #15181c; --surface: #1c2026; --ink: #e8ebef; --ink-2: #a6aeb8; --hairline: #2e343c;
+    --accent-ui: #6fa8d6; --zero: #262b32; --unobserved: #5c6670; --current-year: #e8ebef; --neutral-mid: #2a3038;
+    color-scheme: dark;
+  }
+  :root:not([data-theme='light']) .btn-primary,
+  :root:not([data-theme='light']) .seg button[aria-pressed='true'],
+  :root:not([data-theme='light']) .lang button[aria-pressed='true'] { color: #15181c; }
+}
+:root[data-theme='dark'] {
+  --bg: #15181c; --surface: #1c2026; --ink: #e8ebef; --ink-2: #a6aeb8; --hairline: #2e343c;
+  --accent-ui: #6fa8d6; --zero: #262b32; --unobserved: #5c6670; --current-year: #e8ebef; --neutral-mid: #2a3038;
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .btn-primary,
+:root[data-theme='dark'] .seg button[aria-pressed='true'],
+:root[data-theme='dark'] .lang button[aria-pressed='true'] { color: #15181c; }

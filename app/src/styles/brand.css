@@ -1,0 +1,168 @@
+/* KalenderApi brand layer (modification of Fire Harmony, Apache-2.0).
+   Two visual directions share one engine and switch with the existing theme toggle:
+   - dark  = "Mission control": deep peat-night surfaces, teal for what satellites saw, ember for fire
+   - light = "Field ledger":   warm paper, peat ink, teal accent
+   Loaded after theme.css so only tokens change; component CSS stays as in Fire Harmony. */
+
+:root {
+  --font-sans: "Public Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "Fraunces Variable", Georgia, serif;
+  /* the KalenderApi states (PRD 5.1) */
+  --ka-fire: #df7230;
+  --ka-trusted: #e9f5f1;
+  --ka-blind: #8a9aa6;
+  --ka-smoke: #8c6b52;
+  --ka-nodata: #6c757a;
+}
+
+:root, :root[data-theme="dark"] {
+  --bg: #060b0c;
+  --bg-glow: radial-gradient(1200px 560px at 10% -14%, rgba(38, 196, 168, 0.10), transparent 62%),
+             radial-gradient(900px 480px at 100% -8%, rgba(223, 114, 48, 0.08), transparent 60%);
+  --surface: #0b1315;
+  --surface-2: #10191c;
+  --surface-3: #172326;
+  --border: rgba(160, 230, 215, 0.09);
+  --border-strong: rgba(160, 230, 215, 0.18);
+  --text: #e6efec;
+  --text-2: #a6b6b2;
+  --text-3: #7f908c;
+  --accent: #2fd1b2;
+  --accent-strong: #63e3c9;
+  --accent-soft: rgba(47, 209, 178, 0.13);
+  --accent-glow: 0 0 0 1px rgba(47, 209, 178, 0.35), 0 8px 28px rgba(47, 209, 178, 0.16);
+  --focus: #7ff0d8;
+}
+
+:root[data-theme="light"] {
+  --bg: #f3eedf;
+  --bg-glow: none;
+  --surface: #fffdf6;
+  --surface-2: #f8f3e6;
+  --surface-3: #eae3d0;
+  --border: #d6ccb4;
+  --border-strong: #bfb397;
+  --text: #1b2420;
+  --text-2: #45504a;
+  --text-3: #5e655e;
+  --accent: #0a6a60;
+  --accent-strong: #08524a;
+  --accent-soft: rgba(10, 106, 96, 0.1);
+  --accent-glow: 0 0 0 1px rgba(10, 106, 96, 0.3), 0 8px 24px rgba(10, 106, 96, 0.12);
+  --focus: #0a6a60;
+}
+
+h1, h2, .fh-brand-name, .ka-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72;
+  letter-spacing: -0.01em;
+}
+
+/* NASA true-colour photo toggle, with the map controls: just above the zoom rail (bottom right of the map), so the panel
+   (wide screens) and the bottom sheet (phones) never cover it. It opens up and to the left, the button staying where it
+   was pressed. Under the top bar's cards (z 10). --ka-rail-h is the zoom rail's height: + − and reset with a mouse,
+   reset alone on a touch screen (MapView.tsx). */
+.ka-photo {
+  --ka-rail-h: 122px;
+  position: absolute; z-index: 9; right: var(--gap, 16px);
+  bottom: calc(var(--fh-ex-dock-h, 104px) + var(--gap, 16px) + 32px + var(--ka-rail-h) + 8px);
+  display: flex; flex-direction: row-reverse; flex-wrap: wrap-reverse; gap: 8px; align-items: center;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px;
+  font-size: 13px; color: var(--text); backdrop-filter: blur(6px); box-shadow: var(--elev-2, none);
+  max-width: min(420px, calc(100% - var(--ex-free-left, 16px) - var(--gap, 16px)));
+}
+.ka-photo:has(.ka-photo-note) { padding: 8px 10px; }
+@media (pointer: coarse) {
+  .ka-photo { --ka-rail-h: 54px; }
+  .ka-photo button, .ka-photo input[type="date"] { min-height: 44px; }
+}
+@media (pointer: coarse) and (min-width: 769px) {
+  .ka-photo { bottom: calc(var(--fh-ex-dock-h, 104px) + var(--gap, 16px) + 47px + var(--ka-rail-h) + 8px); }
+}
+@media (max-width: 768px) {
+  .ka-photo { bottom: calc(var(--ex-sheet-h, 0px) + var(--gap, 10px) + 36px + var(--ka-rail-h) + 8px);
+    max-width: calc(100% - var(--gap, 10px) * 2); font-size: 12.5px; }
+}
+.ka-photo button {
+  border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit;
+}
+.ka-photo button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.ka-photo input[type="date"] { font: inherit; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: 8px; padding: 5px 8px; }
+.ka-photo .ka-photo-note { color: var(--text-3); font-size: 12px; width: 100%; }
+
+/* The ways into the story (#/story) and "Play the season" (#/season): a small pill in the header, and a card in the
+   Explorer panel for Central Kalimantan. Theme tokens only, so both themes work. */
+.ka-head-story {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--ctl-sm, 32px); padding: 0 12px 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); border-radius: var(--radius-pill, 999px);
+  background: var(--accent-soft); color: var(--accent); font-size: var(--fs-13, 13px); font-weight: 600;
+  text-decoration: none; white-space: nowrap;
+  transition: border-color var(--t-fast, 120ms) var(--ease-out, ease-out), color var(--t-fast, 120ms) var(--ease-out, ease-out);
+}
+.ka-head-story:hover { border-color: var(--accent); color: var(--accent-strong); }
+.ka-head-story:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-head-story > svg { flex: none; }
+@media (pointer: coarse) { .ka-head-story { min-height: var(--ctl-touch, 44px); } }
+/* phones: the play mark alone (the link keeps its name for screen readers) */
+@media (max-width: 560px) {
+  .ka-head-story { justify-content: center; min-width: var(--ctl-touch, 44px); padding: 0; }
+  .ka-head-story-text { display: none; }
+}
+
+.ka-season-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.ka-season-cta-main {
+  flex: 1 1 220px; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: center;
+  padding: 10px 12px; border-radius: var(--radius-md, 10px);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); background: var(--accent-soft);
+  color: var(--text); text-decoration: none;
+  transition: border-color var(--t-fast, 120ms) var(--ease-out, ease-out);
+}
+.ka-season-cta-main:hover { border-color: var(--accent); }
+.ka-season-cta-main:focus-visible, .ka-season-cta-alt:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-season-cta-main > svg { grid-row: span 2; color: var(--accent); }
+.ka-season-cta-title { font-weight: 650; font-size: var(--fs-14, 14px); color: var(--accent); }
+.ka-season-cta-note { font-size: var(--fs-12, 12px); line-height: 1.4; color: var(--text-2); }
+.ka-season-cta-alt { font-size: var(--fs-13, 13px); color: var(--text-2); white-space: nowrap; }
+.ka-season-cta-alt:hover { color: var(--text); }
+@media (pointer: coarse) { .ka-season-cta-alt { display: inline-flex; align-items: center; min-height: var(--ctl-touch, 44px); } }
+
+/* "Under the Smoke" cinematic landing (#/story), dark by design in both themes */
+.ka-story { position: fixed; inset: 0; background: #04090a; color: #e6efec; overflow: hidden; font-family: var(--font-sans); }
+.ka-story-canvas { position: absolute; inset: 0; }
+.ka-story-vignette { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 70% 45%, transparent 35%, rgba(4, 9, 10, 0.85) 100%),
+              linear-gradient(90deg, rgba(4, 9, 10, 0.92) 0%, rgba(4, 9, 10, 0.55) 34%, transparent 58%); }
+.ka-story-top { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; align-items: baseline; padding: 22px 32px; }
+.ka-story-brand { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #e6efec; text-decoration: none; }
+.ka-story-tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: #7f908c; text-transform: uppercase; }
+.ka-story-skip { margin-left: auto; color: #a6b6b2; font-size: 14px; }
+.ka-story-copy { position: absolute; left: 32px; bottom: 120px; max-width: 520px; }
+.ka-story-kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #2fd1b2; margin: 0 0 12px; }
+.ka-story-copy h1 { font-size: clamp(34px, 5vw, 60px); line-height: 1.04; margin: 0 0 14px; animation: kaIn 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ka-story-body { font-size: 18px; line-height: 1.5; color: #c7d3d0; margin: 0; animation: kaIn 900ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ka-story-cta { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+.ka-btn-primary { background: #2fd1b2; color: #04110f; padding: 12px 18px; border-radius: 10px; font-weight: 650; text-decoration: none; }
+.ka-btn-ghost { background: transparent; color: #e6efec; border: 1px solid rgba(160, 230, 215, 0.3); padding: 12px 18px; border-radius: 10px; font: inherit; cursor: pointer; }
+.ka-story-foot { position: absolute; left: 32px; right: 32px; bottom: 22px; font-size: 11.5px; color: #7f908c; max-width: 760px; }
+.ka-story-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: #2fd1b2; transition: width 120ms linear; }
+/* Story: which day the dots and the photo show, and the blind-zero key (same two-tone hatching as the vis2019 images) */
+.ka-story-stamp { position: absolute; right: 32px; top: 72px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  font-family: var(--font-mono); font-size: 12px; color: #c7d3d0; background: rgba(6, 11, 12, 0.62); padding: 8px 10px; border-radius: 8px;
+  font-variant-numeric: tabular-nums; pointer-events: none; }
+.ka-story-hatch { display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(214, 228, 224, 0.35);
+  background: repeating-linear-gradient(135deg, #1e2a33 0 1.4px, #f3eedf 1.4px 2.8px, transparent 2.8px 5px); }
+@media (max-width: 760px) { .ka-story-stamp { right: 20px; top: 64px; font-size: 11px; } }
+@keyframes kaIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) {
+  .ka-story-copy { left: 20px; right: 20px; bottom: 110px; }
+  .ka-story-top { padding: 16px 20px; flex-wrap: wrap; }
+  .ka-story-tag { display: none; }
+}
+/* the hexagon note under the map legend (Legend.tsx): its size, what it counts, and that it ignores district borders */
+.ka-hex-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.4; color: var(--text-2); }
+/* Story: the caption stays readable over the hatching and the white cloud of the blind day */
+.ka-story-copy h1, .ka-story-body { text-shadow: 0 1px 14px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6); }

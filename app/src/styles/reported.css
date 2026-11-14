@@ -1,0 +1,105 @@
+/* "Detected and reported" card (components/ReportedCard.tsx), a KalenderApi addition. Only theme tokens are used, so
+   both themes (dark "Mission control", light "Field ledger") work: teal (--accent) for what satellites saw, ember
+   (--ka-fire) for the area reported burned, both at 3:1 or more on the card surface. */
+.ka-rep {
+  --ka-rep-detected: var(--accent);
+  --ka-rep-reported: var(--ka-fire, #df7230);
+  --ka-rep-bar-h: 56px;
+}
+
+.ka-rep-lead { margin: 0; color: var(--text); font-size: var(--fs-13); line-height: 1.55; }
+.ka-rep-lead strong { font-weight: 600; }
+
+.ka-rep-note { margin: 0; color: var(--text-2); font-size: var(--fs-12); line-height: 1.5; }
+
+.ka-rep-loading {
+  height: 150px; border-radius: var(--radius-2, 8px);
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+
+.ka-rep-chart {
+  display: grid; gap: 6px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border: 1px solid var(--border); border-radius: var(--radius-2, 8px);
+  background: var(--surface-2);
+}
+
+.ka-rep-label {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px;
+  margin: 0; color: var(--text); font-size: var(--fs-12); font-weight: 600; line-height: 1.35;
+}
+.ka-rep-label:not(:first-child) { margin-top: var(--sp-2); }
+.ka-rep-unit { color: var(--text-2); font-weight: 400; }
+.ka-rep-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; align-self: center; }
+.ka-rep-key.is-detected { background: var(--ka-rep-detected); }
+.ka-rep-key.is-reported { background: var(--ka-rep-reported); }
+
+.ka-rep-bars, .ka-rep-years {
+  display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 3px;
+}
+.ka-rep-bars { border-bottom: 1px solid var(--border-strong); }
+
+.ka-rep-col {
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  height: calc(var(--ka-rep-bar-h) + 16px); min-width: 0; cursor: default;
+}
+.ka-rep-val {
+  margin-bottom: 2px; color: var(--text-2);
+  font-size: 10px; line-height: 12px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; white-space: nowrap;
+}
+.ka-rep-val.is-none { color: var(--text-3); font-style: italic; }
+.ka-rep-bar {
+  display: block; flex: none; width: 100%; max-width: 22px;
+  border-radius: 2px 2px 0 0;
+}
+/* a bar's height is its share of the row's largest value times --ka-rep-bar-h (set inline by the component) */
+.ka-rep-bar.is-detected { background: var(--ka-rep-detected); }
+.ka-rep-bar.is-reported { background: var(--ka-rep-reported); }
+.ka-rep-bar.is-none {
+  height: 14px; border: 1px dashed var(--text-3); border-bottom: none; background: transparent;
+}
+
+.ka-rep-years span {
+  color: var(--text-2); font-size: var(--fs-11); text-align: center; font-variant-numeric: tabular-nums;
+}
+
+.ka-rep-missing { margin: 0; padding-left: 1.1em; color: var(--text-2); font-size: var(--fs-12); line-height: 1.5; }
+.ka-rep-missing strong { color: var(--text); font-weight: 600; }
+
+.ka-rep-sources { display: grid; gap: 6px; padding-top: var(--sp-2); border-top: 1px solid var(--border); }
+.ka-rep-more { display: grid; gap: 6px; }
+.ka-rep-more[open] { gap: 8px; }
+.ka-rep-more > summary {
+  width: fit-content; color: var(--text); font-size: var(--fs-12); font-weight: 600; cursor: pointer;
+  border-radius: 4px;
+}
+.ka-rep-more > summary:hover { color: var(--accent); }
+.ka-rep-more > :not(summary) { margin-top: 6px; }
+.ka-rep-sources ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ka-rep-sources li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font-size: var(--fs-12); line-height: 1.45; }
+.ka-rep-sources a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.ka-rep-sources a:hover { color: var(--accent-strong, var(--accent)); }
+.ka-rep-src-pub { color: var(--text); font-weight: 600; }
+.ka-rep-src-title { flex-basis: 100%; }
+.ka-rep-tag {
+  padding: 0 5px; border-radius: 4px; border: 1px solid var(--border-strong);
+  color: var(--text-2); font-size: var(--fs-11); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
+}
+.ka-rep-tag.is-official { color: var(--text); border-color: var(--text-3); }
+
+/* "Blind zeros by district" (BlindDistrictsCard.tsx): a map of the 14 districts and a ranked list, one shade */
+.ka-bz { --ka-bz: #9fb4c7; }
+:root[data-theme="light"] .ka-bz { --ka-bz: #3d5a73; }
+.ka-bz-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 10px 0 8px; }
+.ka-bz-map { width: 100%; max-width: 320px; height: auto; justify-self: center; }
+.ka-bz-map path { fill: var(--ka-bz); stroke: var(--bg); stroke-width: 0.8; stroke-linejoin: round; cursor: default; }
+.ka-bz-map path.is-on { stroke: var(--accent); stroke-width: 1.6; }
+.ka-bz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: var(--fs-12); }
+.ka-bz-list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) 46px 64px; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 4px; }
+.ka-bz-list li.is-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ka-bz-sw { width: 10px; height: 10px; border-radius: 2px; background: var(--ka-bz); }
+.ka-bz-name { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-bz-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; color: var(--text); }
+.ka-bz-bar { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ka-bz) 18%, transparent); overflow: hidden; }
+.ka-bz-bar i { display: block; height: 100%; background: var(--ka-bz); }
+.ka-bz-src { color: var(--text-3); }

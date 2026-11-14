@@ -1,0 +1,33 @@
+# Data never goes into git (lives in $SS_DATA_DIR, outside the repo)
+/data/
+*.parquet
+*.csv
+!docs/**/*.csv
+*.zip
+*.nc
+*.hdf
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code worktrees
+.claude/

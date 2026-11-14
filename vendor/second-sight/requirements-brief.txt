@@ -1,0 +1,4 @@
+# api/brief (AI-01..AI-05): standard library only at runtime.
+pytest>=8
+# Optional PDF export (needs GTK/Pango on Windows; HTML is the fallback):
+# weasyprint>=62
