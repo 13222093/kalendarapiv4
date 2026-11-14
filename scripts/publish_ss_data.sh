@@ -27,6 +27,6 @@ d['meta']['data_dir_note'] = 'absolute path on the build machine replaced by the
 json.dump(d, open(p, 'w', encoding='utf-8'), indent=2, default=str)
 print('validation_results.json meta.data_dir rewritten:', bool(old))
 PY
-if grep -rl "Ari Azis" "$DEST" --include=*.json 2>/dev/null; then echo "WARNING: a local path is still in the files above" >&2; exit 1; fi
+if grep -rlE "[A-Za-z]:[\/]+Users[\/]" "$DEST" --include=*.json 2>/dev/null; then echo "WARNING: a local path is still in the files above" >&2; exit 1; fi
 echo "copied the bundle (without index.json), validation_results.json and finding.json to $DEST"
 ls -l "$DEST" | head -60
