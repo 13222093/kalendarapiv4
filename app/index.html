@@ -6,7 +6,7 @@
     <title>KalenderApi: a zero is not always a zero</title>
     <meta
       name="description"
-      content="Explore one consistent worldwide fire hotspot record from MODIS and VIIRS, 2000 to today, with a burning calendar for any place on Earth."
+      content="Indonesia's fire record on one scale: the 2012 jump from MODIS to VIIRS, Second Sight's harmonization with its 90% range, and the zeros the satellites could not see under cloud."
     />
     <meta name="color-scheme" content="light dark" />
     <!-- Link previews (chat apps, social sites): absolute URLs of the published site; the picture is public/og-image.jpg
@@ -37,6 +37,8 @@
     <script>
       (function () {
         var t = null, d = document.documentElement, h = location.hash;
+        // project 4: a first visit (no hash at all) opens the Indonesia record; '#/' stays Fire Harmony's explorer
+        if (!h) { h = '#/record'; try { history.replaceState(null, '', location.pathname + location.search + h); } catch (e) { location.hash = h; } }
         try { t = localStorage.getItem('fh_theme'); } catch (e) { /* private mode */ }
         d.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');   // light unless the visitor picked dark
         if (!h || h === '#/' || h.indexOf('#/?') === 0) d.setAttribute('data-boot', 'map');

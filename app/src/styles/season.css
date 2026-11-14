@@ -233,3 +233,10 @@
   .ka-season-blindbtn { padding: 8px 10px; }
   .ka-season-blindtxt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
+
+/* Project 4: the season years (#/season?y=2015|2019|2023) in the header, the one shown marked; the "not built yet" panel */
+.ka-season-links .ka-season-year { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.ka-season-links .ka-season-year[aria-current="page"] { color: #2fd1b2; text-decoration: none; }
+.ka-season-error[role="status"] p { color: #c7d3d0; }
+.ka-season-error[role="status"] .ka-season-kicker { color: #7f908c; }
+.ka-season-error a { color: #63e3c9; }

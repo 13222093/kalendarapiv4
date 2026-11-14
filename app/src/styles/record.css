@@ -1,0 +1,191 @@
+/* Project 4 (new file): the Indonesia record page (#/record, pages/Record.tsx and components/record/*). Theme tokens
+   only (tokens.css, theme.css, brand.css), so the dark "Mission control" and light "Field ledger" themes both work. */
+
+/* charts sit on the card surface, like the Dashboard's */
+.ka-rec-ba > .ui-figure, .ka-rec-cal, .ka-rec-frame, .ka-rec-sure > .ui-figure {
+  padding: var(--sp-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+}
+@media (max-width: 560px) {
+  .ka-rec-ba > .ui-figure, .ka-rec-cal, .ka-rec-frame, .ka-rec-sure > .ui-figure { padding: var(--sp-4) var(--sp-3); }
+}
+.ka-rec-ba, .ka-rec-sure { display: grid; gap: var(--sp-4); min-width: 0; }
+
+.ka-rec-note { margin: 0; max-width: 72em; color: var(--text-2); font-size: var(--fs-13); line-height: 1.5; text-wrap: pretty; }
+.ka-rec-link { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+
+/* the area picker in the page header */
+.ka-rec-picker { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--text-2); font-size: var(--fs-13); font-weight: 600; }
+.ka-rec-picker select {
+  min-height: var(--ctl); max-width: min(72vw, 260px); padding: 0 var(--sp-8) 0 var(--sp-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); background-color: var(--surface-2); color: var(--text);
+  font: inherit; font-size: var(--fs-14); font-weight: 500; cursor: pointer; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+.ka-rec-picker select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-rec-picker select:disabled { opacity: 0.6; cursor: default; }
+.ka-rec-picker select option, .ka-rec-picker select optgroup { background: var(--surface); color: var(--text); }
+@media (pointer: coarse) { .ka-rec-picker select { min-height: var(--ctl-touch); } }
+
+/* states: loading (a shimmer), not built yet, failed */
+.ka-rec-state { min-width: 0; }
+.ka-rec-empty {
+  display: grid; align-content: center; justify-items: start; gap: var(--sp-2); padding: var(--sp-5);
+  border: 1px dashed var(--border-strong); border-radius: var(--radius-md);
+  background: repeating-linear-gradient(135deg, transparent 0 9px, color-mix(in srgb, var(--text) 3.5%, transparent) 9px 10px);
+}
+.ka-rec-empty-title { margin: 0; color: var(--text); font-size: var(--fs-14); font-weight: 650; }
+
+/* before and after: the key under the chart (swatches as the lines are drawn) */
+.ka-rec-key { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); margin: 0; padding: 0; list-style: none; color: var(--text-2); font-size: var(--fs-13); }
+.ka-rec-key li { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.ka-rec-sw { display: inline-block; width: 22px; height: 0; border-top: 2px solid; }
+.ka-rec-sw-h { border-top-width: 3px; border-color: var(--harmonized); box-shadow: 0 -5px 0 2px color-mix(in srgb, var(--harmonized) 14%, transparent); }
+.ka-rec-sw-naive { border-color: var(--sensor-snpp); }
+.ka-rec-sw-summed { border-top-width: 1px; border-color: var(--text-3); }
+
+/* ------------------------------------------------------------------------------------------------ calendar */
+.ka-rec-cal { display: grid; gap: var(--sp-3); min-width: 0; }
+.ka-rec-cal-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); }
+.ka-rec-cal-read {
+  flex: 1 1 18rem; min-height: 1.5em; margin: 0; color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-12);
+  font-variant-numeric: tabular-nums; line-height: 1.5;
+}
+.ka-rec-cal-grid { --cell-h: 26px; display: grid; gap: 2px; min-width: 0; font-variant-numeric: tabular-nums; }
+.ka-rec-cal-row { display: grid; grid-template-columns: 3rem repeat(12, minmax(0, 1fr)) 4.25rem; gap: 2px; align-items: stretch; }
+/* the change of satellite: a gap and a rule between 2011 and 2012 */
+.ka-rec-cal-row.is-seam { position: relative; margin-top: var(--sp-5); }
+.ka-rec-cal-row.is-seam::before {
+  content: "2012: VIIRS joins MODIS"; position: absolute; left: 3rem; right: 0; bottom: calc(100% + 4px);
+  border-bottom: 1px solid var(--border-strong); color: var(--text-3); font-size: var(--fs-11, 11px); line-height: 14px;
+  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+}
+.ka-rec-cal-y, .ka-rec-cal-mh, .ka-rec-cal-th, .ka-rec-cal-tot {
+  display: flex; align-items: center; color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-12);
+}
+.ka-rec-cal-mh { justify-content: center; }
+.ka-rec-mh-s { display: none; }   /* the month's initial, on phones only */
+.ka-rec-cal-th, .ka-rec-cal-tot { justify-content: flex-end; padding-right: 2px; }
+.ka-rec-cal-tot { color: var(--text-2); }
+.ka-rec-cal-headrow > * { padding-bottom: 2px; }
+
+.ka-rec-cell {
+  --c: var(--surface-2); --ink-c: var(--text-3);
+  position: relative; display: flex; align-items: center; justify-content: center; min-width: 0; height: var(--cell-h);
+  padding: 0; border: 0; border-radius: 3px; background: var(--c); color: var(--ink-c);
+  font-family: var(--font-mono); font-size: var(--fs-12); line-height: 1; cursor: pointer;
+  transition: background-color var(--t-med) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
+}
+.ka-rec-cell.is-out { background: transparent; cursor: default; }
+.ka-rec-cell[data-null] { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.ka-rec-cell-n { position: relative; z-index: 1; padding: 0 2px; border-radius: 2px; white-space: nowrap; overflow: hidden; }
+.ka-rec-cell:hover { box-shadow: 0 0 0 1px var(--text-2); }
+.ka-rec-cell:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; z-index: 2; }
+.ka-rec-cell[aria-selected="true"] { box-shadow: 0 0 0 2px var(--text); z-index: 1; }
+/* provisional (near real time): an inner hairline, not a dashed border (DESIGN.md: no dashed lines) */
+.ka-rec-cell[data-prov]:not([aria-selected="true"]) { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
+
+/* the ember ramp (DESIGN.md: --ember-100 least to --ember-900 most, remapped per theme) */
+:is(.ka-rec-cell, .ka-rec-ramp i)[data-step="1"] { --c: var(--ember-100); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="2"] { --c: var(--ember-200); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="3"] { --c: var(--ember-300); }
+:is(.ka-rec-cell, .ka-rec-ramp i)[data-step="4"] { --c: var(--ember-400); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="5"] { --c: var(--ember-500); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="6"] { --c: var(--ember-600); }
+:is(.ka-rec-cell, .ka-rec-ramp i)[data-step="7"] { --c: var(--ember-700); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="8"] { --c: var(--ember-800); } :is(.ka-rec-cell, .ka-rec-ramp i)[data-step="9"] { --c: var(--ember-900); }
+.ka-rec-cell[data-step="0"] { --c: var(--surface-2); --ink-c: var(--text-3); }
+/* text on the ramp: dark steps take light text, light steps dark text (dark theme: 1 to 5 are dark; light: 5 to 9) */
+:root[data-theme="dark"] .ka-rec-cell:is([data-step="1"], [data-step="2"], [data-step="3"], [data-step="4"], [data-step="5"]) { --ink-c: #f4ece4; }
+:root[data-theme="dark"] .ka-rec-cell:is([data-step="6"], [data-step="7"], [data-step="8"], [data-step="9"]) { --ink-c: #1d0f08; }
+:root[data-theme="light"] .ka-rec-cell:is([data-step="1"], [data-step="2"], [data-step="3"], [data-step="4"]) { --ink-c: #3a1a0e; }
+:root[data-theme="light"] .ka-rec-cell:is([data-step="5"], [data-step="6"], [data-step="7"], [data-step="8"], [data-step="9"]) { --ink-c: #fff6ee; }
+
+/* observability (TRI-04): hatching over the colour; marks in the top right corner */
+.ka-rec-cell[data-obs="partial"]::before, .ka-rec-cell[data-obs="unobserved"]::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+}
+.ka-rec-cell[data-obs="partial"]::before {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 55%, transparent) 0 1px, transparent 1px 5px);
+}
+.ka-rec-cell[data-obs="unobserved"]::before {
+  background: repeating-linear-gradient(135deg, var(--text) 0 2.2px, transparent 2.2px 5px);
+  opacity: 0.85;
+}
+.ka-rec-cell:is([data-obs="partial"], [data-obs="unobserved"]) .ka-rec-cell-n { background: color-mix(in srgb, var(--surface) 82%, transparent); color: var(--text); }
+.ka-rec-cell[data-obs="good"]::after, .ka-rec-cell[data-obs="not-computed"]::after {
+  content: ""; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; pointer-events: none;
+}
+.ka-rec-cell[data-obs="good"]::after { background: var(--accent); box-shadow: 0 0 0 1px var(--surface); }
+.ka-rec-cell[data-obs="not-computed"]::after { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-c) 55%, transparent); }
+
+/* the legend */
+.ka-rec-cal-legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); margin: 0; padding: 0; list-style: none; color: var(--text-2); font-size: var(--fs-12); }
+.ka-rec-cal-legend li { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.ka-rec-ramp-item { flex-basis: 100%; flex-wrap: wrap; }
+.ka-rec-ramp { display: inline-flex; gap: 1px; }
+.ka-rec-ramp i { display: block; width: 14px; height: 12px; background: var(--c); }
+.ka-rec-ramp i:first-child { border-radius: 2px 0 0 2px; } .ka-rec-ramp i:last-child { border-radius: 0 2px 2px 0; }
+.ka-rec-lg { --c: var(--ember-400); position: relative; flex: none; display: inline-block; width: 18px; height: 14px; border-radius: 3px; background: var(--c); }
+.ka-rec-lg[data-obs="partial"]::before, .ka-rec-lg[data-obs="unobserved"]::before { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ka-rec-lg[data-obs="partial"]::before { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 55%, transparent) 0 1px, transparent 1px 5px); }
+.ka-rec-lg[data-obs="unobserved"]::before { background: repeating-linear-gradient(135deg, var(--text) 0 2.2px, transparent 2.2px 5px); opacity: 0.85; }
+.ka-rec-lg[data-obs="good"]::after, .ka-rec-lg[data-obs="not-computed"]::after { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; }
+.ka-rec-lg[data-obs="good"]::after { background: var(--accent); box-shadow: 0 0 0 1px var(--surface); }
+.ka-rec-lg[data-obs="not-computed"] { --c: var(--surface-2); }
+.ka-rec-lg[data-obs="not-computed"]::after { box-shadow: inset 0 0 0 1px var(--text-2); }
+.ka-rec-lg[data-prov] { --c: var(--surface-2); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
+
+/* phones: no numbers in the cells (the readout and the month's sentence have them), no totals column */
+@media (max-width: 760px) {
+  .ka-rec-cal-grid { --cell-h: 22px; }
+  .ka-rec-cal-row { grid-template-columns: 2.4rem repeat(12, minmax(0, 1fr)); }
+  .ka-rec-cal-th, .ka-rec-cal-tot { display: none; }
+  .ka-rec-cell-n { display: none; }
+  .ka-rec-mh-l { display: none; }
+  .ka-rec-mh-s { display: inline; }
+  .ka-rec-cal-row.is-seam::before { left: 2.4rem; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .ka-rec-cell { font-size: 11px; } }
+
+/* this month */
+.ka-rec-month { margin: 0; max-width: 60em; color: var(--text); font-size: var(--fs-16); line-height: 1.55; text-wrap: pretty; }
+.ka-rec-num { font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ka-rec-obs-word { font-weight: 650; color: var(--text); }
+.ka-rec-note[data-obs="unobserved"] .ka-rec-obs-word, .ka-rec-note[data-obs="partial"] .ka-rec-obs-word {
+  padding: 0 4px; border-radius: 3px;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 18%, transparent) 0 1px, transparent 1px 4px);
+}
+
+/* the zero, day by day: one card per season year */
+.ka-rec-seasons { display: grid; gap: var(--sp-4); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .ka-rec-seasons { grid-template-columns: minmax(0, 1fr); } }
+.ka-rec-season {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px var(--sp-3);
+  padding: var(--sp-4) var(--sp-5); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); border-radius: var(--radius-lg);
+  background: var(--accent-soft); color: var(--text); text-decoration: none;
+  transition: border-color var(--t-fast) var(--ease-out);
+}
+.ka-rec-season > * { grid-column: 1; }
+.ka-rec-season > svg { grid-column: 2; grid-row: 1 / span 3; color: var(--accent); }
+a.ka-rec-season:hover { border-color: var(--accent); }
+a.ka-rec-season:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-rec-season.is-off { border-style: dashed; border-color: var(--border-strong); background: transparent; color: var(--text-2); }
+.ka-rec-season-y { font-family: var(--font-display); font-size: var(--fs-30); font-weight: 650; line-height: 1.1; }
+.ka-rec-season-t { color: var(--accent); font-size: var(--fs-14); font-weight: 650; }
+:root[data-theme="light"] .ka-rec-season-t { color: var(--accent-strong); }
+.ka-rec-season.is-off .ka-rec-season-t { color: var(--text-2); }
+.ka-rec-season-n { color: var(--text-2); font-size: var(--fs-12); line-height: 1.45; }
+
+/* how sure */
+.ka-rec-badges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin: 0; }
+.ka-rec-tests { max-height: 520px; overflow: auto; scrollbar-width: thin; }
+.ka-rec-tests .ui-table { font-size: var(--fs-13); }
+.ka-rec-tests thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+.ka-rec-tests tr[data-status="fail"] > th { box-shadow: inset 3px 0 0 var(--critical); }
+.ka-rec-test-why { display: block; margin-top: 2px; color: var(--text-2); font-size: var(--fs-12); line-height: 1.45; }
+.ka-rec-rule { color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-12); }
+.ka-rec-mind { display: grid; gap: var(--sp-2); margin: 0; padding-left: 1.2em; color: var(--text-2); font-size: var(--fs-14); line-height: 1.5; }
+@media (max-width: 760px) { .ka-rec-tests :is(th, td):nth-child(4) { display: none; } }
+
+/* the "Watch the story" pill in the page header reuses .ka-head-story (brand.css); it keeps its words on phones here */
+.ui-page-header .ka-head-story { min-height: var(--ctl); padding: 0 14px 0 12px; }
+@media (max-width: 560px) {
+  .ui-page-header .ka-head-story { min-width: 0; padding: 0 14px 0 12px; }
+  .ui-page-header .ka-head-story > span { display: inline; }
+}

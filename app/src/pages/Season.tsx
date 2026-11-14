@@ -46,14 +46,32 @@ interface VisFile {
   source: { firemask: { product: string; access: string; read_utc: string }; districts: { name: string; license: string } };
 }
 interface Vis { file: VisFile; byDate: Map<string, VisDay>; rings: [number, number][][] }
-const VIS_URL = `${import.meta.env.BASE_URL}ka-data/visibility_kalteng_2019.json`;
+// Project 4: one set of files per season year (2019 as before; 2015 and 2023 once the data work has built them)
+const visUrl = (year: number) => `${import.meta.env.BASE_URL}ka-data/visibility_kalteng_${year}.json`;
 const DISTRICTS_URL = `${import.meta.env.BASE_URL}ka-data/kalteng_districts.json`;
-const visImgUrl = (date: string) => `${import.meta.env.BASE_URL}ka-data/vis2019/${date}.png`;
+const visImgUrl = (year: number, date: string) => `${import.meta.env.BASE_URL}ka-data/vis${year}/${date}.png`;
+/** A ka-data file that is not built yet: a 404, or (in development) the app's page served in its place. */
+class NotBuilt extends Error {}
+async function getJson<T>(url: string): Promise<T> {
+  const r = await fetch(url);
+  if (r.status === 404) throw new NotBuilt(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  if (!(r.headers.get('content-type') ?? '').includes('json')) throw new NotBuilt(url);
+  return r.json() as Promise<T>;
+}
+/** The address of a day: 2019 keeps its old form ('#/season?d=2019-09-15'), other years name the year too. */
+const dayHash = (year: number, date: string, debug: boolean) =>
+  `#/season?${year === 2019 ? '' : `y=${year}&`}d=${date}${debug ? '&debug=1' : ''}`;
 const BLIND_NOTE = 20;         // caption: name the blind share when at least this % of today's no-fire land was never seen
 const pct1 = (x: number) => `${x.toFixed(1)}%`;
 
-const DATA_URL = `${import.meta.env.BASE_URL}ka-data/kalteng_2019_season.json`;
-const PHOTO = 'VIIRS_SNPP_CorrectedReflectance_TrueColor';
+const dataUrl = (year: number) => `${import.meta.env.BASE_URL}ka-data/kalteng_${year}_season.json`;
+const SEASON_YEARS = [2015, 2019, 2023];
+// Project 4: GIBS has the Suomi NPP VIIRS true-colour layer from 24 Nov 2015 (its WMTS capabilities); before that a day's
+// photo is MODIS Terra true colour (every day since 2000), and the page says which satellite took it.
+const VIIRS_PHOTO_FROM = '2015-11-24';
+const photoId = (date: string) => (date < VIIRS_PHOTO_FROM ? 'MODIS_Terra_CorrectedReflectance_TrueColor' : 'VIIRS_SNPP_CorrectedReflectance_TrueColor');
+const photoName = (date: string) => (date < VIIRS_PHOTO_FROM ? 'MODIS Terra' : 'VIIRS S-NPP');
 const BASE_FPS = 6;            // days per second at 1x
 const SPEEDS = [0.5, 1, 2] as const;
 const TRAIL = 7;               // previous days drawn as a fading trail
@@ -126,7 +144,7 @@ const NO_FRAME_MS = 3000;
 /** One still NASA GIBS photo (WMS, plain lat/lon) of the box around the data, for the page that gets no frames. */
 function stillUrl(date: string, [w, s, e, n]: [number, number, number, number]) {
   const width = 1024, height = Math.round((width * (n - s)) / (e - w));
-  return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=${PHOTO}`
+  return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=${photoId(date)}`
     + `&STYLES=&FORMAT=image/jpeg&CRS=EPSG:4326&BBOX=${s},${w},${n},${e}&WIDTH=${width}&HEIGHT=${height}&TIME=${date}`;
 }
 
@@ -150,7 +168,7 @@ function photoLayer(date: string, opacity: number, onLoad: () => void, onError: 
   extent: [number, number, number, number], kick: PhotoKick = NO_KICK) {
   return new TileLayer({
     id: `photo-${date}`, opacity, visible: opacity > 0,   // a hidden layer still loads its tiles
-    data: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${PHOTO}/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+    data: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${photoId(date)}/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
     minZoom: 0, maxZoom: 9, zoomOffset, tileSize: 256, extent,
     onViewportLoad: onLoad, onTileError: onError,
     renderSubLayers: renderPhotoTile as never,
@@ -196,7 +214,7 @@ function dayLayer(day: Day, age: number) {
 
 // ------------------------------------------------------------------------------------------------ page
 
-export function Season() {
+export function Season({ year = 2019 }: { year?: number }) {
   const root = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const deck = useRef<Deck<MapView> | null>(null);
@@ -226,11 +244,11 @@ export function Season() {
   }, []);
 
   // the data file
+  const [notBuilt, setNotBuilt] = useState(false);
   useEffect(() => {
     let live = true;
     setError(null);
-    fetch(DATA_URL)
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<SeasonFile>; })
+    getJson<SeasonFile>(dataUrl(year))
       .then((file) => {
         if (!live) return;
         if (!Array.isArray(file.days) || file.days.length === 0) throw new Error('the file has no days');
@@ -241,9 +259,23 @@ export function Season() {
         setIdx(at >= 0 ? at : 0);
         setPlaying(at < 0 && !reduced);   // a shared link to a day opens paused on it; reduced motion never autoplays
       })
-      .catch((e: unknown) => { if (live) setError(e instanceof Error ? e.message : String(e)); });
+      .catch((e: unknown) => {
+        if (!live) return;
+        if (e instanceof NotBuilt) setNotBuilt(true);
+        else setError(e instanceof Error ? e.message : String(e));
+      });
     return () => { live = false; };
-  }, [attempt, reduced]);
+  }, [attempt, reduced, year]);
+
+  // the other season years that are built (the year switch in the header)
+  const [years, setYears] = useState<number[]>([]);
+  useEffect(() => {
+    let live = true;
+    Promise.all(SEASON_YEARS.map((y) => (y === year ? Promise.resolve(y)
+      : fetch(dataUrl(y), { method: 'HEAD' }).then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? y : null)).catch(() => null))))
+      .then((ys) => { if (live) setYears(ys.filter((y): y is number => y !== null)); });
+    return () => { live = false; };
+  }, [year]);
 
   // the blind-zero layer: its numbers, the district borders, and one small image per day (all 92 load at once, about
   // 0.5 MB). Without it the season still plays, and the foot says the layer is missing.
@@ -254,8 +286,8 @@ export function Season() {
   const [, setVisTick] = useState(0);
   useEffect(() => {
     let live = true;
-    const get = (u: string) => fetch(u).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<unknown>; });
-    Promise.all([get(VIS_URL), get(DISTRICTS_URL)])
+    const get = (u: string) => getJson<unknown>(u);
+    Promise.all([get(visUrl(year)), get(DISTRICTS_URL)])
       .then((res) => {
         if (!live) return;
         const [file, dist] = res as [VisFile, { districts: { rings: [number, number][][] }[] }];
@@ -264,12 +296,14 @@ export function Season() {
         for (const d of file.days) {
           const img = new Image();
           img.onload = () => { if (live) { visImgs.current.set(d.date, img); setVisTick((v) => v + 1); } };
-          img.src = visImgUrl(d.date);
+          img.src = visImgUrl(year, d.date);
         }
       })
-      .catch((e: unknown) => { if (live) setVisErr(e instanceof Error ? e.message : String(e)); });
+      .catch((e: unknown) => {
+        if (live) setVisErr(e instanceof NotBuilt ? `not built yet for ${year}` : e instanceof Error ? e.message : String(e));
+      });
     return () => { live = false; };
-  }, []);
+  }, [year]);
 
   // deck.gl, created once
   useEffect(() => {
@@ -515,9 +549,9 @@ export function Season() {
   useEffect(() => {
     const day = season?.days[idx];
     if (!day || playing) return;
-    const want = `#/season?d=${day.date}${debug ? '&debug=1' : ''}`;
+    const want = dayHash(year, day.date, debug);
     if (window.location.hash !== want) window.history.replaceState(null, '', want);
-  }, [idx, playing, season, debug]);
+  }, [idx, playing, season, debug, year]);
   useEffect(() => {
     if (!season) return;
     const onHash = () => {
@@ -593,21 +627,38 @@ export function Season() {
       {noFrames && season && day ? (
         <img className="ka-season-still" src={stillUrl(day.date, [season.file.bbox[0] - PHOTO_MARGIN, season.file.bbox[1] - PHOTO_MARGIN,
           season.file.bbox[2] + PHOTO_MARGIN, season.file.bbox[3] + PHOTO_MARGIN])}
-          alt={`A still NASA VIIRS true-colour photo of Central Kalimantan on ${day.date}`} />
+          alt={`A still NASA ${photoName(day.date)} true-colour photo of Central Kalimantan on ${day.date}`} />
       ) : null}
       <div className="ka-season-vignette" />
       {debug ? <pre className="ka-season-debug" aria-hidden="true">{dbg || 'debug: waiting for the first second'}</pre> : null}
       <header className="ka-season-top">
         <a className="ka-season-brand" href="#/story">KalenderApi</a>
-        <span className="ka-season-tag">Play the season . Central Kalimantan . 1 Aug to 31 Oct 2019</span>
+        <span className="ka-season-tag">Play the season . Central Kalimantan . 1 Aug to 31 Oct {year}</span>
         <nav className="ka-season-links" aria-label="Pages">
+          {/* project 4: the other season years that are built, and the Indonesia record of Central Kalimantan */}
+          {years.length > 1 ? years.map((y) => (
+            <a key={y} href={y === 2019 ? '#/season' : `#/season?y=${y}`} aria-current={y === year ? 'page' : undefined}
+              className="ka-season-year">{y}</a>
+          )) : null}
+          <a href={`#/record?aoi=prov-kalimantan-tengah&m=${year}-09`}>Record</a>
           <a href="#/story">Story</a>
-          <a href="#/?area=state:IDN-1931&month=201909&tab=calendar">Explorer</a>
+          <a href={`#/?area=state:IDN-1931&month=${year}09&tab=calendar`}>Explorer</a>
         </nav>
       </header>
 
       <section className="ka-season-hud" aria-label="The day shown">
-        {error ? (
+        {notBuilt ? (
+          <div className="ka-season-error" role="status">
+            <p className="ka-season-kicker">Central Kalimantan . 1 Aug to 31 Oct {year}</p>
+            <p>The {year} season is not built yet: its hotspot file (ka-data/kalteng_{year}_season.json) is still being made by the data run.</p>
+            <p>
+              {years.filter((y) => y !== year).map((y) => (
+                <a key={y} href={y === 2019 ? '#/season' : `#/season?y=${y}`} style={{ marginRight: 12 }}>Play {y} instead</a>
+              ))}
+              <a href="#/record?aoi=prov-kalimantan-tengah">Central Kalimantan in the Indonesia record</a>
+            </p>
+          </div>
+        ) : error ? (
           <div className="ka-season-error" role="alert">
             <p>The season data file could not be loaded ({error}).</p>
             <button type="button" className="ka-btn-ghost" onClick={() => setAttempt((a) => a + 1)}>Try again</button>
@@ -733,13 +784,13 @@ export function Season() {
             onClick={() => setSrcOpen((v) => !v)}>{srcOpen ? 'Hide sources' : 'Sources and method'}</button>
           <div id="ka-season-foot-body" className="ka-season-foot-body">
             Hotspots: NASA FIRMS VIIRS S-NPP 375 m.
-            Imagery: NASA GIBS / Worldview (VIIRS S-NPP true colour of the same day; black wedges are gaps between passes).
+            Imagery: NASA GIBS / Worldview ({photoName(season?.days[0]?.date ?? `${year}-08-01`)} true colour of the same day; black wedges are gaps between passes{year < 2016 ? '; GIBS has VIIRS true colour only from 24 November 2015' : ''}).
             {vis ? (
               <> Blind zeros: NASA MODIS Terra and Aqua daily fire mask (MOD14A1, MYD14A1 C6.1) via Microsoft Planetary Computer,
                 read {vis.file.source.firemask.read_utc.slice(0, 10)}. Districts: geoBoundaries (BPS, WFP, OCHA ROAP), {vis.file.source.districts.license}.</>
             ) : visErr ? <> The blind-zero layer could not be loaded ({visErr}).</> : null}
             {src ? (
-              <> Data file: {fmt(season?.kept ?? 0)} hotspots kept of {fmt(src.rows_total)} rows in the FIRMS 2019 Indonesia archive
+              <> Data file: {fmt(season?.kept ?? 0)} hotspots kept of {fmt(src.rows_total)} rows in the FIRMS {year} Indonesia archive
                 {season && season.kept !== src.rows_kept ? ' (the file\'s own count differs)' : ''}, sha256 <code title={src.sha256}>{src.sha256.slice(0, 12)}</code>.</>
             ) : null}
             {season ? (
@@ -782,7 +833,7 @@ function captions(s: Season, i: number, v: VisDay | null): string[] {
       ? ' Look at the photo: where smoke or cloud covers the peat, a low count is not an absence of fire.' : ''}`);
   }
   if (r > 0) out.push(`${fmt(r)} hotspots re-appeared near where they were last seen, after 2 or more days with none.`);
-  if (!out.length) out.push(`${parts(day.date).month} 2019 in Central Kalimantan: ${fmt(n)} hotspots detected this day.`);
+  if (!out.length) out.push(`${parts(day.date).month} ${parts(day.date).year} in Central Kalimantan: ${fmt(n)} hotspots detected this day.`);
   return out;
 }
 

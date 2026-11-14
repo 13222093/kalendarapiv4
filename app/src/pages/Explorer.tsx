@@ -897,6 +897,7 @@ export function Explorer() {
             <span className="ka-season-cta-title">Play the 2019 fire season</span>
             <span className="ka-season-cta-note">1 Aug to 31 Oct, one real day per frame: that day's NASA photo, its VIIRS hotspots, and the zeros Terra and Aqua could not see, by district</span>
           </a>
+          <a className="ka-season-cta-alt" href="#/record?aoi=prov-kalimantan-tengah">Indonesia record</a>
           <a className="ka-season-cta-alt" href="#/story">Watch the story</a>
         </div>
       ) : null}

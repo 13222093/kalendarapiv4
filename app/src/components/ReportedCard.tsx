@@ -127,7 +127,7 @@ export function ReportedCard() {
       {rows ? (
         <>
           <div className="ka-rep-chart" aria-hidden="true">
-            <p className="ka-rep-label"><span className="ka-rep-key is-detected" />Detected <span className="ka-rep-unit">hotspots per year, harmonized MODIS and VIIRS (this app)</span></p>
+            <p className="ka-rep-label"><span className="ka-rep-key is-detected" />Detected <span className="ka-rep-unit">hotspots per year, MODIS and VIIRS harmonized by Fire Harmony (NOAA-20 scale)</span></p>
             <Bars rows={rows} pick={(r) => r.detected} tone="detected" unit="hotspots" />
             <p className="ka-rep-label"><span className="ka-rep-key is-reported" />Reported <span className="ka-rep-unit">burned area per year, hectares (SiPongi, Ministry of Forestry)</span></p>
             <Bars rows={rows} pick={(r) => r.reported} tone="reported" unit="ha" />
@@ -159,6 +159,10 @@ export function ReportedCard() {
             </table>
           </div>
 
+          <p className="ka-rep-note">
+            The same province on Second Sight's harmonized scale, month by month, with the months cloud hid:{' '}
+            <a href="#/record?aoi=prov-kalimantan-tengah">Central Kalimantan in the Indonesia record</a>.
+          </p>
           {missing.length ? (
             <ul className="ka-rep-missing">
               {missing.map((r) => <li key={r.year}><strong>{r.year}: no verified figure.</strong> {r.note ?? ''}</li>)}

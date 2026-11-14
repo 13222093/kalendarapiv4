@@ -98,7 +98,10 @@ export function BlindDistrictsCard() {
             land counts as seen, so the share of ground never seen can be higher. A seen zero is not proof that nothing
             burned either: small or smouldering peat fires can stay below the detection limit.
           </p>
-          <p className="ka-rep-note"><a href="#/season">Play the season</a> to see which zeros were blind on each day.</p>
+          <p className="ka-rep-note">
+            <a href="#/season">Play the season</a> to see which zeros were blind on each day, or open{' '}
+            <a href="#/record?aoi=prov-kalimantan-tengah">Central Kalimantan in the Indonesia record</a> for the months cloud hid, on one fire scale.
+          </p>
           <p className="ka-rep-note ka-bz-src">
             NASA MODIS MOD14A1 (Terra) and MYD14A1 (Aqua) C6.1 daily FireMask, read from Microsoft Planetary Computer, on a
             0.01 degree grid. District borders: geoBoundaries gbOpen IDN ADM2 (CC BY 3.0 IGO). The counting rule is in

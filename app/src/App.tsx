@@ -10,8 +10,8 @@ import { assistantOn } from './lib/assistant.ts';
 import { Tooltip } from './components/Tooltip.tsx';
 import { MOD_KEY } from './components/platform.ts';
 import {
-  IconBook, IconCheck, IconChevronRight, IconClose, IconCode, IconDashboard, IconDatabase, IconExternal, IconInfo, IconMap, IconMenu, IconMoon,
-  IconPlay, IconPoster, IconRanking, IconReport, IconSearch, IconSparkle, IconSun, IconWind,
+  IconBook, IconCheck, IconChevronRight, IconClose, IconCode, IconDashboard, IconDatabase, IconExternal, IconInfo, IconMenu, IconMoon,
+  IconChart, IconGlobe, IconPlay, IconPoster, IconRanking, IconReport, IconSearch, IconSparkle, IconSun, IconWind,
 } from './components/icons.tsx';
 import { PALETTE_EVENT, panelSearchBox, useCommand } from './lib/commands.ts';
 import { PROJECT_LINKS, PROJECT_ORDER, type ProjectLinkKey } from './lib/config.ts';
@@ -34,13 +34,19 @@ const DataPage = lazy(() => import('./pages/Data.tsx').then((m) => ({ default: m
 const Haze = lazy(() => import('./pages/Haze.tsx').then((m) => ({ default: m.Haze })));
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx').then((m) => ({ default: m.Dashboard })));
 const Rankings = lazy(() => import('./pages/Rankings.tsx').then((m) => ({ default: m.Rankings })));
+// Project 4 (modification): the Indonesia record (Second Sight's harmonized fire cell-days and the blind zeros).
+const RecordPage = lazy(() => import('./pages/Record.tsx').then((m) => ({ default: m.Record })));
 // The command palette brings the place list (and the data code), so it loads the first time it is opened.
 const CommandPalette = lazy(() => import('./components/CommandPalette.tsx').then((m) => ({ default: m.CommandPalette })));
 
-type Route = 'explorer' | 'dashboard' | 'rankings' | 'haze' | 'methods' | 'data';
+type Route = 'record' | 'explorer' | 'dashboard' | 'rankings' | 'haze' | 'methods' | 'data';
 
-const ROUTES: readonly Route[] = ['explorer', 'dashboard', 'rankings', 'haze', 'methods', 'data'];
-const HREF: Record<Route, string> = { explorer: '#/', dashboard: '#/dashboard', rankings: '#/rankings', haze: '#/haze', methods: '#/methods', data: '#/data' };
+// Project 4 (modification): the Indonesia record comes first; Fire Harmony's explorer is the global context.
+const ROUTES: readonly Route[] = ['record', 'explorer', 'dashboard', 'rankings', 'haze', 'methods', 'data'];
+// Fire Harmony's other global pages: in the page menu (shown at every width), not in the header's links, so the header
+// fits the two records' names at laptop widths
+const IN_MENU: ReadonlySet<Route> = new Set(['dashboard', 'rankings', 'haze']);
+const HREF: Record<Route, string> = { record: '#/record', explorer: '#/', dashboard: '#/dashboard', rankings: '#/rankings', haze: '#/haze', methods: '#/methods', data: '#/data' };
 
 // The text of the shell (English only).
 const T = {
@@ -48,7 +54,9 @@ const T = {
   appTitle: 'KalenderApi: a zero is not always a zero',
   skip: 'Skip to content',
   navLabel: 'Main',
-  nav: { explorer: 'Explorer', dashboard: 'Dashboard', rankings: 'Rankings', haze: 'Haze', methods: 'Methods', data: 'Data' } satisfies Record<Route, string>,
+  nav: { record: 'Indonesia record', explorer: 'Global context (Fire Harmony)', dashboard: 'Dashboard', rankings: 'Rankings', haze: 'Haze', methods: 'Methods', data: 'Data' } satisfies Record<Route, string>,
+  // the header link of the explorer: its name, then its source in a quieter tone (the whole reads as nav.explorer)
+  navSource: { explorer: ['Global context', '(Fire Harmony)'] } as Partial<Record<Route, [string, string]>>,
   dataTo: 'Data to',
   dataTitle: (first: string, last: string, now: string | null) =>
     `Full months from ${first} to ${last}.${now ? ` ${now} is still filling in.` : ''} Open the Data page for the sources and files.`,
@@ -58,7 +66,8 @@ const T = {
     close: 'Close the menu',
     title: 'Pages',
     notes: {
-      explorer: 'The map: fire in any place and month',
+      record: 'Fire on one scale, MODIS to VIIRS, and the months cloud hid',
+      explorer: 'Fire Harmony\'s worldwide map, on its VIIRS NOAA-20 scale',
       dashboard: 'Every statistic in one place',
       rankings: 'Every place, sorted and filtered',
       haze: 'Where the smoke in Malaysia comes from',
@@ -67,10 +76,10 @@ const T = {
     } satisfies Record<Route, string>,
     version: (v: string) => `Data version ${v}`,
   },
-  tagline: 'One consistent fire record from MODIS and VIIRS, from November 2000 to today.',
+  tagline: 'Indonesia\'s fire record on one scale, harmonized by Second Sight, with the zeros the satellites could not see. Fire Harmony\'s worldwide record gives the global context.',
   made: 'Made for the NASA Space Apps Challenge 2026.',
   creditTitle: 'Data',
-  credit: 'Fire hotspots from NASA FIRMS (MODIS Collection 6.1 and VIIRS 375 m). Rain from NASA GPM IMERG, weather and PM2.5 from NASA MERRA-2, fire weather from NASA GISS GFWED. Burned area from ESA Fire_cci, El Niño and Indian Ocean Dipole indices from NOAA. Base map from OpenFreeMap, © OpenStreetMap contributors.',
+  credit: 'Indonesia record: NASA FIRMS MODIS C6.1 and VIIRS 375 m archives, harmonized by Second Sight (MIT); cloud from the NASA MODIS daily FireMask (MOD14A1, MYD14A1). Global context: Fire Harmony. Fire hotspots from NASA FIRMS (MODIS Collection 6.1 and VIIRS 375 m). Rain from NASA GPM IMERG, weather and PM2.5 from NASA MERRA-2, fire weather from NASA GISS GFWED. Burned area from ESA Fire_cci, El Niño and Indian Ocean Dipole indices from NOAA. Base map from OpenFreeMap, © OpenStreetMap contributors.',
   linksTitle: 'Learn more',
   projectTitle: 'Project',
   newTab: 'opens in a new tab',
@@ -84,6 +93,7 @@ const T = {
     label: (mod: string) => `Search places, pages and actions (${mod} K)`,
   },
   links: [
+    { href: HREF.record, label: 'Indonesia record', note: 'Fire on one scale, and the months cloud hid' },
     { href: HREF.methods, label: 'Methods', note: 'How the record is made and tested' },
     { href: HREF.data, label: 'Data', note: 'Sources, files and how to cite' },
     { href: HREF.dashboard, label: 'Dashboard', note: 'Every statistic in one place' },
@@ -94,7 +104,7 @@ const T = {
   errorText: 'Something went wrong while loading it. Check your internet connection, then reload. The other pages still work.',
   details: 'Technical details',
   reload: 'Reload the page',
-  toExplorer: 'Open the Explorer',
+  toExplorer: 'Open the Indonesia record',
 } as const;
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -106,10 +116,11 @@ function addMonths(ym: number, n: number): number {
   return Math.floor(t / 12) * 100 + (t % 12) + 1;
 }
 
-/** '#/methods' -> 'methods'; anything unknown (or empty) is the explorer. */
+/** '#/methods' -> 'methods'; anything unknown (or empty) is the explorer. (A first visit with no hash at all is sent to
+ *  '#/record' by index.html.) */
 function routeOf(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split(/[/?]/)[0] ?? '';
-  return path === 'methods' || path === 'data' || path === 'haze' || path === 'dashboard' || path === 'rankings' ? path : 'explorer';
+  return path === 'record' || path === 'methods' || path === 'data' || path === 'haze' || path === 'dashboard' || path === 'rankings' ? path : 'explorer';
 }
 
 function subscribeHash(onChange: () => void): () => void {
@@ -125,6 +136,12 @@ function readHash(): string {
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
+/** Project 4: the season year of '#/season?y=2015' (or of the day in '#/season?d=2023-09-01'); 2019 by default. */
+function seasonYearOf(hash: string): number {
+  const q = new URLSearchParams(hash.split('?')[1] ?? '');
+  const y = Number(q.get('y') ?? q.get('d')?.slice(0, 4));
+  return Number.isInteger(y) && y >= 2012 && y <= 2030 ? y : 2019;
+}
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
@@ -136,9 +153,11 @@ export function App() {
     );
   }
   if (hash === '#/season' || hash.startsWith('#/season?')) {
+    // project 4: one season per year (#/season?y=2015); a new year mounts a new page with its own files
+    const year = seasonYearOf(hash);
     return (
       <Suspense fallback={<div className="ka-story" />}>
-        <Season />
+        <Season key={year} year={year} />
       </Suspense>
     );
   }
@@ -186,6 +205,13 @@ function Shell() {
           ) : null}
           {route !== 'explorer' ? (
             <div className="fh-route" key={route}>
+              {route === 'record' ? (
+                <PageBoundary key="record">
+                  <Suspense fallback={<PageLoading />}>
+                    <RecordPage />
+                  </Suspense>
+                </PageBoundary>
+              ) : null}
               {route === 'dashboard' ? (
                 <PageBoundary key="dashboard">
                   <Suspense fallback={<PageLoading />}>
@@ -385,7 +411,7 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
         {/* On phones and tablets the open page is named under the brand (the page's own title says it to screen
             readers, so this line is hidden from them; it is not part of the link, which opens the Explorer). */}
         <div className="fh-brand-wrap">
-          <a className="fh-brand" href={HREF.explorer}>
+          <a className="fh-brand" href={HREF.record}>
             <BrandMark />
             <span className="fh-brand-name">{T.appName}</span>
           </a>
@@ -394,10 +420,15 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
         <nav className="fh-nav" aria-label={T.navLabel}>
           <ul>
             {ROUTES.map((r) => (
-              <li key={r}>
-                <a href={HREF[r]} aria-current={r === route ? 'page' : undefined}>
+              <li key={r} className={IN_MENU.has(r) ? 'ka-nav-more' : undefined}>
+                <a href={HREF[r]} aria-current={r === route ? 'page' : undefined} aria-label={T.navSource[r] ? T.nav[r] : undefined}>
                   <span className="fh-nav-icon">{NAV_ICON[r]}</span>
-                  <span className="fh-nav-label" data-label={T.nav[r]}>{T.nav[r]}</span>
+                  {T.navSource[r] ? (
+                    <span className="ka-nav-label">
+                      <span className="fh-nav-label" data-label={T.navSource[r]![0]}>{T.navSource[r]![0]}</span>
+                      <span className="ka-nav-src" aria-hidden="true">{T.navSource[r]![1]}</span>
+                    </span>
+                  ) : <span className="fh-nav-label" data-label={T.nav[r]}>{T.nav[r]}</span>}
                 </a>
               </li>
             ))}
@@ -434,11 +465,11 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
 }
 
 const NAV_ICON: Record<Route, ReactNode> = {
-  explorer: <IconMap size={16} />, dashboard: <IconDashboard size={16} />, rankings: <IconRanking size={16} />, haze: <IconWind size={16} />,
+  record: <IconChart size={16} />, explorer: <IconGlobe size={16} />, dashboard: <IconDashboard size={16} />, rankings: <IconRanking size={16} />, haze: <IconWind size={16} />,
   methods: <IconBook size={16} />, data: <IconDatabase size={16} />,
 };
 const MENU_ICON: Record<Route, ReactNode> = {
-  explorer: <IconMap size={20} />, dashboard: <IconDashboard size={20} />, rankings: <IconRanking size={20} />, haze: <IconWind size={20} />,
+  record: <IconChart size={20} />, explorer: <IconGlobe size={20} />, dashboard: <IconDashboard size={20} />, rankings: <IconRanking size={20} />, haze: <IconWind size={20} />,
   methods: <IconBook size={20} />, data: <IconDatabase size={20} />,
 };
 
@@ -718,7 +749,7 @@ function Footer({ shell }: { shell: ShellData }) {
     <footer className="fh-footer">
       <div className="fh-footer-inner">
         <div className="fh-footer-brand">
-          <a className="fh-brand" href={HREF.explorer}>
+          <a className="fh-brand" href={HREF.record}>
             <BrandMark />
             <span className="fh-brand-name">{T.appName}</span>
           </a>
@@ -822,7 +853,7 @@ function PageError({ message }: { message: string }) {
           </details>
           <div className="fh-page-error-actions">
             <button type="button" className="fh-btn" onClick={() => window.location.reload()}>{T.reload}</button>
-            <a className="fh-btn fh-btn-quiet" href={HREF.explorer}>{T.toExplorer}</a>
+            <a className="fh-btn fh-btn-quiet" href={HREF.record}>{T.toExplorer}</a>
           </div>
         </div>
       </div>
