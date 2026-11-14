@@ -8,9 +8,9 @@ import { Badge, Card, PlotFigure, cssVar } from '../ui';
 import { dateOnly, fmtInt, fmt1, testStatus, trust, type TestStatus, type Validation } from '../../lib/record';
 
 const HELD = { ape_2015: 'Held-out 2015', ape_2019: 'Held-out 2019', loyo_mdape: 'Every year (median)' } as const;
-const ST_WORD: Record<TestStatus, string> = { pass: 'Pass', fail: 'Fail', not_run: 'Not run', info: 'Descriptive' };
-const ST_TONE = { pass: 'good', fail: 'critical', not_run: 'neutral', info: 'neutral' } as const;
-const ORDER: Record<TestStatus, number> = { fail: 0, pass: 1, not_run: 2, info: 3 };
+const ST_WORD: Record<TestStatus, string> = { pass: 'Pass', fail: 'Fail', not_run: 'Not run', na: 'Not applicable', info: 'Descriptive' };
+const ST_TONE = { pass: 'good', fail: 'critical', not_run: 'neutral', na: 'neutral', info: 'neutral' } as const;
+const ORDER: Record<TestStatus, number> = { fail: 0, pass: 1, not_run: 2, na: 3, info: 4 };
 
 function num(v: number | null): string {
   if (v == null || !Number.isFinite(v)) return '–';
@@ -25,7 +25,7 @@ export function HowSure({ v }: { v: Validation }) {
   const run = dateOnly(v.meta?.run_utc);
   const source = `Source: Second Sight's validation run (validation_results.json${run ? `, run ${run}` : ''}${v.meta?.n_boot ? `, ${fmtInt(v.meta.n_boot)} bootstrap draws` : ''}).`;
   const counts = useMemo(() => {
-    const c: Record<TestStatus, number> = { pass: 0, fail: 0, not_run: 0, info: 0 };
+    const c: Record<TestStatus, number> = { pass: 0, fail: 0, not_run: 0, na: 0, info: 0 };
     for (const r of v.results) c[testStatus(r)] += 1;
     return c;
   }, [v]);
@@ -87,6 +87,7 @@ export function HowSure({ v }: { v: Validation }) {
           <Badge tone="good">{counts.pass} passed</Badge>
           <Badge tone="critical">{counts.fail} failed</Badge>
           <Badge>{counts.not_run} not run</Badge>
+          {counts.na ? <Badge>{counts.na} not applicable</Badge> : null}
           {counts.info ? <span className="ka-rec-note">{counts.info} descriptive results without a pass rule are not listed.</span> : null}
         </p>
         {listed.length ? (
@@ -99,7 +100,7 @@ export function HowSure({ v }: { v: Validation }) {
                 {listed.map(({ r, s, i }) => (
                   <tr key={`${r.test_id}-${i}`} data-status={s}>
                     <th scope="row">{r.test_id}</th>
-                    <td>{r.metric}{(s === 'fail' || s === 'not_run') && r.notes ? <span className="ka-rec-test-why">{r.notes}</span> : null}</td>
+                    <td>{r.metric}{(s === 'fail' || s === 'not_run' || s === 'na') && r.notes ? <span className="ka-rec-test-why">{r.notes}</span> : null}</td>
                     <td className="ui-num">{num(r.value)}</td>
                     <td className="ka-rec-rule">{r.rule ?? '–'}</td>
                     <td><Badge tone={ST_TONE[s]}>{ST_WORD[s]}</Badge></td>

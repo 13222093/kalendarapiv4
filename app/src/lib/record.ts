@@ -215,11 +215,31 @@ export const SEAM_YEAR = 2012;
 
 export const isProvisional = (r: MonthRow) => !!r.flag_nrt || !!r.flag_partial;
 
+/** A month converted from VIIRS that carries no 90% interval (H_lo = H_hi = H). In this bundle that is every province
+ *  month from 2022 on: Second Sight's export falls back to one pooled national ratio there (docs/DATA.md 8.1). Aqua-era
+ *  months also have H_lo = H_hi, but they are Aqua's own count, not a conversion, so they are not flagged. */
+export const noInterval = (r: MonthRow) => r.H != null && isViirs(r.sensor_used) && r.H_lo != null && r.H_lo === r.H_hi;
+
+/** The single VIIRS-to-MODIS ratio behind those months (median of H / V_raw over the S-NPP months without an
+ *  interval), or null when there are none. */
+export function pooledRatio(rows: MonthRow[]): { ratio: number; from: number } | null {
+  const xs = rows.filter((r) => noInterval(r) && r.sensor_used === 'SNPP' && (r.V_raw ?? 0) > 0);
+  if (!xs.length) return null;
+  const v = xs.map((r) => r.H! / r.V_raw!).sort((a, b) => a - b);
+  return { ratio: v[Math.floor(v.length / 2)]!, from: Math.min(...xs.map((r) => r.year)) };
+}
+
+/** The blind share of a month whose observability was computed: of its no-fire cell-days, the share Terra and Aqua
+ *  saw only under cloud (f_cloud = U / (T + U), TRI-04). */
+export const blindShare = (r: MonthRow) => (r.f_cloud == null ? null : r.f_cloud);
+export const pct1 = (x: number) => `${(Math.round(x * 1000) / 10).toFixed(1)}%`;
+
 export interface YearPoint {
   year: number;
   naive: number; summed: number; H: number; lo: number; hi: number;   // indexed: own 2003-2011 mean = 100
   rawNaive: number; rawSummed: number; rawH: number; rawLo: number; rawHi: number;   // fire cell-days
   provisional: boolean;
+  noBand: boolean;   // some month of the year was converted without an interval: no 90% range for the year
   months: number;
 }
 export interface BeforeAfter {
@@ -240,7 +260,8 @@ export function beforeAfter(rows: MonthRow[]): BeforeAfter | null {
   const years = new Map<number, Omit<YearPoint, 'naive' | 'summed' | 'H' | 'lo' | 'hi'>>();
   for (const r of rows) {
     if (r.year < 2003 || r.year > 2026) continue;
-    const y = years.get(r.year) ?? { year: r.year, rawNaive: 0, rawSummed: 0, rawH: 0, rawLo: 0, rawHi: 0, provisional: false, months: 0 };
+    const y = years.get(r.year) ?? { year: r.year, rawNaive: 0, rawSummed: 0, rawH: 0, rawLo: 0, rawHi: 0, provisional: false, noBand: false, months: 0 };
+    y.noBand ||= noInterval(r);
     y.rawNaive += rawSpliced(r) ?? 0;
     y.rawSummed += (modisRaw(r) ?? 0) + (viirsRaw(r) ?? 0);
     y.rawH += r.H ?? 0;
@@ -354,8 +375,9 @@ export function peakMonth(rows: MonthRow[]): string | null {
 
 // ------------------------------------------------------------------------------------------------ validation
 
-export type TestStatus = 'pass' | 'fail' | 'not_run' | 'info';
+export type TestStatus = 'pass' | 'fail' | 'not_run' | 'na' | 'info';
 export function testStatus(r: TestRow): TestStatus {
+  if (r.status === 'not_applicable') return 'na';
   if (r.status && r.status !== 'run') return 'not_run';
   if (r.passed === true) return 'pass';
   if (r.passed === false) return 'fail';

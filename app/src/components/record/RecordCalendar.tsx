@@ -6,20 +6,21 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { FigureTableView, Segmented } from '../ui';
 import {
-  MONTHS, MONTHS_SHORT, SEAM_YEAR, cellValue, emberStep, fmtCompact, fmtInt, fmt1, isProvisional, monthName, obsState,
-  ym, type MonthRow, type ObsState, type Series,
+  MONTHS, MONTHS_SHORT, SEAM_YEAR, blindShare, cellValue, emberStep, fmtCompact, fmtInt, fmt1, isProvisional, monthName,
+  noInterval, obsState, pct1, ym, type MonthRow, type ObsState, type Series,
 } from '../../lib/record';
 
 const OBS_WORDS: Record<ObsState, string> = {
   good: 'seen clearly', partial: 'partly seen (cloud)', unobserved: 'not seen (cloud)', 'not-computed': 'observability not computed',
 };
 
-export function RecordCalendar({ rows, area, series, onSeries, selected, onSelect, computed, obsElsewhere, ratio, unit, source }: {
+export function RecordCalendar({ rows, area, series, onSeries, selected, onSelect, computed, obsElsewhere, ratio, unit, source, seasonHref }: {
   rows: MonthRow[]; area: string; series: Series; onSeries: (s: Series) => void;
   selected: string | null; onSelect: (key: string) => void;
   computed: Set<string> | null;
   obsElsewhere: string | null;   // the area whose months have observability, when it is not this one
   ratio: number | null; unit: string; source: string;
+  seasonHref: (key: string) => string | null;   // Play the season at the first day of a month, when that season is built
 }) {
   const grid = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<string | null>(null);
@@ -34,6 +35,10 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
   const keys = useMemo(() => rows.map((r) => ym(r.year, r.month)), [rows]);
   const obsCount = useMemo(() => rows.filter((r) => obsState(r, computed) !== 'not-computed').length, [rows, computed]);
   const anyObs = obsCount > 0;
+  const obsMonths = useMemo(() => rows.filter((r) => obsState(r, computed) !== 'not-computed').map((r) => {
+    const key = ym(r.year, r.month);
+    return { key, share: blindShare(r), href: seasonHref(key) };
+  }), [rows, computed, seasonHref]);
   const focusKey = selected && byKey.has(selected) ? selected : keys[keys.length - 1] ?? null;
 
   const describe = (key: string): string => {
@@ -47,8 +52,11 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
       if (series === 'harm' && r.H_lo != null && r.H_hi != null && Math.round(r.H_lo) !== Math.round(r.H_hi)) {
         parts.push(`likely ${fmtInt(r.H_lo)} to ${fmtInt(r.H_hi)}`);
       }
+      if (series === 'harm' && noInterval(r)) parts.push('no 90% range (one national ratio)');
     }
     parts.push(OBS_WORDS[obsState(r, computed)]);
+    const b = obsState(r, computed) !== 'not-computed' ? blindShare(r) : null;
+    if (b != null) parts.push(`${pct1(b)} of the no-fire cell-days blind (cloud)`);
     if (isProvisional(r)) parts.push('provisional');
     return parts.join(', ');
   };
@@ -134,6 +142,7 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
                 if (!r) return <span key={key} role="gridcell" className="ka-rec-cell is-out" aria-label={`${monthName(key)}: outside the record`} />;
                 const v = cellValue(r, series);
                 const obs = obsState(r, computed);
+                const blind = obs !== 'not-computed' ? blindShare(r) : null;
                 return (
                   <button key={key} type="button" role="gridcell" data-key={key}
                     className="ka-rec-cell" data-step={v == null ? undefined : emberStep(v, max)} data-null={v == null ? '' : undefined}
@@ -141,6 +150,12 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
                     aria-selected={key === selected} tabIndex={key === focusKey ? 0 : -1} aria-label={describe(key)}
                     onClick={() => onSelect(key)} onPointerEnter={() => setHover(key)}>
                     <span className="ka-rec-cell-n">{v == null ? '–' : fmtCompact(v)}</span>
+                    {/* the month's blind share: a hatched strip along the foot of the cell, as long as the share */}
+                    {blind != null ? (
+                      <span className="ka-rec-cell-track" aria-hidden="true">
+                        <span className="ka-rec-cell-blind" style={{ width: `${Math.max(4, blind * 100)}%` }} />
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -158,6 +173,7 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
         <li><i className="ka-rec-lg" data-obs="partial" aria-hidden="true" />Partly seen: cloud hid part of the no-fire land</li>
         <li><i className="ka-rec-lg" data-obs="unobserved" aria-hidden="true" />Not seen: a low count here is not a measurement</li>
         <li><i className="ka-rec-lg" data-obs="good" aria-hidden="true" />Seen clearly</li>
+        {anyObs ? <li><i className="ka-rec-lg ka-rec-lg-blind" aria-hidden="true"><i /></i>Strip: the month's blind share (no-fire cell-days seen only under cloud)</li> : null}
         <li><i className="ka-rec-lg" data-obs="not-computed" aria-hidden="true" />Observability not computed</li>
         <li><i className="ka-rec-lg" data-prov="" aria-hidden="true" />Provisional (near real time){years.some((y) => total(y).prov) ? '; * total so far' : ''}</li>
       </ul>
@@ -167,6 +183,22 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
           : `Observability is not computed for ${area}: no month here is marked seen or not seen, so a low count can be a cloudy month.${obsElsewhere ? ` Months with cloud measured from the NASA MODIS FireMask are in ${obsElsewhere}.` : ''}`}
         {ratio != null ? ` Raw from 2012 is VIIRS, which counted ${fmt1(ratio)} fire cell-days for every one MODIS Aqua counted in the same months.` : ''}
       </p>
+      {obsMonths.length ? (
+        <div className="ka-rec-blindlist">
+          <p className="ka-rec-note">
+            Even a month seen clearly has blind days. The blind share of each month with observability, and its days in
+            Play the season (each day's NASA photo, hotspots and hatched blind zeros):
+          </p>
+          <ul>
+            {obsMonths.map(({ key, share, href }) => (
+              <li key={key}>
+                {href ? <a href={href}>{monthName(key)}</a> : <span>{monthName(key)}</span>}
+                <span className="ka-rec-num">{share == null ? 'n/a' : pct1(share)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="ui-figure-foot">
         <p className="ui-figure-source">{source}</p>
         <FigureTableView table={table} />

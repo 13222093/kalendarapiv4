@@ -189,3 +189,29 @@ a.ka-rec-season:focus-visible { outline: 2px solid var(--focus); outline-offset:
   .ui-page-header .ka-head-story { min-width: 0; padding: 0 14px 0 12px; }
   .ui-page-header .ka-head-story > span { display: inline; }
 }
+
+/* a computed month's blind share: a hatched strip along the foot of the cell, as long as the share (min 4%) */
+.ka-rec-cell-blind {
+  position: absolute; left: 0; bottom: 0; height: 5px; border-radius: 0 0 0 3px; pointer-events: none;
+  background: repeating-linear-gradient(135deg, var(--text) 0 1.4px, var(--surface) 1.4px 3px);
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.ka-rec-lg-blind { --c: var(--ember-600); }
+.ka-rec-lg-blind > i { position: absolute; left: 0; bottom: 0; width: 45%; height: 5px;
+  background: repeating-linear-gradient(135deg, var(--text) 0 1.4px, var(--surface) 1.4px 3px); }
+/* the months with observability: their blind share and a way into their days */
+.ka-rec-blindlist { display: grid; gap: var(--sp-2); }
+.ka-rec-blindlist ul { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.ka-rec-blindlist li {
+  display: inline-flex; align-items: baseline; gap: var(--sp-2); padding: 4px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-pill); background: var(--surface-2); font-size: var(--fs-13);
+}
+.ka-rec-blindlist a { color: var(--accent); }
+:root[data-theme="light"] .ka-rec-blindlist a { color: var(--accent-strong); }
+@media (pointer: coarse) { .ka-rec-blindlist li { min-height: var(--ctl-touch); align-items: center; } }
+/* the strip's track: the whole width is 100% of the month's no-fire cell-days */
+.ka-rec-cell-track { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; border-radius: 0 0 3px 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 72%, transparent); pointer-events: none; }
+.ka-rec-cell-track > .ka-rec-cell-blind { border-radius: 0; box-shadow: none; }
+.ka-rec-note a, .ka-rec-month a { color: var(--accent); }
+:root[data-theme="light"] :is(.ka-rec-note, .ka-rec-month) a { color: var(--accent-strong); }

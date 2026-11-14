@@ -4,7 +4,7 @@
 // Told as INTEGRATION.md's thesis: the jump (2012, MODIS to VIIRS) -> the fix (one scale, 90% range) -> the zero.
 // Link: #/record?aoi=<aoi_id>&m=<YYYY-MM>&s=raw|harm. Every number is computed from the bundle (lib/record.ts); until
 // public/ss-data/index.json exists every section says "not built yet".
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Callout, Card, Page, PageHeader, Section, Skeleton } from '../components/ui';
 import { IconPlay } from '../components/icons';
 import { BeforeAfterFigure } from '../components/record/BeforeAfter';
@@ -12,8 +12,8 @@ import { RecordCalendar } from '../components/record/RecordCalendar';
 import { ThisMonth } from '../components/record/ThisMonth';
 import { HowSure } from '../components/record/HowSure';
 import {
-  KALTENG, MONTHS_SHORT, SEASON_YEARS, aoiGroups, aoiName, beforeAfter, dateOnly, loadFinding, loadIndex, loadMonthly,
-  loadValidation, obsState, peakMonth, seasonBuilt, sensorRatio, settle, shortVersion, ym,
+  KALTENG, MONTHS_SHORT, SEASON_YEARS, aoiGroups, aoiName, beforeAfter, blindShare, dateOnly, loadFinding, loadIndex, loadMonthly,
+  loadValidation, obsState, pct1, peakMonth, pooledRatio, seasonBuilt, sensorRatio, settle, shortVersion, ym,
   type AoiEntry, type Finding, type Load, type MonthRow, type RecordIndex, type Series, type Validation,
 } from '../lib/record';
 import '../styles/record.css';
@@ -121,6 +121,13 @@ export function Record() {
   const ba = useMemo(() => (rows ? beforeAfter(rows) : null), [rows]);
   const calFrom = idx?.calibration_window?.[0] ?? 2012, calTo = idx?.calibration_window?.[1] ?? 2021;
   const ratio = useMemo(() => (rows ? sensorRatio(rows, [calFrom, calTo]) : null), [rows, calFrom, calTo]);
+  const pooled = useMemo(() => (rows ? pooledRatio(rows) : null), [rows]);
+  // Play the season at the first day of a month, for Central Kalimantan's built season years (Aug to Oct)
+  const seasonHref = useCallback((key: string) => {
+    const y = Number(key.slice(0, 4)), m = Number(key.slice(5, 7));
+    if (aoi?.aoi_id !== KALTENG || m < 8 || m > 10 || !seasons?.includes(y)) return null;
+    return `#/season?${y === 2019 ? '' : `y=${y}&`}d=${key}-01`;
+  }, [aoi, seasons]);
   const computed = useMemo(() => {
     if (!idx || !aoi || !idx.obs_months) return null;
     return new Set(idx.obs_months[aoi.aoi_id] ?? []);
@@ -187,7 +194,7 @@ export function Record() {
 
       <Section id="jump" title="Before and after" subtitle="The jump in 2012, and the fix: the same record stitched as recorded, added together, and harmonized">
         {rows && ba ? (
-          <BeforeAfterFigure area={area} ba={ba} source={source} ratio={ratio}
+          <BeforeAfterFigure area={area} ba={ba} source={source} ratio={ratio} pooled={pooled}
             finding={aoi?.level === 'national' && finding.state === 'ok' ? finding.data : null} />
         ) : rows ? <p className="ka-rec-note">Too few years in {area} to compare.</p> : (
           <ChartFrame title={`${area}: the record before and after harmonization`} unit="Fire cell-days a year, each line indexed to its own 2003 to 2011 mean (= 100). Band: the harmonized line's 90% range." source={source}>
@@ -204,7 +211,7 @@ export function Record() {
         {rows ? (
           <RecordCalendar rows={rows} area={area} series={series} onSeries={(s) => set({ s })}
             selected={selected} onSelect={(m) => set({ m })} computed={computed} obsElsewhere={obsElsewhere}
-            ratio={ratio?.ratio ?? null} unit={unit} source={calSource} />
+            ratio={ratio?.ratio ?? null} unit={unit} source={calSource} seasonHref={seasonHref} />
         ) : (
           <ChartFrame title={`${area}: every month`} unit={unit} source={calSource}>
             <State load={rowsLoad} what="the calendar" height={420} retry={retryRows} />
@@ -229,8 +236,8 @@ export function Record() {
                 const r = rows.find((x) => x.year === y && x.month === m);
                 const s = r ? obsState(r, computed) : null;
                 if (!r || !s || s === 'not-computed') return [];
-                const cloud = r.f_cloud != null ? `, cloud ${Math.round(r.f_cloud * 100)}%` : '';
-                return [`${MONTHS_SHORT[m - 1]} ${s === 'good' ? 'seen clearly' : s === 'partial' ? 'partly seen' : 'not seen'}${cloud}`];
+                const b = blindShare(r);
+                return [`${MONTHS_SHORT[m - 1]} ${s === 'good' ? 'seen clearly' : s === 'partial' ? 'partly seen' : 'not seen'}${b != null ? `, ${pct1(b)} blind` : ''}`];
               }) : [];
               const body = (
                 <>
@@ -282,13 +289,12 @@ function MonthVsDay({ rows, computed }: { rows: MonthRow[]; computed: Set<string
   if (!obs.length) return null;
   const os = obs.map((r) => r.O!), cs = obs.map((r) => r.f_cloud!);
   const allGood = obs.every((r) => r.obs_class === 'good');
-  const pct = (x: number) => `${Math.round(x * 100)}%`;
   return (
     <p className="ka-rec-note">
       {allGood ? 'Month by month, Terra and Aqua saw these seasons clearly' : 'Month by month, these seasons range from seen clearly to not seen'}
-      {' '}(O from {Math.min(...os).toFixed(2)} to {Math.max(...os).toFixed(2)}; cloud over {pct(Math.min(...cs))} to {pct(Math.max(...cs))} of
-      the no-fire land). A month's average hides its worst days: on a single cloudy day a large share of the zeros can be
-      blind, which is why the season plays one day at a time.
+      {' '}(O from {Math.min(...os).toFixed(2)} to {Math.max(...os).toFixed(2)}), yet {pct1(Math.min(...cs))} to {pct1(Math.max(...cs))} of
+      each month's no-fire cell-days were blind zeros, seen only under cloud. A month's average also hides its worst days:
+      on a single cloudy day a large share of the zeros can be blind, which is why the season plays one day at a time.
     </p>
   );
 }

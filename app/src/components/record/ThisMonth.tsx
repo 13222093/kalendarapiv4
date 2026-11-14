@@ -4,10 +4,8 @@
 // at the scale of a month). For Central Kalimantan, Aug to Oct of a built season year links to Play the season.
 import { Card } from '../ui';
 import {
-  KALTENG, MONTHS, fmtInt, fmt1, isProvisional, monthVerdict, obsState, rawSpliced, ym, type MonthRow,
+  KALTENG, MONTHS, fmtInt, fmt1, isProvisional, monthVerdict, noInterval, obsState, pct1, rawSpliced, ym, type MonthRow,
 } from '../../lib/record';
-
-const pct = (x: number) => `${fmtInt(x * 100)}%`;
 
 export function ThisMonth({ rows, selected, aoiId, computed, seasons }: {
   rows: MonthRow[]; selected: string; aoiId: string; computed: Set<string> | null;
@@ -34,7 +32,8 @@ export function ThisMonth({ rows, selected, aoiId, computed, seasons }: {
         <p className="ka-rec-month">
           <strong>{name}</strong>: <strong className="ka-rec-num">{fmtInt(v.H)}</strong> fire cell-days on the harmonized scale
           {v.lo != null && v.hi != null && Math.round(v.lo) !== Math.round(v.hi)
-            ? <> (likely {fmtInt(v.lo)} to {fmtInt(v.hi)}, 9 in 10)</> : null}
+            ? <> (likely {fmtInt(v.lo)} to {fmtInt(v.hi)}, 9 in 10)</>
+            : noInterval(row) ? <> (no 90% range: converted with one national ratio)</> : null}
           {v.ratio != null ? <>, <strong className="ka-rec-num">{fmt1(v.ratio)}×</strong> the median {MONTHS[m - 1]}</> : null}
           , rank <strong className="ka-rec-num">{fmtInt(v.rank)}</strong> of {fmtInt(v.of)} years.
           {v.raw != null ? <> Raw as recorded: {fmtInt(v.raw)}.</> : null}
@@ -47,10 +46,9 @@ export function ThisMonth({ rows, selected, aoiId, computed, seasons }: {
           <p className="ka-rec-note" data-obs={obs}>
             <span className="ka-rec-obs-word">{obs === 'good' ? 'Seen clearly' : obs === 'partial' ? 'Partly seen' : 'Not seen'}</span>
             {row.O != null ? <> (O = {row.O.toFixed(2)})</> : null}.
-            {row.f_cloud != null ? <> Cloud hid the ground on {pct(row.f_cloud)} of the land with no fire detected</> : null}
-            {row.f_missing != null ? <>{row.f_cloud != null ? ', and' : ''} {pct(row.f_missing)} of land cell-days had no usable look</> : null}
+            {row.f_cloud != null ? <>{obs === 'good' ? ' Still, ' : ' '}<strong className="ka-rec-num">{pct1(row.f_cloud)}</strong> of the no-fire cell-days were blind zeros: Terra and Aqua saw only cloud there</> : null}
+            {row.f_missing != null ? <>{row.f_cloud != null ? ', and' : ''} {pct1(row.f_missing)} of land cell-days had no usable look</> : null}
             {row.f_cloud != null || row.f_missing != null ? ' (NASA MODIS Terra and Aqua daily FireMask).' : ''}
-            {obs !== 'good' ? ' A zero under that cloud is a blind zero, not a measurement.' : ''}
           </p>
         )
       ) : null}

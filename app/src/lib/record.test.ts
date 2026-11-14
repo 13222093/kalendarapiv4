@@ -2,7 +2,9 @@
 // project 4 data contract (obs_class null or not listed in obs_months = "not computed", never "unobserved").
 // The rows below are a made-up test fixture for the arithmetic only; they are never shown by the app.
 import { describe, expect, it } from 'vitest';
-import { beforeAfter, emberStep, monthVerdict, obsState, rawSpliced, sensorRatio, type MonthRow } from './record';
+import {
+  beforeAfter, emberStep, monthVerdict, noInterval, obsState, pooledRatio, rawSpliced, sensorRatio, testStatus, type MonthRow,
+} from './record';
 
 function row(year: number, month: number, p: Partial<MonthRow>): MonthRow {
   return {
@@ -83,6 +85,32 @@ describe('monthVerdict', () => {
     expect(w.medianFrom).toBe('others');   // no baseline_median: the median of the other Septembers (10, 90) = 50
     expect(w.ratio).toBeCloseTo(1.2);
     expect(monthVerdict(rows, '2020-09')).toBeNull();
+  });
+});
+
+describe('noInterval and pooledRatio', () => {
+  it('flags VIIRS months without an interval, not Aqua months (their own count)', () => {
+    const aqua = row(2019, 9, { H: 100, H_lo: 100, H_hi: 100, A_raw: 100, sensor_used: 'Aqua' });
+    const snppBand = row(2023, 9, { H: 50, H_lo: 40, H_hi: 60, V_raw: 250, sensor_used: 'SNPP' });
+    const snppPooled = row(2023, 10, { H: 50, H_lo: 50, H_hi: 50, V_raw: 250, sensor_used: 'SNPP' });
+    expect(noInterval(aqua)).toBe(false);
+    expect(noInterval(snppBand)).toBe(false);
+    expect(noInterval(snppPooled)).toBe(true);
+    expect(pooledRatio([aqua, snppBand, snppPooled])).toEqual({ ratio: 0.2, from: 2023 });
+    expect(pooledRatio([aqua, snppBand])).toBeNull();
+    const ba = beforeAfter([row(2003, 9, { A_raw: 1, H: 1 }), aqua, snppPooled])!;
+    expect(ba.points.find((p) => p.year === 2023)!.noBand).toBe(true);
+    expect(ba.points.find((p) => p.year === 2019)!.noBand).toBe(false);
+  });
+});
+
+describe('testStatus', () => {
+  it('keeps "not applicable" apart from "not run"', () => {
+    const t = { test_id: 'V3', metric: 'm', value: null };
+    expect(testStatus({ ...t, passed: null, status: 'not_applicable' })).toBe('na');
+    expect(testStatus({ ...t, passed: null, status: 'not_run' })).toBe('not_run');
+    expect(testStatus({ ...t, passed: false, status: 'run' })).toBe('fail');
+    expect(testStatus({ ...t, passed: null, status: 'run' })).toBe('info');
   });
 });
 
