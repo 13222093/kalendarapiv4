@@ -9,4 +9,8 @@ made to be compared with KalenderApi v1.0, KalenderApi v1.1 and Second Sight.
 - **App:** `app/` (from KalenderApi v1.0, a modified version of Fire Harmony, Apache-2.0; see `app/NOTICE.md`)
 - **Science core:** `vendor/second-sight/` (Second Sight, MIT, snapshot of commit 9fff725; see its `LICENSE`)
 
-Status: scaffold. Nothing here has been run with real data yet.
+- **AI use:** `AI_USE.md`
+
+Status (14 November 2026): runs with real data. Second Sight bundle, validation and finding in `app/public/ss-data/`;
+Central Kalimantan 2015, 2019 and 2023 seasons in `app/public/ka-data/`. Run: `cd app && npm ci && npm run dev`, then
+open `#/record`.

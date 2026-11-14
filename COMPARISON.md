@@ -23,15 +23,15 @@ Keduanya adalah dua kebohongan dalam rekaman yang sama, pada satuan yang sama (s
 
 ## 2. Skor per kriteria (perkiraan)
 
-| Kriteria | A. v1.0 | B. v1.1 | C. Second Sight | Catatan |
-|---|---|---|---|---|
-| Impact | 3,5 | 4 | 4 | C menyasar BPBD, KHG/BRGM, Manggala Agni dengan bahasa Indonesia; B punya angka "api yang terlewat" kalau lolos |
-| Creativity | 3,5 | 4 | 3 | Harmonisasi (C) adalah pilar yang paling ramai; nol buta harian (A, B) belum dibuat pesaing mana pun |
-| Validity | 2,5 | 3 sekarang, 4,5 bila terdaftar dan diuji | 4,5 | C: 94 cek ditulis sebelum run, kegagalan dilaporkan. A: harmonisasinya milik Fire Harmony |
-| Relevance | 4 | 4,5 | 5 | Statement challenge meminta alat harmonisasi; C mengerjakannya sendiri |
-| Presentation | 4,5 | 4 | 2 | C: app masih "Data contoh" sintetis dan kartu validasi kosong |
-| **Total sekarang** | **18** | **19,5** | **18,5** | |
-| **Potensi sampai Minggu** | 19 | 22 | 20 (bila data asli masuk app) | |
+| Kriteria | A. v1.0 | B. v1.1 | C. Second Sight | D. Proyek 4 | Catatan |
+|---|---|---|---|---|---|
+| Impact | 3,5 | 4 | 4 | 4,5 | C menyasar BPBD, KHG/BRGM, Manggala Agni dengan bahasa Indonesia; B punya angka "api yang terlewat" kalau lolos; D: rekaman Indonesia 40 wilayah + nol buta per kabupaten |
+| Creativity | 3,5 | 4 | 3 | 4 | Harmonisasi (C) adalah pilar yang paling ramai; nol buta harian (A, B) belum dibuat pesaing mana pun; D: satu cerita "jump, fix, zero" |
+| Validity | 2,5 | 3 sekarang, 4,5 bila terdaftar dan diuji | 4,5 | 4,5 | C: 94 cek ditulis sebelum run, kegagalan dilaporkan. A: harmonisasinya milik Fire Harmony. D: validasi C dijalankan ulang di mesin kita dan hasilnya sama |
+| Relevance | 4 | 4,5 | 5 | 5 | Statement challenge meminta alat harmonisasi; C dan D mengerjakannya sendiri |
+| Presentation | 4,5 | 4 | 2 | 4 | C: app masih "Data contoh" sintetis. D: data asli, rapi, tapi halamannya banyak dan ada dua skala |
+| **Total sekarang** | **18** | **19,5** | **18,5** | **22** | |
+| **Potensi sampai Minggu** | 19 | 22 | 20 (bila data asli masuk app) | 23 sampai 24 (dengan bukti B, situs live, video) | |
 
 Pembanding: kiln-watch sekitar 24 dan Fire Harmony sekitar 23 (H2H-00-sintesis.md). **Tidak ada satu build pun yang
 sendirian mengalahkan keduanya.** A kuat di tampilan tapi meminjam inti sains; C kuat di sains tapi tampilannya belum siap.
@@ -83,7 +83,28 @@ Login.
 - **Juri-proxy:** skor lima kriteria di atas oleh dua orang secara terpisah, lalu dibandingkan.
 - **Kesiapan submit:** situs live, README, AI_USE, references, video 30 detik.
 
-## 7. Status proyek 4
+## 7. Proyek 4 setelah dibangun (14 November 2026, commit 9f3c924)
 
-Lihat `INTEGRATION.md` (rencana dan kontrak data) dan `docs/DATA.md`, `docs/APP.md` (catatan kerja). Tabel ini akan
-diperbarui dengan kolom D setelah proyek 4 bisa dijalankan dengan data asli.
+**Yang jalan, dengan data asli** (catatan lengkap: `docs/DATA.md`, `docs/APP.md`):
+- Pipeline Second Sight dijalankan tanpa patch: 6.355.534 baris FIRMS, unit test 193 lulus, validasi 1000 bootstrap
+  memberi 15 lulus, 11 gagal, 9 tidak dijalankan, sama dengan README mereka. Artinya hasil C bisa direproduksi.
+- `#/record` "Indonesia record" (halaman utama): 40 wilayah. Kalteng: mentah +35%, harmonis -72% (2019 sampai 2023
+  terhadap 2003 sampai 2007), VIIRS 4,8 kali MODIS Aqua. Indonesia: mentah +98%, harmonis -63%, 5,2 kali.
+  Kalender 2000 sampai 2026, galat tahun yang disisihkan (mentah 435%, harmonis 7,2%), semua uji termasuk yang gagal.
+- Nol buta per bulan untuk Kalteng, Agustus sampai Oktober 2015, 2019, 2023: 2,0% sampai 17,4% (Oktober 2019), dengan
+  tautan ke Play the season per tahun (`#/season?y=2015|2019|2023`).
+- Story: "the jump" dan "the fix" (angka nasional dari bundle), lalu adegan nol buta Kalteng.
+
+**Kelemahan D yang terlihat setelah dibangun:**
+- **Kelas observabilitas bulanan terlalu kasar.** Kesembilan bulan Kalteng berkelas "good" (O 0,82 sampai 0,98),
+  padahal Oktober 2019 punya 17,4% nol buta. Cerita nol buta hanya kuat di tingkat hari dan kabupaten, bukan bulan.
+- **Provinsi sesudah 2021 tanpa pita 90%** (ekspor C memakai satu rasio nasional). App mengatakannya terus terang,
+  tetapi angka Kalteng 2022 sampai 2026 jadi lebih lemah.
+- **Uji leave-one-region-out C gagal untuk Kalimantan** (galat 20%), dan sekarang tampil di halaman Kalteng.
+- **Dua skala di satu app:** rekaman Indonesia (sel-hari, skala Aqua MODIS) dan penjelajah global Fire Harmony
+  (hotspot, skala NOAA-20). Sudah diberi label, tetapi juri bisa bingung.
+- **Belum ada:** perkiraan api tersembunyi (milik B), situs live, video, CHIRPS dan NOAA-21.
+
+**Kesimpulan:** D adalah build terkuat untuk dinilai sekarang karena menutup kelemahan A (inti sains pinjaman) dan C
+(app tanpa data asli) sekaligus. B tetap perlu sebagai jalur bukti: kalau H2 lolos, hasilnya menjadi adegan keempat D
+("the proof"). Uji keempatnya dengan naskah dan penguji yang sama (bagian 6) sebelum memutuskan.
