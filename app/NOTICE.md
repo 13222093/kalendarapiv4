@@ -68,5 +68,6 @@ unchanged pipeline; see `docs/DATA.md`). Changes to the app (full notes in `docs
 - `src/pages/Explorer.tsx`: the Central Kalimantan card links to `#/record?aoi=prov-kalimantan-tengah`.
 - `src/components/BlindDistrictsCard.tsx`: a link to Central Kalimantan in the Indonesia record.
 - `src/components/ReportedCard.tsx`: the detected row is labelled as Fire Harmony's harmonization (NOAA-20 scale), with a link to Central Kalimantan in the Indonesia record.
-- Second round: `src/lib/record.ts`, `src/lib/record.test.ts`, `src/components/record/*`, `src/pages/Record.tsx`, `src/styles/record.css`: no 90% band for province months converted with one national ratio (from 2022), the blind share of each month with FireMask observability, and "not applicable" tests counted apart.
+- Second and third rounds: `src/lib/record.ts`, `src/lib/record.test.ts`, `src/components/record/*`, `src/pages/Record.tsx`, `src/styles/record.css`: the blind share of each month with FireMask observability, "not applicable" tests counted apart, and province months from 2022 drawn with the 90% band of the patched export (source lines name the patch).
+- `vendor/second-sight/pipeline/export/bundle.py` (Second Sight, MIT): one 7-line patch, approved by the team, so province rows use their parent island kappa strata (see `docs/DATA.md` 9.1); `public/ss-data/` re-exported with it.
 - `public/ka-data/` (new, built by `pipeline/visibility/` with the year as an argument): Central Kalimantan 2015 and 2023 season and visibility files, same rules as 2019.

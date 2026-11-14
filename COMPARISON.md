@@ -98,8 +98,10 @@ Login.
 **Kelemahan D yang terlihat setelah dibangun:**
 - **Kelas observabilitas bulanan terlalu kasar.** Kesembilan bulan Kalteng berkelas "good" (O 0,82 sampai 0,98),
   padahal Oktober 2019 punya 17,4% nol buta. Cerita nol buta hanya kuat di tingkat hari dan kabupaten, bukan bulan.
-- **Provinsi sesudah 2021 tanpa pita 90%** (ekspor C memakai satu rasio nasional). App mengatakannya terus terang,
-  tetapi angka Kalteng 2022 sampai 2026 jadi lebih lemah.
+- **Satu patch pada metode C.** Ekspor C memberi provinsi sesudah 2021 satu rasio nasional tanpa pita 90%. Atas
+  persetujuan tim, `bundle.py` di-patch (7 baris, `docs/DATA.md` 9.1) supaya provinsi memakai strata pulau induknya,
+  seperti yang dimaksud komentar kode C sendiri. Kalteng 2022 sampai 2026 sekarang punya pita. Ini perlu disampaikan
+  ke tim C, karena angka provinsi D sesudah 2021 tidak lagi sama persis dengan ekspor C.
 - **Uji leave-one-region-out C gagal untuk Kalimantan** (galat 20%), dan sekarang tampil di halaman Kalteng.
 - **Dua skala di satu app:** rekaman Indonesia (sel-hari, skala Aqua MODIS) dan penjelajah global Fire Harmony
   (hotspot, skala NOAA-20). Sudah diberi label, tetapi juri bisa bingung.

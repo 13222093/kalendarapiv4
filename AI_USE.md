@@ -19,8 +19,9 @@ should check that rule against the official guide before submitting; this file s
   KalenderApi (Story, Season, the blind-zero and district cards, the Indonesia record page) and the scripts in
   `pipeline/visibility/`, under the team's direction. Every change is listed in `app/NOTICE.md`, `docs/APP.md` and
   `docs/DATA.md`.
-- **Runs:** AI sessions ran Second Sight's pipeline unchanged (no patches to `vendor/second-sight/`) and the
-  visibility scripts, and recorded every command, input checksum and run time in `docs/DATA.md`.
+- **Runs:** AI sessions ran Second Sight's pipeline and the visibility scripts, and recorded every command, input
+  checksum and run time in `docs/DATA.md`. One 7-line patch to Second Sight's export (province kappa strata) was made
+  after the team approved it; it is described in `docs/DATA.md` section 9.1.
 - **Research and writing:** AI helped search and summarize competitor repositories and papers, and drafted
   documents (comparison, integration plan, PRD drafts). The team made the choices.
 
