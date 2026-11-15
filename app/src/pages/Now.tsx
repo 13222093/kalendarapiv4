@@ -316,6 +316,17 @@ function useLoad<T>(make: (() => Promise<T>) | null, key: string): Load<T> {
   return got.key === key ? got.load : { state: 'loading' };
 }
 
+/** Small drawn icons for the three people this page serves: the office, the village, the fire crew. */
+function NowIcon({ kind }: { kind: 'bpbd' | 'residents' | 'crew' }) {
+  const d = kind === 'bpbd' ? 'M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5M9 11h.01M15 11h.01M12 4V2h3'
+    : kind === 'residents' ? 'M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5'
+      : 'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9zM4 21h16';
+  return (
+    <svg className="now-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.6"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={d} /></svg>
+  );
+}
+
 export function Now() {
   const tr = useTr();
   const lang = useLang();
@@ -502,49 +513,60 @@ export function Now() {
       <SiteHeader current="now" />
 
       <main className="now-main" id="now-main">
-        <p className="now-kicker">{tr('Today in my district', 'Hari ini di daerah saya')}</p>
-        <h1 className="now-title">{aoi ? place : tr('Loading the districts…', 'Memuat daftar kabupaten…')}</h1>
-        {aoi ? <p className="now-sub">{aoi.province}{' · '}{tr('what the satellites recorded, whether it is normal, and what to do next', 'apa yang dicatat satelit, apakah itu normal, dan apa langkah berikutnya')}</p> : null}
+        {/* ---- the title row: where, the level, and a compact district search */}
+        <div className="now-titlebar">
+          <div className="now-titles">
+            <p className="now-kicker">{tr('Today in my district', 'Hari ini di daerah saya')}</p>
+            <div className="now-titlerow">
+              <h1 className="now-title">{aoi ? place : tr('Loading the districts…', 'Memuat daftar kabupaten…')}</h1>
+              {aoi ? (
+                <a className={`now-badge now-badge-${result.level ?? 'none'}`} href="#now-h-do">
+                  <span>{tr('Level', 'Tingkat')}</span>
+                  <b>{liveState.state === 'loading' ? '…' : result.level ? levelName(result.level) : tr('Not set', 'Belum ditentukan')}</b>
+                </a>
+              ) : null}
+            </div>
+            {aoi ? <p className="now-sub">{aoi.province}{' · '}{tr('where the hotspots are, how many, and who to tell', 'di mana titik panasnya, berapa banyak, dan siapa yang dikabari')}</p> : null}
+          </div>
+          <div className="now-find" role="search" aria-label={tr('Pick the district', 'Pilih kabupaten')}>
+            <label htmlFor="now-q">{tr('Change district (514 districts and cities)', 'Ganti kabupaten (514 kabupaten dan kota)')}</label>
+            <input id="now-q" type="search" value={q} onChange={(ev) => setQ(ev.target.value)} autoComplete="off"
+              placeholder={tr('Search a district, for example Kapuas', 'Cari kabupaten, misalnya Kapuas')} />
+            {q.trim().length >= 2 ? (
+              groups.length ? (
+                <ul className="now-results" aria-label={tr('Matching districts', 'Kabupaten yang cocok')}>
+                  {groups.flatMap((g) => g.items.map((d) => (
+                    <li key={d.aoi_id}>
+                      <button type="button" onClick={() => go(d.aoi_id)}>{aoiName(d, lang)} <small>{g.province}</small></button>
+                    </li>
+                  )))}
+                </ul>
+              ) : <p className="now-small" role="status">{tr('No district matches.', 'Tidak ada kabupaten yang cocok.')}</p>
+            ) : null}
+            <details className="now-more">
+              <summary>{tr('Or find by latitude and longitude', 'Atau cari dengan lintang dan bujur')}</summary>
+              <form onSubmit={findByCoord} className="now-coord" aria-label={tr('Find the district of a point', 'Cari kabupaten dari satu titik')}>
+                <div><label htmlFor="now-lat">{tr('Latitude', 'Lintang')}</label><input id="now-lat" inputMode="decimal" value={lat} onChange={(ev) => setLat(ev.target.value)} placeholder="-2.72" /></div>
+                <div><label htmlFor="now-lon">{tr('Longitude', 'Bujur')}</label><input id="now-lon" inputMode="decimal" value={lon} onChange={(ev) => setLon(ev.target.value)} placeholder="113.95" /></div>
+                <button type="submit" className="now-btn">{tr('Find the district', 'Cari kabupaten')}</button>
+                {coordNote ? <p className="now-small now-coord-note" role="status">{coordNote}</p> : null}
+              </form>
+            </details>
+          </div>
+        </div>
         {districts.state === 'error' || districts.state === 'missing' ? (
           <p className="now-alert" role="alert">{tr('The district list could not be loaded, so this page cannot show a district.', 'Daftar kabupaten tidak dapat dimuat, sehingga halaman ini tidak dapat menampilkan kabupaten.')}</p>
         ) : null}
         {unknownAsked ? <p className="now-note" role="note">{tr(`No district "${asked}" in the record; showing ${name}.`, `Tidak ada kabupaten "${asked}" dalam catatan; menampilkan ${name}.`)}</p> : null}
 
-        {/* ---- pick the district */}
-        <section className="now-card now-pick" aria-labelledby="now-h-pick">
-          <h2 id="now-h-pick">{tr('Pick the district', 'Pilih kabupaten')}</h2>
-          <div className="now-pick-grid">
-            <div>
-              <label htmlFor="now-q">{tr('Search by name (514 districts and cities)', 'Cari berdasarkan nama (514 kabupaten dan kota)')}</label>
-              <input id="now-q" type="search" value={q} onChange={(ev) => setQ(ev.target.value)} autoComplete="off"
-                placeholder={tr('for example Pulang Pisau', 'misalnya Pulang Pisau')} />
-              {q.trim().length >= 2 ? (
-                groups.length ? (
-                  <ul className="now-results" aria-label={tr('Matching districts', 'Kabupaten yang cocok')}>
-                    {groups.flatMap((g) => g.items.map((d) => (
-                      <li key={d.aoi_id}>
-                        <button type="button" onClick={() => go(d.aoi_id)}>{aoiName(d, lang)} <small>{g.province}</small></button>
-                      </li>
-                    )))}
-                  </ul>
-                ) : <p className="now-small" role="status">{tr('No district matches.', 'Tidak ada kabupaten yang cocok.')}</p>
-              ) : null}
-            </div>
-            <form onSubmit={findByCoord} className="now-coord" aria-label={tr('Find the district of a point', 'Cari kabupaten dari satu titik')}>
-              <div><label htmlFor="now-lat">{tr('Latitude', 'Lintang')}</label><input id="now-lat" inputMode="decimal" value={lat} onChange={(ev) => setLat(ev.target.value)} placeholder="-2.72" /></div>
-              <div><label htmlFor="now-lon">{tr('Longitude', 'Bujur')}</label><input id="now-lon" inputMode="decimal" value={lon} onChange={(ev) => setLon(ev.target.value)} placeholder="113.95" /></div>
-              <button type="submit" className="now-btn">{tr('Find the district', 'Cari kabupaten')}</button>
-              {coordNote ? <p className="now-small now-coord-note" role="status">{coordNote}</p> : null}
-            </form>
-          </div>
-        </section>
-
         {aoi && box ? (
           <>
             {/* ---- right now */}
-            <section className="now-card" aria-labelledby="now-h-now">
+            <section className="now-card now-hero" aria-labelledby="now-h-now">
+              <div className="now-hero-grid">
+              <div className="now-figs">
               <div className="now-head">
-                <h2 id="now-h-now">{tr('Right now', 'Saat ini')}</h2>
+                <h2 id="now-h-now" className="now-eyebrow">{tr('Right now', 'Saat ini')}</h2>
                 <button type="button" className="now-btn now-btn-quiet" onClick={() => setTick((t) => t + 1)} disabled={liveState.state === 'loading'}>
                   {liveState.state === 'loading' ? tr('Reading…', 'Membaca…') : tr('Read again', 'Baca ulang')}
                 </button>
@@ -588,13 +610,21 @@ export function Now() {
                     </div>
                   </div>
                   <p className="now-src">
-                    {tr(`Unit: hotspots (one satellite detection of heat; not a fire count and not burned area). Source: ${liveSource}; VIIRS confidence nominal or high, MODIS confidence 30 or more. Read ${wib(nowMs, lang)}; counted by detection time in the 24 hours and the 7 days before that, inside the ${byBox ? 'bounding box of the district (the outline did not load)' : 'district outline'}.`,
-                      `Satuan: titik panas (satu deteksi panas oleh satelit; bukan jumlah kebakaran dan bukan luas terbakar). Sumber: ${liveSource}; keyakinan VIIRS nominal atau tinggi, keyakinan MODIS 30 atau lebih. Dibaca ${wib(nowMs, lang)}; dihitung menurut waktu deteksi dalam 24 jam dan 7 hari sebelumnya, di dalam ${byBox ? 'kotak batas kabupaten (garis batas tidak termuat)' : 'garis batas kabupaten'}.`)}
+                    {tr(`NASA FIRMS, read ${wib(nowMs, lang)}.`, `NASA FIRMS, dibaca ${wib(nowMs, lang)}.`)}
                     {liveData.failed.length ? ' ' + tr(`Not read this time: ${liveData.failed.join(', ')}; its count is unknown, not zero.`, `Tidak terbaca kali ini: ${liveData.failed.join(', ')}; jumlahnya tidak diketahui, bukan nol.`) : ''}
                   </p>
+                  <details className="now-more">
+                    <summary>{tr('How this is counted', 'Cara menghitungnya')}</summary>
+                    <p className="now-src">
+                      {tr(`Unit: hotspots (one satellite detection of heat; not a fire count and not burned area). Source: ${liveSource}; VIIRS confidence nominal or high, MODIS confidence 30 or more. Read ${wib(nowMs, lang)}; counted by detection time in the 24 hours and the 7 days before that, inside the ${byBox ? 'bounding box of the district (the outline did not load)' : 'district outline'}.`,
+                        `Satuan: titik panas (satu deteksi panas oleh satelit; bukan jumlah kebakaran dan bukan luas terbakar). Sumber: ${liveSource}; keyakinan VIIRS nominal atau tinggi, keyakinan MODIS 30 atau lebih. Dibaca ${wib(nowMs, lang)}; dihitung menurut waktu deteksi dalam 24 jam dan 7 hari sebelumnya, di dalam ${byBox ? 'kotak batas kabupaten (garis batas tidak termuat)' : 'garis batas kabupaten'}.`)}
+                    </p>
+                  </details>
                 </>
               ) : null}
+              </div>
 
+              <div className="now-mapside">
               <div className="now-mapwrap">
                 <NowMap key={aoiId} box={box} outline={outline} points={marked} photoDate={photoDate} sites={sites} peat={peatOutline}
                   label={tr(`Map of ${place}: hotspots of the last 7 days over NASA's newest photo`, `Peta ${place}: titik panas 7 hari terakhir di atas foto NASA terbaru`)} />
@@ -610,6 +640,10 @@ export function Now() {
                 {peatOutline ? <li><i className="now-line now-line-peat" aria-hidden="true" />{tr('peat outline', 'batas gambut')}</li> : null}
                 {sites.length ? <li><i className="now-ring" aria-hidden="true" />{tr('peat site to re-check', 'lokasi gambut untuk dicek ulang')}</li> : null}
               </ul>
+              </div>
+              </div>
+              <details className="now-more">
+                <summary>{tr('About the photo and the map', 'Tentang foto dan peta')}</summary>
               <p className="now-src">
                 {!photoKnown ? tr('Looking for NASA\'s newest photo…', 'Mencari foto NASA terbaru…')
                   : photoDay ? tr(`Photo: VIIRS NOAA-20 true colour of ${photoDay} (UTC day), the early-afternoon pass, from NASA GIBS. White is cloud; black wedges are gaps between passes. Hotspots are of the last 7 days, so some are older than the photo.`,
@@ -617,6 +651,14 @@ export function Now() {
                     : tr('NASA\'s photo of today and of the two days before could not be loaded, so the map has no photo. Cloud cannot be judged here.', 'Foto NASA hari ini dan dua hari sebelumnya tidak dapat dimuat, sehingga peta tidak memuat foto. Awan tidak dapat dinilai di sini.')}
                 {' '}{tr('Zoom with the + and − buttons, or Ctrl + wheel; drag to move (two fingers on a phone); with the keyboard, focus the map and use the arrow, + and − keys. Imagery: NASA GIBS. District boundary: geoBoundaries (BPS, WFP, OCHA ROAP), CC BY 3.0 IGO.', 'Perbesar dengan tombol + dan −, atau Ctrl + roda; seret untuk menggeser (dua jari di ponsel); dengan papan ketik, fokuskan peta lalu pakai tombol panah, + dan −. Citra: NASA GIBS. Batas kabupaten: geoBoundaries (BPS, WFP, OCHA ROAP), CC BY 3.0 IGO.')}
               </p>
+              </details>
+
+              {/* ---- who uses this */}
+              <ul className="now-who" aria-label={tr('Who uses this page', 'Siapa yang memakai halaman ini')}>
+                <li><NowIcon kind="bpbd" /><span><b>{tr('District disaster office (BPBD)', 'BPBD kabupaten')}</b>{tr('sees where and how much, and sets the level.', 'melihat di mana dan berapa banyak, lalu menetapkan tingkat.')}</span></li>
+                <li><NowIcon kind="residents" /><span><b>{tr('The village', 'Desa')}</b>{tr('gets a plain message to pass on.', 'menerima pesan sederhana untuk diteruskan.')}</span></li>
+                <li><NowIcon kind="crew" /><span><b>{tr('Manggala Agni crew', 'Regu Manggala Agni')}</b>{tr('gets coordinates of hotspots and peat sites.', 'menerima koordinat titik panas dan lokasi gambut.')}</span></li>
+              </ul>
 
               {counts && counts.recent.length ? (
                 <div className="now-scroll" tabIndex={0} role="region" aria-label={tr('Newest hotspots in the district', 'Titik panas terbaru di kabupaten')}>
@@ -655,6 +697,8 @@ export function Now() {
                         `${mf.label}${mf.partial ? ' sejauh ini' : ''}: ${num(mf.H, 1)} sel-hari api di ${place} pada catatan satu skala.`)}
                     </span>
                   </p>
+                  <details className="now-more">
+                    <summary>{tr('How this is counted', 'Cara menghitungnya')}</summary>
                   <p>
                     {mf.median != null ? tr(`The median ${mf.monthOnly}${baseline ? ` (${baseline[0]} to ${baseline[1]})` : ''} has ${num(mf.median, mf.median % 1 ? 1 : 0)}. `, `Median ${mf.monthOnly}${baseline ? ` (${baseline[0]} sampai ${baseline[1]})` : ''} adalah ${num(mf.median, mf.median % 1 ? 1 : 0)}. `) : ''}
                     {mf.higherPct != null ? tr(`This month is higher than ${num(mf.higherPct)}% of the ${earlierYears} earlier ${mf.monthOnly}s on record (ties count half). `, `Bulan ini lebih tinggi dari ${num(mf.higherPct)}% dari ${earlierYears} ${mf.monthOnly} sebelumnya dalam catatan (nilai sama dihitung setengah). `)
@@ -670,6 +714,7 @@ export function Now() {
                     {tr(`Unit: fire cell-days (a 0.01 degree cell with a hotspot on one day), MODIS and VIIRS harmonized to one scale. District values are an approximate share-out of the province record. Source: NASA FIRMS archives, KalenderApi record${recordDate ? ` built ${recordDate}` : ''}${monthRow?.flag_nrt ? '; this month is near-real-time data, provisional' : ''}.`,
                       `Satuan: sel-hari api (sel 0,01 derajat dengan titik panas pada satu hari), MODIS dan VIIRS diharmonisasi ke satu skala. Nilai kabupaten adalah pembagian perkiraan dari catatan provinsi. Sumber: arsip NASA FIRMS, catatan KalenderApi${recordDate ? ` dibuat ${recordDate}` : ''}${monthRow?.flag_nrt ? '; bulan ini data waktu hampir nyata, sementara' : ''}.`)}
                   </p>
+                  </details>
                 </>
               ) : rows.state === 'ok' ? <p className="now-note" role="note">{tr('The record has no value for this district yet.', 'Catatan belum memuat nilai untuk kabupaten ini.')}</p> : null}
             </section>
@@ -683,7 +728,11 @@ export function Now() {
                     ? tr('The satellites recorded zero hotspots in this district in the last 24 hours.', 'Satelit mencatat nol titik panas di kabupaten ini dalam 24 jam terakhir.')
                     : tr(`The satellites recorded ${num(counts.total24)} hotspot${counts.total24 === 1 ? '' : 's'} in this district in the last 24 hours; everywhere else in it they recorded none.`, `Satelit mencatat ${num(counts.total24)} titik panas di kabupaten ini dalam 24 jam terakhir; di bagian lain kabupaten tidak ada yang tercatat.`)
                   : tr('Today\'s hotspots could not be read here.', 'Titik panas hari ini tidak dapat dibaca di sini.')}
-                {' '}
+                {' '}<b>{tr('Under cloud, no hotspot means not seen, not no fire.', 'Di bawah awan, tidak ada titik panas berarti tidak terlihat, bukan tidak ada api.')}</b>
+              </p>
+              <details className="now-more">
+                <summary>{tr('How to read a zero', 'Cara membaca angka nol')}</summary>
+              <p>
                 {photoDay
                   ? tr(`Look at the photo of ${photoDay} above. Where the district is white with cloud, a satellite could not see the ground, so no hotspot there does not mean no fire: it means not seen. Where the ground is clear in the photo, a zero is more believable, though small or smouldering peat fires can still be missed.`,
                     `Lihat foto tanggal ${photoDay} di atas. Di bagian kabupaten yang putih tertutup awan, satelit tidak dapat melihat permukaan tanah, sehingga tidak adanya titik panas di sana tidak berarti tidak ada api: artinya tidak terlihat. Di bagian yang permukaannya tampak jelas pada foto, nol lebih dapat dipercaya, meskipun api kecil atau bara gambut masih bisa terlewat.`)
@@ -698,6 +747,7 @@ export function Now() {
                   {' '}<span className="now-src-inline">{tr('Source: NASA MOD14A1 and MYD14A1 daily FireMask.', 'Sumber: FireMask harian NASA MOD14A1 dan MYD14A1.')}</span>
                 </p>
               ) : null}
+              </details>
             </section>
 
             {/* ---- peat sites to re-check */}
@@ -714,6 +764,8 @@ export function Now() {
                   {tr('On peat, fire came back at these places after days when the satellite had a clear look and detected nothing. Places like this are worth a ground re-check.',
                     'Di lahan gambut, api muncul lagi di tempat-tempat ini setelah hari-hari ketika satelit mendapat pandangan jelas dan tidak mendeteksi apa pun. Tempat seperti ini layak dicek ulang di lapangan.')}
                 </p>
+                <details className="now-more">
+                  <summary>{tr('How this is counted', 'Cara menghitungnya')}</summary>
                 <p>
                   {tr(`${place}, August to October ${peat.season ?? ''} season${peat.provisional ? ' (near-real-time data, provisional)' : ''}.`,
                     `${place}, musim Agustus sampai Oktober ${peat.season ?? ''}${peat.provisional ? ' (data waktu hampir nyata, sementara)' : ''}.`)}
@@ -722,6 +774,7 @@ export function Now() {
                     `Api terdeteksi lagi setelah jeda sebanyak ${num(peat.comeBacks.total)} kali: ${num(peat.comeBacks.seenQuiet)} setelah hari-hari dengan pandangan jelas tanpa deteksi, ${num(peat.comeBacks.underCloud)} setelah hari-hari yang seluruhnya berawan, dan ${num(peat.comeBacks.modisFire)} ketika MODIS mendeteksi api selama jeda${peat.comeBacks.noData ? `; ${num(peat.comeBacks.noData)} tanpa pandangan yang dapat dipakai` : ''}.`) : ''}
                   {' '}{tr(`The ${Math.min(SITE_ROWS, peat.sites.length)} sites with the most days are listed; the CSV has ${peat.sites.length}.`, `${Math.min(SITE_ROWS, peat.sites.length)} lokasi dengan hari terbanyak ditampilkan; berkas CSV memuat ${peat.sites.length}.`)}
                 </p>
+                </details>
                 <div className="now-scroll" tabIndex={0} role="region" aria-label={tr('Peat sites to re-check', 'Lokasi gambut untuk dicek ulang')}>
                   <table className="now-table">
                     <thead><tr>
@@ -756,6 +809,9 @@ export function Now() {
                 <p className="now-level-name">{liveState.state === 'loading' ? '…' : result.level ? levelName(result.level) : tr('Not set', 'Belum ditentukan')}</p>
                 <p className="now-level-why">{liveState.state === 'loading' ? tr('Reading the hotspots…', 'Membaca titik panas…') : whyText[result.why]}</p>
               </div>
+              <p className="now-small">{tr('KalenderApi\'s own level, not an official government status.', 'Tingkat milik KalenderApi sendiri, bukan status resmi pemerintah.')}</p>
+              <details className="now-more">
+                <summary>{tr('How the level is set', 'Cara tingkat ditetapkan')}</summary>
               <p className="now-note" role="note">
                 {tr('These three levels are KalenderApi\'s own, from the rules below. They are not an official government status and not a forecast.',
                   'Tiga tingkat ini milik KalenderApi sendiri, dari aturan di bawah. Ini bukan status resmi pemerintah dan bukan prakiraan.')}
@@ -767,6 +823,7 @@ export function Now() {
                   </li>
                 ))}
               </ul>
+              </details>
 
               <div className="now-head now-head-msg">
                 <h3>{tr('Three messages, ready to send', 'Tiga pesan, siap dikirim')}</h3>
@@ -781,14 +838,14 @@ export function Now() {
                   const text = message(kind);
                   return (
                     <article className="now-msg" key={kind} aria-labelledby={`now-m-${kind}`}>
-                      <h4 id={`now-m-${kind}`}>{title}</h4>
+                      <h4 id={`now-m-${kind}`}><NowIcon kind={kind} />{title}</h4>
                       <p className="now-msg-text" lang={msgLang}>{text}</p>
                       <label htmlFor={`now-p-${kind}`}>{tr('Local post phone number (optional, added to the text)', 'Nomor telepon posko setempat (opsional, ditambahkan ke teks)')}</label>
                       <input id={`now-p-${kind}`} type="tel" inputMode="tel" autoComplete="off" value={phones[kind]} maxLength={24}
                         onChange={(ev) => setPhones((p) => ({ ...p, [kind]: ev.target.value }))} />
-                      <div className="now-msg-actions">
-                        <button type="button" className="now-btn" onClick={() => { void copyText(text).then((ok) => setCopied(ok ? kind : `fail-${kind}`)); }}>{tr('Copy', 'Salin')}</button>
-                        <a className="now-btn now-btn-primary" href={waLink(text)} target="_blank" rel="noopener noreferrer">{tr('Share on WhatsApp', 'Bagikan ke WhatsApp')}</a>
+                      <div className="now-msg-actions now-msg-send">
+                        <a className="now-btn now-btn-primary now-btn-wa" href={waLink(text)} target="_blank" rel="noopener noreferrer">{tr('Share on WhatsApp', 'Bagikan ke WhatsApp')}</a>
+                        <button type="button" className="now-btn now-btn-quiet" onClick={() => { void copyText(text).then((ok) => setCopied(ok ? kind : `fail-${kind}`)); }}>{tr('Copy', 'Salin')}</button>
                         <span className="now-small" role="status">{copied === kind ? tr('Copied.', 'Tersalin.') : copied === `fail-${kind}` ? tr('Could not copy; select the text instead.', 'Tidak dapat menyalin; pilih teksnya secara manual.') : ''}</span>
                       </div>
                     </article>

@@ -186,3 +186,53 @@
   .now-top, .now-pick, .now-mapwrap, .now-btn, .now-seg { display: none; }
   .now-page { background: none; }
 }
+
+/* ---- map first: the title row with the level badge and a compact search, then the map with the three numbers */
+.now-titlebar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin-top: 14px; }
+.now-titles { min-width: 0; flex: 1 1 420px; }
+.now-titlebar .now-kicker { margin-top: 0; }
+.now-titlerow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.now-badge {
+  display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 14px; border-radius: 999px;
+  border: 2px solid var(--border-strong); background: var(--surface-2); color: var(--text); text-decoration: none;
+}
+.now-badge span { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.now-badge b { font-family: var(--font-display); font-size: 20px; line-height: 1.1; }
+.now-badge-watch { border-color: var(--accent-strong); }
+.now-badge-high { border-color: var(--ka-up); background: var(--accent-soft); }
+.now-find { flex: 0 1 340px; min-width: 240px; position: relative; }
+.now-find .now-results { position: absolute; left: 0; right: 0; z-index: 5; }
+.now-find .now-coord { grid-template-columns: 1fr 1fr; margin-top: 6px; }
+.now-find .now-coord .now-btn { grid-column: 1 / -1; }
+details.now-more { margin: 6px 0; }
+details.now-more > summary { cursor: pointer; width: fit-content; padding: 4px 0; font-size: 13px; color: var(--accent-strong); }
+details.now-more[open] > summary { margin-bottom: 6px; }
+
+.now-hero { padding: 16px; margin-top: 14px; }
+.now-hero-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.now-figs, .now-mapside { min-width: 0; }
+.now-card h2.now-eyebrow { margin: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.now-figs .now-stats { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.now-figs p.now-stat-value { font-size: 56px; }
+.now-figs p.now-stat-time { font-size: 22px; }
+.now-hero .now-mapwrap { margin-top: 0; }
+.now-hero .now-map { height: 580px; }
+
+.now-who { list-style: none; margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 20px; }
+.now-who li { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.4; color: var(--text-2); }
+.now-who b { display: block; color: var(--text); }
+.now-icon { flex: none; color: var(--accent-strong); }
+.now-msg h4 { display: flex; align-items: center; gap: 8px; }
+.now-msg-send .now-btn-wa { flex: 1 1 100%; min-height: 46px; font-size: 15px; }
+
+@media (max-width: 860px) {
+  .now-hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .now-figs .now-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .now-figs .now-stat:last-child { grid-column: 1 / -1; }
+  .now-figs p.now-stat-value { font-size: 44px; }
+  .now-figs p.now-stat-time { font-size: 20px; }
+  .now-figs .now-stat { padding: 10px 12px; }
+  .now-hero .now-map { height: 400px; }
+  .now-who { grid-template-columns: minmax(0, 1fr); }
+  .now-find { flex-basis: 100%; }
+}
