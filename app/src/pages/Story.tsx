@@ -777,8 +777,8 @@ export function Story() {
   const title = done ? tr('Zero hotspots is not always zero fire.', 'Nol titik panas belum tentu nol api.') : beat.title;
   const body = done
     ? tr(
-      'NASA satellites record a hotspot wherever they detect fire. But under cloud a satellite cannot see the ground, so “zero hotspots” can mean nothing could be seen, not that nothing burned. KalenderApi shows, for every day, which areas the satellite could see and which were hidden under cloud.',
-      'Satelit NASA mencatat titik panas di setiap lokasi yang terdeteksi terbakar. Tapi di bawah awan satelit tidak bisa melihat tanah, jadi “nol titik panas” bisa berarti tidak terlihat, bukan tidak ada api. KalenderApi menunjukkan, untuk setiap hari, daerah mana yang terlihat satelit dan mana yang tertutup awan.')
+      'NASA satellites record a hotspot wherever they detect fire. But under cloud a satellite cannot see the ground, so “zero hotspots” can mean nothing could be seen, not that nothing burned. KalenderApi puts NASA’s MODIS and VIIRS on one fire calendar, marks the days hidden under cloud, and tells a district what to do today.',
+      'Satelit NASA mencatat titik panas di setiap lokasi yang terdeteksi terbakar. Tapi di bawah awan satelit tidak bisa melihat tanah, jadi “nol titik panas” bisa berarti tidak terlihat, bukan tidak ada api. KalenderApi menyatukan MODIS dan VIIRS milik NASA dalam satu kalender api, menandai hari yang tertutup awan, dan memberi tahu kabupaten apa yang harus dilakukan hari ini.')
     : loadingText ?? beat.body;
 
   // A click or a tap anywhere outside a control, or the right arrow key: on to the next scene, and from the last
@@ -848,12 +848,13 @@ export function Story() {
         <p key={body} className="ka-story-body">{body}</p>
         {done && (
           <div className="ka-story-cta">
-            <a className="ka-btn-primary" href="#/season">{tr('Play a fire season, day by day', 'Putar satu musim kebakaran, hari demi hari')}</a>
-            <a className="ka-btn-ghost" href="#/now">{tr("Check today's hotspots in your district", 'Cek titik panas hari ini di daerah Anda')}</a>
+            {/* the three things the app does, in the order a district officer needs them; the story replays from the top bar */}
+            <a className="ka-btn-primary" href="#/now">{tr('Today in your district: what to do now', 'Hari ini di daerah Anda: apa yang harus dilakukan')}</a>
+            <a className="ka-btn-ghost" href="#/record?aoi=IDN&sec=jump">{tr('MODIS and VIIRS on one scale', 'MODIS dan VIIRS pada satu skala')}</a>
+            <a className="ka-btn-ghost" href="#/season?y=2015">{tr('Play a fire season, day by day', 'Putar satu musim kebakaran, hari demi hari')}</a>
+            <a className="ka-btn-ghost" href="#/record?aoi=IDN&sec=calendar">{tr('Open your area\'s fire calendar', 'Buka kalender api daerah Anda')}</a>
             <a className="ka-btn-ghost" href="#/zero">{tr('Inspect one day, cell by cell', 'Periksa satu hari, petak demi petak')}</a>
-            <a className="ka-btn-ghost" href="#/record">{tr('Open your area\'s fire calendar', 'Buka kalender api daerah Anda')}</a>
             <a className="ka-btn-ghost" href={`#/brief?aoi=${KALTENG_AOI}`}>{tr('One-page district brief', 'Ringkasan satu halaman per kabupaten')}</a>
-            <button type="button" className="ka-btn-ghost" onClick={() => jumpTo(0, !reduced)}>{tr('Replay the story', 'Putar ulang cerita')}</button>
           </div>
         )}
       </section>

@@ -323,7 +323,7 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
           {tr('Fire hotspots: NASA FIRMS (MODIS Collection 6.1 and VIIRS 375 m), counted and put on one scale by us. Globe imagery: NASA Blue Marble, from NASA GIBS. District outlines: geoBoundaries (CC BY 3.0 IGO).',
             'Titik panas: NASA FIRMS (MODIS Collection 6.1 dan VIIRS 375 m), kami hitung dan kami taruh pada satu skala. Citra bola dunia: NASA Blue Marble, dari NASA GIBS. Batas kabupaten/kota: geoBoundaries (CC BY 3.0 IGO).')}
           {idx?.generated_at ? ` ${tr('Data as of', 'Data per')} ${idx.generated_at.slice(0, 10)}.` : ''}
-          {' '}{tr('The record is not live.', 'Rekaman ini bukan data langsung.')}
+          {' '}{tr('The record is not live; “Today in my district” reads NASA’s latest files.', 'Rekaman ini bukan data langsung; halaman “Hari ini di daerah saya” membaca berkas terbaru NASA.')}
         </p>
         <p>{tr('Made for the NASA Space Apps Challenge 2026.', 'Dibuat untuk NASA Space Apps Challenge 2026.')} <a href="#/method">{tr('Method, data and credits', 'Metode, data, dan kredit')}</a></p>
       </footer>

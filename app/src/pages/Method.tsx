@@ -532,8 +532,8 @@ export function Method() {
             <a href={REPO_URL} target="_blank" rel="noopener">{tr('our repository', 'repositori kami')}</a>.
           </p>
           <p>
-            {tr('The globe on the home page adapts a few lines from FireLens (MIT License, Team Aquila), and FireLens’s view of the condition right now was the model for “Today in my district”. The idea of a message for residents, the district disaster office and the village came from looking at another team’s project, PeatForge; none of its code is used.',
-              'Bola dunia di beranda mengadaptasi beberapa baris dari FireLens (Lisensi MIT, Team Aquila), dan tampilan kondisi terkini di FireLens menjadi contoh untuk halaman “Hari ini di daerah saya”. Gagasan pesan untuk warga, BPBD, dan desa muncul setelah melihat proyek tim lain, PeatForge; tidak ada kodenya yang dipakai.')}
+            {tr('The globe on the home page adapts a few lines from FireLens (MIT License, Team Aquila), and FireLens’s view of the condition right now was the model for “Today in my district”. The idea of a message for residents, the district disaster office and the village came from another team’s project, PeatForge, used with its authors’ permission; the office’s action list on that page follows the pattern of its decision queue.',
+              'Bola dunia di beranda mengadaptasi beberapa baris dari FireLens (Lisensi MIT, Team Aquila), dan tampilan kondisi terkini di FireLens menjadi contoh untuk halaman “Hari ini di daerah saya”. Gagasan pesan untuk warga, BPBD, dan desa berasal dari proyek tim lain, PeatForge, dipakai dengan izin pembuatnya; daftar tindakan BPBD di halaman itu mengikuti pola antrean keputusannya.')}
           </p>
         </Section>
 
@@ -572,6 +572,7 @@ export function Method() {
             <li>{tr('The peat checks written in advance were not run. The peat sites on “Today in my district” come from a separate count, made after looking at the data: they are places to re-check, not proof that fire kept burning.',
               'Pengujian gambut yang ditulis lebih dulu tidak dijalankan. Lokasi gambut di halaman “Hari ini di daerah saya” berasal dari hitungan terpisah yang dibuat setelah melihat data: itu tempat untuk dicek ulang, bukan bukti bahwa api terus menyala.')}</li>
             <li>{tr('The level on “Today in my district” is our own rule, not an official status.', 'Tingkat di halaman “Hari ini di daerah saya” adalah aturan kami sendiri, bukan status resmi.')}</li>
+            <li>{tr('The actions under “What to do now” are suggestions from the page’s own rules, not an official procedure. The alert loop on that page demonstrates the next step and sends nothing; the WhatsApp buttons are the real way to send.', 'Tindakan di bawah “What to do now” adalah saran dari aturan halaman itu sendiri, bukan prosedur resmi. Alur peringatan di halaman itu memperagakan langkah berikutnya dan tidak mengirim apa pun; tombol WhatsApp adalah cara mengirim yang sebenarnya.')}</li>
             <li>{tr('The cloud layer is cloud only, MODIS only, Central Kalimantan only, and retrospective. We do not estimate fire under cloud.',
               'Lapisan awan hanya tentang awan, hanya dari MODIS, hanya Kalimantan Tengah, dan bersifat retrospektif. Kami tidak menaksir api di bawah awan.')}</li>
             <li>{tr('District values are approximate and untested.', 'Nilai kabupaten/kota bersifat perkiraan dan belum diuji.')}</li>

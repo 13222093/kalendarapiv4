@@ -85,8 +85,10 @@ Live at https://kalenderapi.vercel.app (Vercel, static files plus two serverless
   control without a compass, stopping the slow turn when the visitor touches the globe, the frame loop with `jumpTo`,
   and `flyTo` with `essential: true`. FireLens's "condition right now" view was also the model for our
   "Today in my district" page; that page's code is our own.
-- **PeatForge** (another team's project; no licence, so no code or assets were taken). Its use case, a message to
-  residents, the district disaster office and the village, shaped what "Today in my district" offers.
+- **PeatForge** (another team's project; it carries no licence file, and is used with its authors' permission, given to
+  our team on 15 November 2026). The office's action list on "Today in my district" ("What to do now") follows the
+  pattern of PeatForge's decision queue, rewritten in our own styles with no lines copied, and the alert loop demo
+  and the resident's report follow its use case (an alert to the village, a reply to the office).
 - **OpenAI API**: `public/api/advise.js` sends the numbers shown on "Today in my district" to an OpenAI model
   (`gpt-6-luna`, with smaller models as a fallback) and returns a draft of advice. The key is read from the host's
   environment (`OPENAI_API_KEY`); it is not in the repository.
