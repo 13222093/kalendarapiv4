@@ -153,9 +153,14 @@ can be rerun. No NASA logos appear in AI-made content.
 ## 30-second video: narration and shots (final, 15 November 20:35)
 
 The video must be 30 seconds or less (Space Apps submission guide, as quoted in search results; a longer video is not
-eligible for global judging). It is one screen recording of the Story at https://kalenderapi.vercel.app/#/story in
-English, which plays for 28.6 seconds and then rests on the home frame. The Story already shows its own captions, so
-no subtitles are burned in.
+eligible for global judging). The picture is the Story at https://kalenderapi.vercel.app/#/story in English, rendered
+frame by frame (1920 x 1080, 30 frames a second, 29.6 seconds): the Story plays for 28.6 seconds and then rests on
+the home frame. The file is `docs/submission/video/story_silent_1080p.mp4` (not in the repository). The Story already
+shows its own captions, so no subtitles are burned in.
+
+The script runs to about 27 seconds at a normal reading pace, which is tight. Ask for a slightly faster voice (speed
+1.1 in ElevenLabs). When the lines are placed, a line may start up to 0.7 seconds before its scene, and all lines are
+sped up by a few percent if they still do not fit.
 
 Narration, one line per scene, so each line can be placed at its scene's start:
 
