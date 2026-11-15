@@ -10,11 +10,12 @@ import { assistantOn } from './lib/assistant.ts';
 import { Tooltip } from './components/Tooltip.tsx';
 import { MOD_KEY } from './components/platform.ts';
 import {
-  IconBook, IconCheck, IconChevronRight, IconClose, IconCode, IconDashboard, IconDatabase, IconExternal, IconInfo, IconMenu, IconMoon,
-  IconChart, IconGlobe, IconPlay, IconPoster, IconRanking, IconReport, IconSearch, IconSparkle, IconSun, IconWind,
+  IconBook, IconCalendar, IconChart, IconCheck, IconChevronRight, IconClose, IconCode, IconExternal, IconFlame, IconMenu, IconMoon,
+  IconReport, IconSearch, IconSparkle, IconSun, IconTarget,
 } from './components/icons.tsx';
 import { PALETTE_EVENT, panelSearchBox, useCommand } from './lib/commands.ts';
-import { PROJECT_LINKS, PROJECT_ORDER, type ProjectLinkKey } from './lib/config.ts';
+import { LangToggle } from './components/LangToggle.tsx';
+import { useTr } from './lib/lang.ts';
 import { toggleTheme, useTheme } from './lib/theme.ts';
 import { RESIZE_FROM, clampPanel, savedPanelWidth } from './components/explorer/panelSize.ts';
 
@@ -36,53 +37,51 @@ const Dashboard = lazy(() => import('./pages/Dashboard.tsx').then((m) => ({ defa
 const Rankings = lazy(() => import('./pages/Rankings.tsx').then((m) => ({ default: m.Rankings })));
 // Project 4 (modification): the Indonesia record (Second Sight's harmonized fire cell-days and the blind zeros).
 const RecordPage = lazy(() => import('./pages/Record.tsx').then((m) => ({ default: m.Record })));
+// KalenderApi's own method page (#/method); Fire Harmony's '#/methods' stays at its address.
+const MethodPage = lazy(() => import('./pages/Method.tsx').then((m) => ({ default: m.Method })));
 // The command palette brings the place list (and the data code), so it loads the first time it is opened.
 const CommandPalette = lazy(() => import('./components/CommandPalette.tsx').then((m) => ({ default: m.CommandPalette })));
 
-type Route = 'record' | 'explorer' | 'dashboard' | 'rankings' | 'haze' | 'methods' | 'data';
+type Route = 'record' | 'explorer' | 'dashboard' | 'rankings' | 'haze' | 'methods' | 'data' | 'method';
 
-// Project 4 (modification): the Indonesia record comes first; Fire Harmony's explorer is the global context.
-const ROUTES: readonly Route[] = ['record', 'explorer', 'dashboard', 'rankings', 'haze', 'methods', 'data'];
-// Fire Harmony's other global pages: in the page menu (shown at every width), not in the header's links, so the header
-// fits the two records' names at laptop widths
-const IN_MENU: ReadonlySet<Route> = new Set(['dashboard', 'rankings', 'haze']);
-const HREF: Record<Route, string> = { record: '#/record', explorer: '#/', dashboard: '#/dashboard', rankings: '#/rankings', haze: '#/haze', methods: '#/methods', data: '#/data' };
+// Fire Harmony's own pages (another team's open-source project, Apache-2.0). They still open at their addresses, and
+// the explorer builds its own links from '#/', but the header, the page menu and the footer link only to KalenderApi's
+// pages; one footer line points to the explorer as global context.
+const FH_ROUTES: ReadonlySet<Route> = new Set<Route>(['explorer', 'dashboard', 'rankings', 'haze', 'methods', 'data']);
+const HREF: Record<Route, string> = { record: '#/record', explorer: '#/', dashboard: '#/dashboard', rankings: '#/rankings', haze: '#/haze', methods: '#/methods', data: '#/data', method: '#/method' };
+// The cinematic Story is the first screen, and its final frame is the home ('hub=1' opens that frame without playing).
+const HOME = '#/story?hub=1';
+const CODE_URL = 'https://github.com/13222093/kalendarapiv4';
 
-// The text of the shell (English only).
+/** A page linked from the header, the page menu and the footer: KalenderApi's own pages, in English and Bahasa
+ *  Indonesia. `route` is set for the pages inside this shell (the others have their own full-screen layout). */
+interface NavItem { key: string; href: string; route?: Route; en: string; id: string; noteEn: string; noteId: string; icon: (size: number) => ReactNode }
+const NAV: readonly NavItem[] = [
+  { key: 'home', href: HOME, en: 'Home', id: 'Beranda',
+    noteEn: 'Start here: the story, and where to go next', noteId: 'Mulai di sini: ceritanya, dan ke mana selanjutnya', icon: (s) => <IconFlame size={s} /> },
+  { key: 'record', href: HREF.record, route: 'record', en: 'Indonesia record', id: 'Rekaman Indonesia',
+    noteEn: 'Fire on one scale, MODIS to VIIRS, and the months cloud hid', noteId: 'Api pada satu skala, dari MODIS ke VIIRS, dan bulan yang tertutup awan', icon: (s) => <IconChart size={s} /> },
+  { key: 'season', href: '#/season?y=2015', en: 'Play the season', id: 'Putar musim',
+    noteEn: 'Central Kalimantan, one real day per frame', noteId: 'Kalimantan Tengah, satu hari nyata per bingkai', icon: (s) => <IconCalendar size={s} /> },
+  { key: 'zero', href: '#/zero', en: 'Zero inspector', id: 'Pemeriksa nol',
+    noteEn: 'Check a zero: did a satellite have a cloud-free look?', noteId: 'Periksa angka nol: apakah satelit punya pengamatan bebas awan?', icon: (s) => <IconTarget size={s} /> },
+  { key: 'brief', href: '#/brief?aoi=prov-kalimantan-tengah', en: 'Brief', id: 'Ringkasan',
+    noteEn: 'One printable page for a district fire officer', noteId: 'Satu halaman siap cetak untuk petugas kabupaten', icon: (s) => <IconReport size={s} /> },
+  { key: 'method', href: HREF.method, route: 'method', en: 'About and method', id: 'Tentang dan metode',
+    noteEn: 'Who we are, how the record is made and tested, and its limits', noteId: 'Siapa kami, cara catatan dibuat dan diuji, serta batasannya', icon: (s) => <IconBook size={s} /> },
+];
+
+// The text of the shell. T: English only (page titles, Fire Harmony's own controls, errors). L: [English, Indonesian],
+// read with tr(...L.key).
 const T = {
   appName: 'KalenderApi',
   appTitle: 'KalenderApi: a zero is not always a zero',
-  skip: 'Skip to content',
-  navLabel: 'Main',
-  nav: { record: 'Indonesia record', explorer: 'Global context (Fire Harmony)', dashboard: 'Dashboard', rankings: 'Rankings', haze: 'Haze', methods: 'Methods', data: 'Data' } satisfies Record<Route, string>,
-  // the header link of the explorer: its name, then its source in a quieter tone (the whole reads as nav.explorer)
-  navSource: { explorer: ['Global context', '(Fire Harmony)'] } as Partial<Record<Route, [string, string]>>,
+  nav: { record: 'Indonesia record', explorer: 'Global context (Fire Harmony)', dashboard: 'Dashboard', rankings: 'Rankings', haze: 'Haze', methods: 'Methods', data: 'Data', method: 'About and method' } satisfies Record<Route, string>,
   dataTo: 'Data to',
   dataTitle: (first: string, last: string, now: string | null) =>
     `Full months from ${first} to ${last}.${now ? ` ${now} is still filling in.` : ''} Open the Data page for the sources and files.`,
   dataYears: (first: number, last: number) => `Data ${first} to ${last}`,
-  menu: {
-    open: 'Open the page menu',
-    close: 'Close the menu',
-    title: 'Pages',
-    notes: {
-      record: 'Fire on one scale, MODIS to VIIRS, and the months cloud hid',
-      explorer: 'Fire Harmony\'s worldwide map, on its VIIRS NOAA-20 scale',
-      dashboard: 'Every statistic in one place',
-      rankings: 'Every place, sorted and filtered',
-      haze: 'Where the smoke in Malaysia comes from',
-      methods: 'How the record is made and tested',
-      data: 'Sources, files and how to cite',
-    } satisfies Record<Route, string>,
-    version: (v: string) => `Data version ${v}`,
-  },
-  tagline: 'Indonesia\'s fire record on one scale, harmonized by Second Sight, with the zeros the satellites could not see. Fire Harmony\'s worldwide record gives the global context.',
-  made: 'Made for the NASA Space Apps Challenge 2026.',
-  creditTitle: 'Data',
-  credit: 'Indonesia record: NASA FIRMS MODIS C6.1 and VIIRS 375 m archives, harmonized by Second Sight (MIT); cloud from the NASA MODIS daily FireMask (MOD14A1, MYD14A1). Global context: Fire Harmony. Fire hotspots from NASA FIRMS (MODIS Collection 6.1 and VIIRS 375 m). Rain from NASA GPM IMERG, weather and PM2.5 from NASA MERRA-2, fire weather from NASA GISS GFWED. Burned area from ESA Fire_cci, El Niño and Indian Ocean Dipole indices from NOAA. Base map from OpenFreeMap, © OpenStreetMap contributors.',
-  linksTitle: 'Learn more',
-  projectTitle: 'Project',
-  newTab: 'opens in a new tab',
+  menu: { version: (v: string) => `Fire Harmony data version ${v}` },
   search: {
     // on the Explorer the panel has its own place search: the header's box goes to pages and actions first
     explorerText: 'Go to…',
@@ -92,13 +91,7 @@ const T = {
     tip: 'Search places, pages and actions',
     label: (mod: string) => `Search places, pages and actions (${mod} K)`,
   },
-  links: [
-    { href: HREF.record, label: 'Indonesia record', note: 'Fire on one scale, and the months cloud hid' },
-    { href: HREF.methods, label: 'Methods', note: 'How the record is made and tested' },
-    { href: HREF.data, label: 'Data', note: 'Sources, files and how to cite' },
-    { href: HREF.dashboard, label: 'Dashboard', note: 'Every statistic in one place' },
-  ],
-  version: (v: string, built: string) => `Data version ${v}, built ${built}.`,
+  version: (v: string, built: string) => `Fire Harmony data version ${v}, built ${built}.`,
   loading: 'Loading the page…',
   errorTitle: 'This page could not be shown',
   errorText: 'Something went wrong while loading it. Check your internet connection, then reload. The other pages still work.',
@@ -106,6 +99,36 @@ const T = {
   reload: 'Reload the page',
   toExplorer: 'Open the Indonesia record',
 } as const;
+
+const L = {
+  skip: ['Skip to content', 'Lewati ke konten'],
+  navLabel: ['Main', 'Utama'],
+  menuOpen: ['Open the page menu', 'Buka menu halaman'],
+  menuClose: ['Close the menu', 'Tutup menu'],
+  menuTitle: ['Pages', 'Halaman'],
+  tagline: [
+    'Indonesia\'s fire record on one scale, from MODIS to VIIRS, with the days and months when the satellites had no cloud-free look. A zero is not always a zero.',
+    'Catatan kebakaran Indonesia pada satu skala, dari MODIS ke VIIRS, dengan hari dan bulan ketika satelit tidak punya pengamatan bebas awan. Nol belum tentu nol.',
+  ],
+  made: ['Made for the NASA Space Apps Challenge 2026.', 'Dibuat untuk NASA Space Apps Challenge 2026.'],
+  creditTitle: ['Data', 'Data'],
+  credit: [
+    'Fire hotspots from NASA FIRMS (MODIS Collection 6.1 and VIIRS 375 m), counted and put on one scale by us. Cloud-free looks from the NASA MODIS daily FireMask (MOD14A1, MYD14A1). Daily satellite photos from NASA GIBS. Official burned area from SIPONGI KEMENHUT. District borders from geoBoundaries (CC BY 3.0 IGO).',
+    'Titik panas dari NASA FIRMS (MODIS Collection 6.1 dan VIIRS 375 m), kami hitung dan kami taruh pada satu skala. Pengamatan bebas awan dari NASA MODIS FireMask harian (MOD14A1, MYD14A1). Foto satelit harian dari NASA GIBS. Luas terbakar resmi dari SIPONGI KEMENHUT. Batas kabupaten dari geoBoundaries (CC BY 3.0 IGO).',
+  ],
+  linksTitle: ['Pages', 'Halaman'],
+  projectTitle: ['Project', 'Proyek'],
+  code: ['Code on GitHub', 'Kode di GitHub'],
+  codeNote: ['The data build, the tests and this app', 'Pembangunan data, uji dan aplikasi ini'],
+  newTab: ['opens in a new tab', 'terbuka di tab baru'],
+  firms: [
+    FIRMS_ACKNOWLEDGEMENT,
+    'Kami berterima kasih atas penggunaan data dari Fire Information for Resource Management System (FIRMS) milik NASA, bagian dari Earth Science Data and Information System (ESDIS) NASA.',
+  ],
+  globalLead: ['Global context: ', 'Konteks global: '],
+  globalLink: ['Fire Harmony\'s explorer', 'penjelajah Fire Harmony'],
+  globalTail: [', another team\'s open-source project (Apache-2.0), on a different scale.', ', proyek sumber terbuka tim lain (Apache-2.0), dengan skala yang berbeda.'],
+} as const satisfies Record<string, readonly [string, string]>;
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const monthLong = (ym: number) => `${MONTHS[(ym % 100) - 1] ?? ''} ${Math.floor(ym / 100)}`;
@@ -120,7 +143,7 @@ function addMonths(ym: number, n: number): number {
  *  '#/record' by index.html.) */
 function routeOf(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split(/[/?]/)[0] ?? '';
-  return path === 'record' || path === 'methods' || path === 'data' || path === 'haze' || path === 'dashboard' || path === 'rankings' ? path : 'explorer';
+  return path === 'record' || path === 'method' || path === 'methods' || path === 'data' || path === 'haze' || path === 'dashboard' || path === 'rankings' ? path : 'explorer';
 }
 
 function subscribeHash(onChange: () => void): () => void {
@@ -132,11 +155,16 @@ function readHash(): string {
   return window.location.hash;
 }
 
-// KalenderApi landing and cinematic story routes remain outside the shared app shell.
-const LandingPage = lazy(() => import('./pages/Landing.tsx').then((m) => ({ default: m.Landing })));
+// The cinematic story is outside the shared app shell. (The old landing page, '#/home', now goes to the Story's final
+// frame: see HomeRedirect.)
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
+// The printable brief (#/brief?aoi=<aoi_id>): one A4 page, with no header or menu.
+const BriefPage = lazy(() => import('./pages/Brief.tsx').then((m) => ({ default: m.Brief })));
+// The Zero inspector (#/zero) and the district calendar (#/calendar): full-screen pages of their own.
+const ZeroPage = lazy(() => import('./pages/Zero.tsx').then((m) => ({ default: m.Zero })));
+const DistrictCalendarPage = lazy(() => import('./pages/DistrictCalendar.tsx').then((m) => ({ default: m.DistrictCalendar })));
 /** Project 4: the season year of '#/season?y=2015' (or of the day in '#/season?d=2023-09-01'); 2019 by default. */
 function seasonYearOf(hash: string): number {
   const q = new URLSearchParams(hash.split('?')[1] ?? '');
@@ -146,17 +174,32 @@ function seasonYearOf(hash: string): number {
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
-  if (hash === '#/home' || hash.startsWith('#/home?')) {
-    return (
-      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
-        <LandingPage />
-      </Suspense>
-    );
-  }
+  if (hash === '#/home' || hash.startsWith('#/home?')) return <HomeRedirect />;
   if (hash === '#/story' || hash.startsWith('#/story?')) {
     return (
       <Suspense fallback={<div className="ka-story" />}>
         <Story />
+      </Suspense>
+    );
+  }
+  if (hash === '#/zero' || hash.startsWith('#/zero?')) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <ZeroPage />
+      </Suspense>
+    );
+  }
+  if (hash === '#/calendar' || hash.startsWith('#/calendar?')) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <DistrictCalendarPage />
+      </Suspense>
+    );
+  }
+  if (hash === '#/brief' || hash.startsWith('#/brief?')) {
+    return (
+      <Suspense fallback={null}>
+        <BriefPage />
       </Suspense>
     );
   }
@@ -172,10 +215,19 @@ export function App() {
   return <Shell />;
 }
 
+/** Old '#/home' links: the address is replaced by the Story's final frame (no new history entry), which the hash
+ *  listener then mounts. */
+function HomeRedirect() {
+  useEffect(() => { window.location.replace(HOME); }, []);
+  return <div className="ka-story" aria-hidden="true" />;
+}
+
 function Shell() {
   const route = routeOf(useSyncExternalStore(subscribeHash, readHash));
   const i18n = useMemo<I18n>(() => ({ lang: 'en', t: DICTS.en, setLang: () => undefined }), []);
-  const shell = useShellData();
+  const tr = useTr();
+  // Fire Harmony's months and data version: only its own pages show them
+  const shell = useShellData(FH_ROUTES.has(route));
 
   // Once opened, the explorer stays mounted (hidden on other pages) so the map and the choices survive.
   const [explorerOpened, setExplorerOpened] = useState(route === 'explorer');
@@ -196,7 +248,7 @@ function Shell() {
       <PaletteHost />
       <Shortcuts />
       <div className="fh-app">
-        <a className="fh-skip" href="#main" onClick={skipToMain}>{T.skip}</a>
+        <a className="fh-skip" href="#main" onClick={skipToMain}>{tr(...L.skip)}</a>
         <Header route={route} shell={shell} />
         {assistantOn() ? <Assistant /> : null}
         <main id="main" ref={mainRef} className="fh-main" tabIndex={-1}>
@@ -217,6 +269,13 @@ function Shell() {
                 <PageBoundary key="record">
                   <Suspense fallback={<PageLoading />}>
                     <RecordPage />
+                  </Suspense>
+                </PageBoundary>
+              ) : null}
+              {route === 'method' ? (
+                <PageBoundary key="method">
+                  <Suspense fallback={<PageLoading />}>
+                    <MethodPage />
                   </Suspense>
                 </PageBoundary>
               ) : null}
@@ -258,7 +317,7 @@ function Shell() {
             </div>
           ) : null}
         </main>
-        <Footer shell={shell} />
+        <Footer route={route} shell={shell} />
       </div>
       </ToastProvider>
     </I18nContext>
@@ -366,9 +425,10 @@ const EMPTY: ShellData = { firstFull: null, lastFull: null, current: null, first
 
 /** The months covered (dashboard.json, else meta.json) and the data version (meta.json), for the header and footer.
  *  data.ts is imported on demand so the database code stays out of the first download. */
-function useShellData(): ShellData {
+function useShellData(enabled: boolean): ShellData {
   const [data, setData] = useState<ShellData>(EMPTY);
   useEffect(() => {
+    if (!enabled) return undefined;
     let alive = true;
     void import('./lib/data.ts').then(async ({ loadDashboard, loadMeta }) => {
       const [meta, dash] = await Promise.allSettled([loadMeta(), loadDashboard()]);
@@ -394,13 +454,14 @@ function useShellData(): ShellData {
       setData(next);
     }).catch(() => undefined);   // the badge and the version line are extras: the pages report their own errors
     return () => { alive = false; };
-  }, []);
+  }, [enabled]);
   return data;
 }
 
 // ------------------------------------------------------------------------------------------------ header
 
 function Header({ route, shell }: { route: Route; shell: ShellData }) {
+  const tr = useTr();
   const header = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -412,55 +473,50 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
   }, []);
   useHeaderAutoHide(header, menuOpen);
   const onMap = route === 'explorer';
+  // Fire Harmony's own controls (its place search and its data badge) show on its own pages only
+  const fh = FH_ROUTES.has(route);
   const searchLabel = onMap ? T.search.explorerLabel(MOD_KEY) : T.search.label(MOD_KEY);
   return (
     <header ref={header} className="fh-header" data-scrolled={scrolled ? '' : undefined}>
       <div className="fh-header-inner">
         {/* On phones and tablets the open page is named under the brand (the page's own title says it to screen
-            readers, so this line is hidden from them; it is not part of the link, which opens the Explorer). */}
+            readers, so this line is hidden from them; it is not part of the link, which opens the home page). */}
         <div className="fh-brand-wrap">
-          <a className="fh-brand" href={HREF.record}>
+          <a className="fh-brand" href={HOME}>
             <BrandMark />
             <span className="fh-brand-name">{T.appName}</span>
           </a>
-          <span key={route} className="fh-brand-page" aria-hidden="true">{T.nav[route]}</span>
+          <span key={route} className="fh-brand-page" aria-hidden="true">{pageName(route, tr)}</span>
         </div>
-        <nav className="fh-nav" aria-label={T.navLabel}>
+        <nav className="fh-nav" aria-label={tr(...L.navLabel)}>
           <ul>
-            {ROUTES.map((r) => (
-              <li key={r} className={IN_MENU.has(r) ? 'ka-nav-more' : undefined}>
-                <a href={HREF[r]} aria-current={r === route ? 'page' : undefined} aria-label={T.navSource[r] ? T.nav[r] : undefined}>
-                  <span className="fh-nav-icon">{NAV_ICON[r]}</span>
-                  {T.navSource[r] ? (
-                    <span className="ka-nav-label">
-                      <span className="fh-nav-label" data-label={T.navSource[r]![0]}>{T.navSource[r]![0]}</span>
-                      <span className="ka-nav-src" aria-hidden="true">{T.navSource[r]![1]}</span>
-                    </span>
-                  ) : <span className="fh-nav-label" data-label={T.nav[r]}>{T.nav[r]}</span>}
+            {NAV.map((p) => (
+              <li key={p.key}>
+                <a href={p.href} aria-current={p.route !== undefined && p.route === route ? 'page' : undefined}>
+                  <span className="fh-nav-icon">{p.icon(16)}</span>
+                  <span className="fh-nav-label" data-label={tr(p.en, p.id)}>{tr(p.en, p.id)}</span>
                 </a>
               </li>
             ))}
           </ul>
         </nav>
         <div className="fh-header-tools">
-          {/* KalenderApi (modification): a plain link to the cinematic story (#/story, which leads on to #/season),
-              kept outside the typed page nav */}
-          <a className="ka-head-story ui-press" href="#/story" aria-label="Story: a zero is not always a zero (14 seconds)">
-            <IconPlay size={13} /><span className="ka-head-story-text">Story</span>
-          </a>
-          <Tooltip content={onMap ? T.search.explorerTip : T.search.tip} keys={[MOD_KEY, 'K']} describe={false}>
-            <button type="button" className="fh-search-trigger ui-press" onClick={() => window.dispatchEvent(new Event('fh:open-palette'))}
-              aria-label={searchLabel} aria-keyshortcuts="Control+K Meta+K">
-              <IconSearch size={16} />
-              <span className="fh-search-trigger-text">{onMap ? T.search.explorerText : T.search.text}</span>
-              <span className="fh-search-trigger-keys" aria-hidden="true"><kbd className="ui-kbd">{MOD_KEY}</kbd><kbd className="ui-kbd">K</kbd></span>
-            </button>
-          </Tooltip>
+          {fh ? (
+            <Tooltip content={onMap ? T.search.explorerTip : T.search.tip} keys={[MOD_KEY, 'K']} describe={false}>
+              <button type="button" className="fh-search-trigger ui-press" onClick={() => window.dispatchEvent(new Event('fh:open-palette'))}
+                aria-label={searchLabel} aria-keyshortcuts="Control+K Meta+K">
+                <IconSearch size={16} />
+                <span className="fh-search-trigger-text">{onMap ? T.search.explorerText : T.search.text}</span>
+                <span className="fh-search-trigger-keys" aria-hidden="true"><kbd className="ui-kbd">{MOD_KEY}</kbd><kbd className="ui-kbd">K</kbd></span>
+              </button>
+            </Tooltip>
+          ) : null}
           {assistantOn() ? <AskButton /> : null}
-          <DataBadge shell={shell} />
+          {fh ? <DataBadge shell={shell} /> : null}
+          <LangToggle />
           <ThemeButton />
-          <Tooltip content={T.menu.open} describe={false}>
-            <button type="button" className="ui-btn ui-btn-ghost ui-btn-icon fh-menu-btn" aria-label={T.menu.open} aria-haspopup="dialog"
+          <Tooltip content={tr(...L.menuOpen)} describe={false}>
+            <button type="button" className="ui-btn ui-btn-ghost ui-btn-icon fh-menu-btn" aria-label={tr(...L.menuOpen)} aria-haspopup="dialog"
               aria-expanded={menuOpen} aria-controls="fh-menu" onClick={() => setMenuOpen(true)}>
               <IconMenu size={20} />
             </button>
@@ -472,27 +528,10 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
   );
 }
 
-const NAV_ICON: Record<Route, ReactNode> = {
-  record: <IconChart size={16} />, explorer: <IconGlobe size={16} />, dashboard: <IconDashboard size={16} />, rankings: <IconRanking size={16} />, haze: <IconWind size={16} />,
-  methods: <IconBook size={16} />, data: <IconDatabase size={16} />,
-};
-const MENU_ICON: Record<Route, ReactNode> = {
-  record: <IconChart size={20} />, explorer: <IconGlobe size={20} />, dashboard: <IconDashboard size={20} />, rankings: <IconRanking size={20} />, haze: <IconWind size={20} />,
-  methods: <IconBook size={20} />, data: <IconDatabase size={20} />,
-};
-
-const PROJECT_ICON: Record<ProjectLinkKey, ReactNode> = {
-  report: <IconReport size={20} />, poster: <IconPoster size={20} />, code: <IconCode size={20} />, dataset: <IconDatabase size={20} />, hub: <IconInfo size={20} />,
-};
-
-/** A link to the rest of the project: a file or a site of its own opens in a new tab (and says so). */
-function ProjectLink({ k, className, style, onClick, children }: {
-  k: ProjectLinkKey; className?: string; style?: CSSProperties; onClick?: () => void; children: ReactNode;
-}) {
-  const l = PROJECT_LINKS[k];
-  return l.external
-    ? <a className={className} style={style} href={l.href} target="_blank" rel="noopener" onClick={onClick} aria-label={`${l.label} (${T.newTab})`}>{children}</a>
-    : <a className={className} style={style} href={l.href} onClick={onClick}>{children}</a>;
+/** The name of the open page: KalenderApi's pages in the reader's language, Fire Harmony's in English. */
+function pageName(route: Route, tr: (en: string, id: string) => string): string {
+  const own = NAV.find((p) => p.route === route);
+  return own ? tr(own.en, own.id) : T.nav[route];
 }
 
 const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -580,6 +619,8 @@ function useHeaderAutoHide(header: RefObject<HTMLElement | null>, locked: boolea
 /** The page menu of phones and tablets: a sheet from the bottom on a phone (drag it down, tap outside or press
  *  Escape to close), a panel under the menu button on a tablet. A native modal dialog, so focus stays inside. */
 function PageMenu({ open, route, shell, onClosed }: { open: boolean; route: Route; shell: ShellData; onClosed: () => void }) {
+  const tr = useTr();
+  const fh = FH_ROUTES.has(route);
   const dlg = useRef<HTMLDialogElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; t: number; dy: number; id: number } | null>(null);
@@ -640,29 +681,32 @@ function PageMenu({ open, route, shell, onClosed }: { open: boolean; route: Rout
         <div className="fh-menu-drag" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
           <span className="fh-menu-grip" aria-hidden="true" />
           <div className="fh-menu-head">
-            <p className="fh-menu-title" id="fh-menu-title">{T.menu.title}</p>
-            <button type="button" className="ui-btn ui-btn-ghost ui-btn-icon" aria-label={T.menu.close} onClick={close}>
+            <p className="fh-menu-title" id="fh-menu-title">{tr(...L.menuTitle)}</p>
+            <button type="button" className="ui-btn ui-btn-ghost ui-btn-icon" aria-label={tr(...L.menuClose)} onClick={close}>
               <IconClose size={20} />
             </button>
           </div>
         </div>
-        <nav aria-label={T.navLabel}>
+        <nav aria-label={tr(...L.navLabel)}>
           <ul className="fh-menu-list">
-            {ROUTES.map((r, i) => (
-              <li key={r}>
-                <a href={HREF[r]} aria-current={r === route ? 'page' : undefined} onClick={close} style={{ '--i': i } as CSSProperties}>
-                  <span className="fh-menu-icon" aria-hidden="true">{MENU_ICON[r]}</span>
-                  <span className="fh-menu-text">
-                    <span className="fh-menu-name">{T.nav[r]}</span>
-                    <span className="fh-menu-note">{T.menu.notes[r]}</span>
-                  </span>
-                  <span className="fh-menu-end" aria-hidden="true">{r === route ? <IconCheck size={18} /> : <IconChevronRight size={18} />}</span>
-                </a>
-              </li>
-            ))}
+            {NAV.map((p, i) => {
+              const on = p.route !== undefined && p.route === route;
+              return (
+                <li key={p.key}>
+                  <a href={p.href} aria-current={on ? 'page' : undefined} onClick={close} style={{ '--i': i } as CSSProperties}>
+                    <span className="fh-menu-icon" aria-hidden="true">{p.icon(20)}</span>
+                    <span className="fh-menu-text">
+                      <span className="fh-menu-name">{tr(p.en, p.id)}</span>
+                      <span className="fh-menu-note">{tr(p.noteEn, p.noteId)}</span>
+                    </span>
+                    <span className="fh-menu-end" aria-hidden="true">{on ? <IconCheck size={18} /> : <IconChevronRight size={18} />}</span>
+                  </a>
+                </li>
+              );
+            })}
             {assistantOn() ? (
               <li className="fh-menu-ask">
-                <a href="#ask" role="button" onClick={(e) => { e.preventDefault(); close(); setAskOpen(true); }} style={{ '--i': ROUTES.length } as CSSProperties}>
+                <a href="#ask" role="button" onClick={(e) => { e.preventDefault(); close(); setAskOpen(true); }} style={{ '--i': NAV.length } as CSSProperties}>
                   <span className="fh-menu-icon" aria-hidden="true"><IconSparkle size={18} /></span>
                   <span className="fh-menu-text">
                     <span className="fh-menu-name">Ask KalenderApi</span>
@@ -675,26 +719,27 @@ function PageMenu({ open, route, shell, onClosed }: { open: boolean; route: Rout
           </ul>
         </nav>
         <nav aria-labelledby="fh-menu-project">
-          <p className="fh-menu-group" id="fh-menu-project">{T.projectTitle}</p>
+          <p className="fh-menu-group" id="fh-menu-project">{tr(...L.projectTitle)}</p>
           <ul className="fh-menu-list fh-menu-project">
-            {PROJECT_ORDER.map((k, i) => (
-              <li key={k}>
-                <ProjectLink k={k} onClick={close} style={{ '--i': ROUTES.length + i } as CSSProperties}>
-                  <span className="fh-menu-icon" aria-hidden="true">{PROJECT_ICON[k]}</span>
-                  <span className="fh-menu-text">
-                    <span className="fh-menu-name">{PROJECT_LINKS[k].label}</span>
-                    <span className="fh-menu-note">{PROJECT_LINKS[k].note}</span>
-                  </span>
-                  <span className="fh-menu-end" aria-hidden="true">{PROJECT_LINKS[k].external ? <IconExternal size={16} /> : <IconChevronRight size={18} />}</span>
-                </ProjectLink>
-              </li>
-            ))}
+            <li>
+              <a href={CODE_URL} target="_blank" rel="noopener" onClick={close} style={{ '--i': NAV.length + 1 } as CSSProperties}
+                aria-label={`${tr(...L.code)} (${tr(...L.newTab)})`}>
+                <span className="fh-menu-icon" aria-hidden="true"><IconCode size={20} /></span>
+                <span className="fh-menu-text">
+                  <span className="fh-menu-name">{tr(...L.code)}</span>
+                  <span className="fh-menu-note">{tr(...L.codeNote)}</span>
+                </span>
+                <span className="fh-menu-end" aria-hidden="true"><IconExternal size={16} /></span>
+              </a>
+            </li>
           </ul>
         </nav>
-        <div className="fh-menu-foot">
-          <DataBadge shell={shell} tip={false} />
-          {shell.version ? <span>{T.menu.version(shell.version)}</span> : null}
-        </div>
+        {fh ? (
+          <div className="fh-menu-foot">
+            <DataBadge shell={shell} tip={false} />
+            {shell.version ? <span>{T.menu.version(shell.version)}</span> : null}
+          </div>
+        ) : null}
       </div>
     </dialog>
   );
@@ -752,44 +797,47 @@ function BrandMark() {
 
 // ------------------------------------------------------------------------------------------------ footer
 
-function Footer({ shell }: { shell: ShellData }) {
+function Footer({ route, shell }: { route: Route; shell: ShellData }) {
+  const tr = useTr();
   return (
     <footer className="fh-footer">
       <div className="fh-footer-inner">
         <div className="fh-footer-brand">
-          <a className="fh-brand" href={HREF.record}>
+          <a className="fh-brand" href={HOME}>
             <BrandMark />
             <span className="fh-brand-name">{T.appName}</span>
           </a>
-          <p>{T.tagline}</p>
-          <p>{T.made}</p>
+          <p>{tr(...L.tagline)}</p>
+          <p>{tr(...L.made)}</p>
         </div>
         <div className="fh-footer-col">
-          <p className="fh-footer-title">{T.creditTitle}</p>
-          <p>{T.credit}</p>
+          <p className="fh-footer-title">{tr(...L.creditTitle)}</p>
+          <p>{tr(...L.credit)}</p>
         </div>
-        <nav className="fh-footer-col" aria-label={T.linksTitle}>
-          <p className="fh-footer-title">{T.linksTitle}</p>
+        <nav className="fh-footer-col" aria-label={tr(...L.linksTitle)}>
+          <p className="fh-footer-title">{tr(...L.linksTitle)}</p>
           <ul className="fh-footer-links">
-            {T.links.map((l) => (
-              <li key={l.href}><a href={l.href}>{l.label}</a><span>{l.note}</span></li>
+            {NAV.map((p) => (
+              <li key={p.key}><a href={p.href}>{tr(p.en, p.id)}</a><span>{tr(p.noteEn, p.noteId)}</span></li>
             ))}
           </ul>
         </nav>
-        <nav className="fh-footer-col" aria-label={T.projectTitle}>
-          <p className="fh-footer-title">{T.projectTitle}</p>
+        <nav className="fh-footer-col" aria-label={tr(...L.projectTitle)}>
+          <p className="fh-footer-title">{tr(...L.projectTitle)}</p>
           <ul className="fh-footer-links fh-footer-project">
-            {PROJECT_ORDER.map((k) => (
-              <li key={k}>
-                <ProjectLink k={k}>{PROJECT_LINKS[k].label}{PROJECT_LINKS[k].external ? <IconExternal size={13} className="fh-footer-ext" /> : null}</ProjectLink>
-                <span>{PROJECT_LINKS[k].note}</span>
-              </li>
-            ))}
+            <li>
+              <a href={CODE_URL} target="_blank" rel="noopener" aria-label={`${tr(...L.code)} (${tr(...L.newTab)})`}>
+                {tr(...L.code)}<IconExternal size={13} className="fh-footer-ext" />
+              </a>
+              <span>{tr(...L.codeNote)}</span>
+            </li>
           </ul>
         </nav>
         <div className="fh-footer-base">
-          <p>{FIRMS_ACKNOWLEDGEMENT}</p>
-          {shell.version && shell.built ? <p>{T.version(shell.version, shell.built)}</p> : null}
+          <p>{tr(...L.firms)}</p>
+          {/* the only link to Fire Harmony's explorer: named as another team's project, on its own scale */}
+          <p>{tr(...L.globalLead)}<a href={HREF.explorer}>{tr(...L.globalLink)}</a>{tr(...L.globalTail)}</p>
+          {FH_ROUTES.has(route) && shell.version && shell.built ? <p>{T.version(shell.version, shell.built)}</p> : null}
         </div>
       </div>
     </footer>

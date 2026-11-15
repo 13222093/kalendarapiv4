@@ -9,8 +9,10 @@ Also marks "re-appeared after a gap" points with the rule in REAPPEAR_RULE (comp
 into that day's pts, so the page only counts what is in the file).
 
 Usage (run with an isolated interpreter):
-  python -I build_season.py <csv> <out.json> <download_utc> [year]
-  year defaults to 2019 (the v1.0 behaviour, output byte-for-byte unchanged); project 4 also builds 2015 and 2023.
+  python -I build_season.py <csv> <out.json> <download_utc> [year] [<start MM-DD> <end MM-DD>]
+  year defaults to 2019 (the v1.0 behaviour, output byte-for-byte unchanged); project 4 also builds other years.
+  The optional window (both dates, same year) replaces 1 Aug to 31 Oct, for example 01-01 03-31 for a wet-season
+  quarter; without it nothing changes. Name the output accordingly (kalteng_<year>_janmar_season.json).
 """
 import csv
 import hashlib
@@ -31,22 +33,25 @@ def url_for(year):
     return f'https://firms.modaps.eosdis.nasa.gov/data/country/viirs-snpp/{year}/viirs-snpp_{year}_Indonesia.csv'
 
 
-def filter_text(year):
+def filter_text(year, start=None, end=None):
+    start, end = start or date(year, 8, 1), end or date(year, 10, 31)
     return (
-        f'acq_date (UTC) from {year}-08-01 to {year}-10-31 inclusive; longitude 110.7 to 115.9 and latitude -3.6 to 0.9 '
+        f'acq_date (UTC) from {start.isoformat()} to {end.isoformat()} inclusive; longitude 110.7 to 115.9 and latitude -3.6 to 0.9 '
         '(a bounding box around Central Kalimantan, NOT the province polygon: it also takes in edges of West, South and '
         'East Kalimantan); type == 0 (presumed vegetation fire); confidence in {n, h, nominal, high} (low dropped). '
         'lon/lat rounded to 3 decimals, frp (MW) to 1 decimal; isNight = 1 when daynight == "N".'
     )
 
 
-def reappear_rule(year):
+def reappear_rule(year, start=None):
+    start = start or date(year, 8, 1)
+    first = start + timedelta(days=3)
     return (
         'A point on day t is "re-appeared after a gap" when the most recent earlier point within 0.03 degrees '
         '(plain Euclidean distance in lon/lat degrees, about 3.3 km) was seen 3 to 14 days before t. That means '
         '(a) a point within 0.03 degrees existed 3 to 14 days earlier, and (b) on the days in between (at least the '
         '2 consecutive days right before t) no point existed within 0.03 degrees. Only days inside this file are '
-        f'looked at (nothing before {year}-08-01), so the first possible re-appearance is on {year}-08-04. '
+        f'looked at (nothing before {start.isoformat()}), so the first possible re-appearance is on {first.isoformat()}. '
         "Stored per day in \"re\" as indices into that day's \"pts\". It says the record had a gap there, "
         'not why (smoke, cloud, a missed pass or a fire that went out and restarted are all possible).'
     )
@@ -64,12 +69,21 @@ def main():
     src, out, downloaded = sys.argv[1], sys.argv[2], sys.argv[3]
     year = int(sys.argv[4]) if len(sys.argv) > 4 else YEAR
     START, END = date(year, 8, 1), date(year, 10, 31)
+    if len(sys.argv) > 5:      # optional window: <start MM-DD> <end MM-DD>
+        START = date(year, *(int(x) for x in sys.argv[5].split('-')))
+        END = date(year, *(int(x) for x in sys.argv[6].split('-')))
+        assert START <= END
     days = {}
     d = START
     while d <= END:
         days[d.isoformat()] = []
         d += timedelta(days=1)
 
+    side = None                 # <csv>.source.json marks a CSV converted from another FIRMS copy (2026: NRT mirror)
+    if os.path.exists(src + '.source.json'):
+        with open(src + '.source.json', encoding='utf-8') as f:
+            side = json.load(f)
+    by_quality, no_type = {}, 0
     rows_total = 0
     with open(src, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -82,10 +96,15 @@ def main():
             lon, lat = float(row['longitude']), float(row['latitude'])
             if not (BBOX[0] <= lon <= BBOX[2] and BBOX[1] <= lat <= BBOX[3]):
                 continue
-            if has_type and row['type'].strip() != '0':
+            typ = row['type'].strip() if has_type else '0'
+            if has_type and typ != '0' and not (side is not None and typ == ''):
                 continue
             if row['confidence'].strip().lower() not in CONF_KEEP:
                 continue
+            if side is not None:
+                q = row.get('quality', '')
+                by_quality[q] = by_quality.get(q, 0) + 1
+                no_type += typ == ''
             frp = float(row['frp']) if row['frp'] else 0.0
             night = 1 if row['daynight'].strip().upper() == 'N' else 0
             days[day].append([round(lon, 3), round(lat, 3), round(frp, 1), night])
@@ -142,7 +161,7 @@ def main():
             'bytes': os.path.getsize(src),
             'rows_total': rows_total,
             'rows_kept': rows_kept,
-            'filter_text': filter_text(year),
+            'filter_text': filter_text(year, START, END),
             'product': 'VIIRS S-NPP 375 m (NASA FIRMS, standard processing)',
             'day_is': 'FIRMS acq_date in UTC (one frame = one acq_date)',
             'pts_columns': ['lon', 'lat', 'frp_MW', 'isNight'],
@@ -152,9 +171,17 @@ def main():
         },
         'bbox': list(BBOX),
         'bbox_note': 'Bounding box around Central Kalimantan (Kalteng), not the province polygon.',
-        'reappear_rule': reappear_rule(year),
+        'reappear_rule': reappear_rule(year, START),
         'days': out_days,
     }
+    if side is not None:
+        doc['source'].update({
+            'url': side['url'], 'product': side['product'], 'converted_from': side['converted_from'],
+            'rows_kept_by_quality': by_quality, 'rows_kept_without_type': no_type, 'provisional': True,
+        })
+        doc['source']['filter_text'] += (
+            ' Near-real-time (NRT) rows carry no type, so the type test is applied to standard-processing rows only; '
+            'NRT rows are kept without it. NRT data are provisional.')
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, 'w', encoding='utf-8') as f:
         json.dump(doc, f, separators=(',', ':'))

@@ -135,19 +135,31 @@ h1, h2, .fh-brand-name, .ka-display {
 .ka-story-vignette { position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(120% 90% at 70% 45%, transparent 35%, rgba(4, 9, 10, 0.85) 100%),
               linear-gradient(90deg, rgba(4, 9, 10, 0.92) 0%, rgba(4, 9, 10, 0.55) 34%, transparent 58%); }
-.ka-story-top { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; align-items: baseline; padding: 22px 32px; }
+.ka-story-top { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; gap: 16px; align-items: center; padding: 18px 32px; }
 .ka-story-brand { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #e6efec; text-decoration: none; }
 .ka-story-tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: #7f908c; text-transform: uppercase; }
-.ka-story-skip { margin-left: auto; color: #a6b6b2; font-size: 14px; }
+/* top right: "Skip story", the EN / ID switch and the small Method link, pushed to the right together */
+.ka-story-tools { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.ka-story-lang { color: #c7d3d0; }
+.ka-story-skip { color: #a6b6b2; font: inherit; font-size: 14px; white-space: nowrap; background: none; border: 0; padding: 4px 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ka-story-method { color: #a6b6b2; font-size: 13px; white-space: nowrap; text-underline-offset: 3px; }
+.ka-story-skip:hover, .ka-story-method:hover { color: #e6efec; }
+.ka-story a:focus-visible, .ka-story button:focus-visible { outline: 2px solid #2fd1b2; outline-offset: 2px; border-radius: 4px; }
 .ka-story-copy { position: absolute; left: 32px; bottom: 120px; max-width: 520px; }
 .ka-story-kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #2fd1b2; margin: 0 0 12px; }
 .ka-story-copy h1 { font-size: clamp(34px, 5vw, 60px); line-height: 1.04; margin: 0 0 14px; animation: kaIn 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 .ka-story-body { font-size: 18px; line-height: 1.5; color: #c7d3d0; margin: 0; animation: kaIn 900ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-.ka-story-cta { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+.ka-story-cta { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.ka-story-cta a { text-decoration: none; }
+.ka-story-cta .ka-btn-primary, .ka-story-cta .ka-btn-ghost { padding: 11px 16px; font-size: 15px; line-height: 1.2; }
 .ka-btn-primary { background: #2fd1b2; color: #04110f; padding: 12px 18px; border-radius: 10px; font-weight: 650; text-decoration: none; }
 .ka-btn-ghost { background: transparent; color: #e6efec; border: 1px solid rgba(160, 230, 215, 0.3); padding: 12px 18px; border-radius: 10px; font: inherit; cursor: pointer; }
 .ka-story-foot { position: absolute; left: 32px; right: 32px; bottom: 22px; font-size: 11.5px; color: #7f908c; max-width: 760px; }
-.ka-story-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: #2fd1b2; transition: width 120ms linear; }
+/* the progress bar is scaled by the story's clock (a transform, so it costs no layout) */
+.ka-story-progress { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: #2fd1b2;
+  transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
+.ka-story.is-home .ka-story-progress { opacity: 0; }
 /* Story: which day the dots and the photo show, and the blind-zero key (same two-tone hatching as the vis2019 images) */
 .ka-story-stamp { position: absolute; right: 32px; top: 72px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   font-family: var(--font-mono); font-size: 12px; color: #c7d3d0; background: rgba(6, 11, 12, 0.62); padding: 8px 10px; border-radius: 8px;
@@ -158,9 +170,16 @@ h1, h2, .fh-brand-name, .ka-display {
 @media (max-width: 760px) { .ka-story-stamp { right: 20px; top: 64px; font-size: 11px; } }
 @keyframes kaIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @media (max-width: 760px) {
-  .ka-story-copy { left: 20px; right: 20px; bottom: 110px; }
-  .ka-story-top { padding: 16px 20px; flex-wrap: wrap; }
+  .ka-story-copy { left: 20px; right: 20px; bottom: 84px; }
+  .ka-story-top { padding: 12px 20px; gap: 12px; }
   .ka-story-tag { display: none; }
+  /* phones: the Indonesian captions run longer, so the caption is set smaller and keeps clear of the chart above it */
+  .ka-story-kicker { margin-bottom: 8px; }
+  .ka-story-copy h1 { font-size: 27px; line-height: 1.08; margin-bottom: 10px; }
+  .ka-story-body { font-size: 15px; line-height: 1.42; }
+  .ka-story-cta { gap: 8px; margin-top: 14px; }
+  .ka-story-cta .ka-btn-primary, .ka-story-cta .ka-btn-ghost { padding: 9px 12px; font-size: 14px; }
+  .ka-story-foot { left: 20px; right: 20px; bottom: 14px; font-size: 10.5px; line-height: 1.35; }
 }
 /* Project 4: the Story's intro chart (the jump and the fix, Indonesia's yearly record over the map). Dark by design,
    as the rest of the Story; right of the caption on wide screens, above it on narrow ones. */
@@ -214,3 +233,49 @@ h1, h2, .fh-brand-name, .ka-display {
 .ka-hex-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.4; color: var(--text-2); }
 /* Story: the caption stays readable over the hatching and the white cloud of the blind day */
 .ka-story-copy h1, .ka-story-body { text-shadow: 0 1px 14px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.6); }
+/* Story: the intro chart draws itself with CSS (no work per frame on the page). The as-recorded line draws on entry;
+   .is-fix dims it and draws the one-scale line and its band; .is-leaving fades the chart; .is-still (a paused story)
+   shows everything finished. */
+.ka-story-chart { animation: kaFade 500ms linear backwards; transition: opacity 600ms linear; }
+.ka-story-chart.is-leaving { opacity: 0; }
+.ka-sc-raw, .ka-sc-harm { stroke-dasharray: 1; }
+.ka-sc-raw { stroke-dashoffset: 0; animation: kaDraw 3000ms 500ms linear backwards; transition: opacity 800ms linear; }
+.ka-sc-lab-raw { animation: kaFade 300ms 3500ms linear backwards; transition: opacity 800ms linear; }
+.ka-sc-harm { stroke-dashoffset: 1; transition: stroke-dashoffset 2800ms 300ms linear; }
+.ka-sc-band { opacity: 0; transition: opacity 2800ms 300ms linear; }
+.ka-sc-lab-harm { opacity: 0; transition: opacity 300ms 3100ms linear; }
+.ka-story-chart.is-fix .ka-sc-raw, .ka-story-chart.is-fix .ka-sc-lab-raw { opacity: 0.45; }
+.ka-story-chart.is-fix .ka-sc-harm { stroke-dashoffset: 0; }
+.ka-story-chart.is-fix .ka-sc-band, .ka-story-chart.is-fix .ka-sc-lab-harm { opacity: 1; }
+.ka-story-chart.is-still, .ka-story-chart.is-still * { animation: none !important; transition: none !important; }
+@keyframes kaDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes kaFade { from { opacity: 0; } to { opacity: 1; } }
+/* Story, final frame (the app's home): the five actions sit in two rows under the copy */
+.ka-story.is-home .ka-story-copy { max-width: 560px; }
+@media (max-width: 760px) {
+  .ka-story-tools { gap: 10px; }
+  .ka-story-brand { font-size: 20px; }
+  .ka-story-skip, .ka-story-method { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ka-story-copy h1, .ka-story-body, .ka-story-chart, .ka-story-chart * { animation: none !important; transition: none !important; }
+}
+
+/* Story, final frame: the product panel (components/HubPanel.tsx, which brings its own CSS). Wide screens: a column at
+   the right edge, centred, scrolling inside itself if it is taller than the window. Under 900 px: below the buttons,
+   and the final frame scrolls (the map and its shading stay put). It is on the page only in the final frame. */
+.ka-story-hub { position: absolute; z-index: 1; right: 32px; top: 76px; bottom: 64px; width: min(420px, 32vw);
+  display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
+  animation: kaIn 700ms 150ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ka-story-hub-in { margin: auto 0; }
+@media (min-width: 900px) { .ka-story.is-home .ka-story-foot { max-width: min(760px, calc(100vw - 64px - min(420px, 32vw) - 32px)); } }
+@media (max-width: 899px) {
+  .ka-story.is-home { overflow-y: auto; overflow-x: hidden; }
+  .ka-story.is-home .ka-story-canvas, .ka-story.is-home .ka-story-vignette { position: fixed; }
+  .ka-story.is-home .ka-story-copy { position: relative; left: auto; right: auto; bottom: auto; max-width: none;
+    margin: 0 20px; padding-top: max(88px, 50vh); }
+  .ka-story.is-home .ka-story-hub { position: relative; right: auto; top: auto; bottom: auto; width: auto; overflow: visible;
+    margin: 24px 20px 0; }
+  .ka-story.is-home .ka-story-foot { position: relative; left: auto; right: auto; bottom: auto; margin: 24px 20px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .ka-story-hub { animation: none; } }

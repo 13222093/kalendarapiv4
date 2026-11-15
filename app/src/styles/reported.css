@@ -87,19 +87,32 @@
 }
 .ka-rep-tag.is-official { color: var(--text); border-color: var(--text-3); }
 
-/* "Blind zeros by district" (BlindDistrictsCard.tsx): a map of the 14 districts and a ranked list, one shade */
+/* "Zeros with no cloud-free look, by district" (BlindDistrictsCard.tsx): a map of the 14 districts and a ranked list,
+   one shade. The card is shown in the explorer and on the record page, so every theme token it uses has a fallback
+   and it keeps working where the app shell's tokens are not set. */
 .ka-bz { --ka-bz: #9fb4c7; }
 :root[data-theme="light"] .ka-bz { --ka-bz: #3d5a73; }
+.ka-bz .ka-rep-lead { color: var(--text, inherit); font-size: var(--fs-13, 13px); }
+.ka-bz .ka-rep-note { color: var(--text-2, inherit); font-size: var(--fs-12, 12px); }
+.ka-bz .ka-rep-note a { color: var(--accent, currentColor); text-decoration: underline; text-underline-offset: 2px; }
+.ka-bz .ka-rep-loading { background: var(--surface-2, transparent); border-color: var(--border, currentColor); }
 .ka-bz-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 10px 0 8px; }
 .ka-bz-map { width: 100%; max-width: 320px; height: auto; justify-self: center; }
-.ka-bz-map path { fill: var(--ka-bz); stroke: var(--bg); stroke-width: 0.8; stroke-linejoin: round; cursor: default; }
-.ka-bz-map path.is-on { stroke: var(--accent); stroke-width: 1.6; }
-.ka-bz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: var(--fs-12); }
+.ka-bz-map path { fill: var(--ka-bz); stroke: var(--bg, #0b1113); stroke-width: 0.8; stroke-linejoin: round; cursor: default; }
+.ka-bz-map path.is-on { stroke: var(--accent, #2fd1b2); stroke-width: 1.6; }
+.ka-bz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: var(--fs-12, 12px); }
 .ka-bz-list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) 46px 64px; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 4px; }
-.ka-bz-list li.is-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ka-bz-list li.is-on { background: color-mix(in srgb, var(--accent, #2fd1b2) 14%, transparent); }
 .ka-bz-sw { width: 10px; height: 10px; border-radius: 2px; background: var(--ka-bz); }
-.ka-bz-name { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ka-bz-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; color: var(--text); }
+.ka-bz-name { color: var(--text, inherit); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-bz-val { font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; text-align: right; color: var(--text, inherit); }
 .ka-bz-bar { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ka-bz) 18%, transparent); overflow: hidden; }
 .ka-bz-bar i { display: block; height: 100%; background: var(--ka-bz); }
-.ka-bz-src { color: var(--text-3); }
+.ka-bz .ka-bz-src { color: var(--text-3, inherit); }
+/* the card measures its own width: wide (the record page) puts the map beside the list, narrow (the explorer's side
+   panel, phones) keeps the map above it */
+.ka-bz { container-type: inline-size; }
+@container (min-width: 640px) {
+  .ka-bz-body { grid-template-columns: minmax(0, 320px) minmax(0, 520px); align-items: center; gap: 28px; }
+  .ka-bz-list { font-size: var(--fs-13, 13px); gap: 3px; }
+}

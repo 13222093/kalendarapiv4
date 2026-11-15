@@ -4,10 +4,14 @@
 // kalenderapi/scripts/build_season.py). Honesty rules: a frame is exactly one day of data; nothing is interpolated or
 // drawn between days (no arrows, no fire fronts); a day with no points shows zero; every number on screen is computed
 // here from the data file. The faded dots are the real points of the previous 7 days, not an estimate.
+// Wording: the hatched layer is "no cloud-free look" (cloud only, from the MODIS fire mask); the panel says once that
+// thick smoke is not flagged, so the true unseen share is higher. English and Bahasa Indonesia (lib/lang.ts).
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Deck, MapView, WebMercatorViewport, type Layer } from '@deck.gl/core';
 import { TileLayer } from '@deck.gl/geo-layers';
 import { BitmapLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
+import { fmtNumber, locale, monthName, useLang, useTr, type Lang, type Tr } from '../lib/lang';
+import { LangToggle } from '../components/LangToggle';
 import '../styles/season.css';
 
 type Pt = [number, number, number, number];   // lon, lat, frp (MW), isNight (1 or 0)
@@ -33,9 +37,10 @@ interface Season {
   kept: number;        // the sum of the daily counts (checked against source.rows_kept)
 }
 
-/** "What could the satellites see?" (public/ka-data/visibility_kalteng_2019.json and vis2019/<date>.png, built by
- *  kalenderapi/scripts/build_visibility.py from the NASA MODIS Terra and Aqua daily FireMask). Per day: cells with no
- *  fire detected that Terra and Aqua saw clear (T) or only under cloud (U, a "blind zero"); d = [T, U] per district. */
+/** Where the satellites had a cloud-free look (public/ka-data/visibility_kalteng_<year>.json and vis<year>/<date>.png,
+ *  built by kalenderapi/scripts/build_visibility.py from the NASA MODIS Terra and Aqua daily FireMask). Per day: cells
+ *  with no fire detected that had a cloud-free look from Terra or Aqua (T) or none, only cloud (U); d = [T, U] per
+ *  district. `blind` is U / (T + U) in %. The file's own `rule` text is not shown: the page states the rule itself. */
 interface VisDay { date: string; F: number; T: number; U: number; N: number; blind: number | null; d: [number, number][] }
 interface VisFile {
   rule: string;
@@ -52,6 +57,7 @@ const DISTRICTS_URL = `${import.meta.env.BASE_URL}ka-data/kalteng_districts.json
 const visImgUrl = (year: number, date: string) => `${import.meta.env.BASE_URL}ka-data/vis${year}/${date}.png`;
 /** A ka-data file that is not built yet: a 404, or (in development) the app's page served in its place. */
 class NotBuilt extends Error {}
+const NOT_BUILT = 'not-built';
 async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url);
   if (r.status === 404) throw new NotBuilt(url);
@@ -62,11 +68,12 @@ async function getJson<T>(url: string): Promise<T> {
 /** The address of a day: 2019 keeps its old form ('#/season?d=2019-09-15'), other years name the year too. */
 const dayHash = (year: number, date: string, debug: boolean) =>
   `#/season?${year === 2019 ? '' : `y=${year}&`}d=${date}${debug ? '&debug=1' : ''}`;
-const BLIND_NOTE = 20;         // caption: name the blind share when at least this % of today's no-fire land was never seen
-const pct1 = (x: number) => `${x.toFixed(1)}%`;
+const BLIND_NOTE = 20;         // caption: point at the hatching when at least this % of today's no-fire land had no cloud-free look
+const pct1 = (x: number, lang: Lang) => `${fmtNumber(x, lang, 1)}%`;
+const KALTENG_AOI = 'prov-kalimantan-tengah';
 
 const dataUrl = (year: number) => `${import.meta.env.BASE_URL}ka-data/kalteng_${year}_season.json`;
-const SEASON_YEARS = [2015, 2019, 2023];
+const SEASON_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2026];
 // Project 4: GIBS has the Suomi NPP VIIRS true-colour layer from 24 Nov 2015 (its WMTS capabilities); before that a day's
 // photo is MODIS Terra true colour (every day since 2000), and the page says which satellite took it.
 const VIIRS_PHOTO_FROM = '2015-11-24';
@@ -91,8 +98,6 @@ const PHOTO_RETRY_MS = 5000;
 const PHOTO_RETRIES = 2;
 const LOW_SHARE = 0.2;         // caption: today below 20% of the largest of the previous 7 days
 const PITCH = 35, BEARING = -10;
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const PLACES = [
   { name: 'Palangka Raya', p: [113.914, -2.21] as [number, number] },
   { name: 'Sampit', p: [112.95, -2.533] as [number, number] },
@@ -101,16 +106,17 @@ const PLACES = [
   { name: 'Muara Teweh', p: [114.894, -0.95] as [number, number] },
 ];
 
-function fmt(n: number) { return Math.round(n).toLocaleString('en-US'); }
+function fmt(n: number, lang: Lang) { return fmtNumber(Math.round(n), lang); }
 function reducedMotion() { return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false; }
 function dateFromHash(hash: string): string | null {
   const q = hash.split('?')[1];
   const d = q ? new URLSearchParams(q).get('d') : null;
   return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
 }
-function parts(date: string) {
+function parts(date: string, lang: Lang) {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  return { month: MONTHS[m - 1] ?? '', year: y, weekday: WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] ?? '' };
+  const weekday = new Intl.DateTimeFormat(locale(lang), { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d)));
+  return { month: monthName(m, lang, 'long'), year: y, weekday };
 }
 
 function prepare(file: SeasonFile): Season {
@@ -215,6 +221,8 @@ function dayLayer(day: Day, age: number) {
 // ------------------------------------------------------------------------------------------------ page
 
 export function Season({ year = 2019 }: { year?: number }) {
+  const tr = useTr();
+  const lang = useLang();
   const root = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const deck = useRef<Deck<MapView> | null>(null);
@@ -239,9 +247,9 @@ export function Season({ year = 2019 }: { year?: number }) {
 
   useEffect(() => {
     const before = document.title;
-    document.title = 'Play the season · KalenderApi';
+    document.title = `${lang === 'id' ? 'Putar musim' : 'Play the season'} · KalenderApi`;
     return () => { document.title = before; };
-  }, []);
+  }, [lang]);
 
   // the data file
   const [notBuilt, setNotBuilt] = useState(false);
@@ -300,7 +308,7 @@ export function Season({ year = 2019 }: { year?: number }) {
         }
       })
       .catch((e: unknown) => {
-        if (live) setVisErr(e instanceof NotBuilt ? `not built yet for ${year}` : e instanceof Error ? e.message : String(e));
+        if (live) setVisErr(e instanceof NotBuilt ? NOT_BUILT : e instanceof Error ? e.message : String(e));
       });
     return () => { live = false; };
   }, [year]);
@@ -385,7 +393,7 @@ export function Season({ year = 2019 }: { year?: number }) {
     }
     layers.push(lay(day.date, 1, kick.current.date === day.date ? kick.current : NO_KICK));
     if (f.from && f.from !== day.date && p < 1) layers.push(lay(f.from, 1 - p));
-    // the day's blind zeros (hatching) and no data (dots), only once that day's own image is in: never another day's
+    // the day's land with no cloud-free look (hatching) and no data (dots), only once that day's own image is in
     if (vis) {
       const img = visImgs.current.get(day.date);
       if (img) {
@@ -598,10 +606,16 @@ export function Season({ year = 2019 }: { year?: number }) {
   const n = day?.pts.length ?? 0;
   const rToday = season?.rePts[idx]?.length ?? 0;
   const rSoFar = season?.cumRe[idx] ?? 0;
-  const when = day ? parts(day.date) : null;
+  const when = day ? parts(day.date, lang) : null;
   const vd = vis && day ? vis.byDate.get(day.date) ?? null : null;
   const seasonBlind = vis?.file.season.blind ?? null;
-  const lines = season && day ? captions(season, idx, vd) : [];
+  const lines = season && day ? captions(season, idx, vd, tr, lang) : [];
+  const to = tr('to', 'sampai');
+  const augOct = `${monthName(8, lang)} ${to} ${monthName(10, lang)}`;          // "Aug to Oct"
+  const kalteng = tr('Central Kalimantan', 'Kalimantan Tengah');
+  const seasonSpan = `1 ${monthName(8, lang)} ${to} 31 ${monthName(10, lang)} ${year}`;
+  const noLook = tr('No cloud-free look', 'Tanpa pandangan bebas awan');
+  const na = tr('n/a', 't.a.');
   const photoReady = day ? loaded.current.has(day.date) : false;
   const src = season?.file.source;
 
@@ -627,77 +641,87 @@ export function Season({ year = 2019 }: { year?: number }) {
       {noFrames && season && day ? (
         <img className="ka-season-still" src={stillUrl(day.date, [season.file.bbox[0] - PHOTO_MARGIN, season.file.bbox[1] - PHOTO_MARGIN,
           season.file.bbox[2] + PHOTO_MARGIN, season.file.bbox[3] + PHOTO_MARGIN])}
-          alt={`A still NASA ${photoName(day.date)} true-colour photo of Central Kalimantan on ${day.date}`} />
+          alt={tr(`A still NASA ${photoName(day.date)} true-colour photo of Central Kalimantan on ${day.date}`,
+            `Foto diam warna asli NASA ${photoName(day.date)} atas Kalimantan Tengah pada ${day.date}`)} />
       ) : null}
       <div className="ka-season-vignette" />
       {debug ? <pre className="ka-season-debug" aria-hidden="true">{dbg || 'debug: waiting for the first second'}</pre> : null}
       <header className="ka-season-top">
-        <a className="ka-season-brand" href="#/story">KalenderApi</a>
-        <span className="ka-season-tag">Play the season . Central Kalimantan . 1 Aug to 31 Oct {year}</span>
-        <nav className="ka-season-links" aria-label="Pages">
-          {/* project 4: the other season years that are built, and the Indonesia record of Central Kalimantan */}
+        <a className="ka-season-brand" href="#/home">KalenderApi</a>
+        <span className="ka-season-tag">{tr('Play the season', 'Putar musim')} . {kalteng} . {seasonSpan}</span>
+        <nav className="ka-season-links" aria-label={tr('Pages', 'Halaman')}>
+          {/* the other season years that are built, then the record of Central Kalimantan, the story and the home page */}
           {years.length > 1 ? years.map((y) => (
             <a key={y} href={y === 2019 ? '#/season' : `#/season?y=${y}`} aria-current={y === year ? 'page' : undefined}
               className="ka-season-year">{y}</a>
           )) : null}
-          <a href={`#/record?aoi=prov-kalimantan-tengah&m=${year}-09`}>Record</a>
-          <a href="#/story">Story</a>
-          <a href={`#/?area=state:IDN-1931&month=${year}09&tab=calendar`}>Explorer</a>
+          <a href={`#/record?aoi=${KALTENG_AOI}&m=${year}-09`}>{tr('Record', 'Rekaman')}</a>
+          <a href="#/story">{tr('Story', 'Cerita')}</a>
+          <a href="#/home">{tr('Home', 'Beranda')}</a>
         </nav>
+        <LangToggle className="ka-season-lang" />
       </header>
 
-      <section className="ka-season-hud" aria-label="The day shown">
+      <section className="ka-season-hud" aria-label={tr('The day shown', 'Hari yang ditampilkan')}>
         {notBuilt ? (
           <div className="ka-season-error" role="status">
-            <p className="ka-season-kicker">Central Kalimantan . 1 Aug to 31 Oct {year}</p>
-            <p>The {year} season is not built yet: its hotspot file (ka-data/kalteng_{year}_season.json) is still being made by the data run.</p>
+            <p className="ka-season-kicker">{kalteng} . {seasonSpan}</p>
+            <p>{tr(`The ${year} season is not built yet: its hotspot file is still being made by the data run.`,
+              `Musim ${year} belum tersedia: berkas titik panasnya masih dibuat.`)}</p>
             <p>
               {years.filter((y) => y !== year).map((y) => (
-                <a key={y} href={y === 2019 ? '#/season' : `#/season?y=${y}`} style={{ marginRight: 12 }}>Play {y} instead</a>
+                <a key={y} href={y === 2019 ? '#/season' : `#/season?y=${y}`} style={{ marginRight: 12 }}>{tr(`Play ${y} instead`, `Putar ${y} saja`)}</a>
               ))}
-              <a href="#/record?aoi=prov-kalimantan-tengah">Central Kalimantan in the Indonesia record</a>
+              <a href={`#/record?aoi=${KALTENG_AOI}`}>{tr('Central Kalimantan in the record', 'Kalimantan Tengah dalam rekaman')}</a>
             </p>
           </div>
         ) : error ? (
           <div className="ka-season-error" role="alert">
-            <p>The season data file could not be loaded ({error}).</p>
-            <button type="button" className="ka-btn-ghost" onClick={() => setAttempt((a) => a + 1)}>Try again</button>
+            <p>{tr('The season data file could not be loaded', 'Berkas data musim gagal dimuat')} ({error}).</p>
+            <button type="button" className="ka-btn-ghost" onClick={() => setAttempt((a) => a + 1)}>{tr('Try again', 'Coba lagi')}</button>
           </div>
         ) : !season || !day || !when ? (
-          <p className="ka-season-kicker" role="status">Loading 92 days of hotspots...</p>
+          <p className="ka-season-kicker" role="status">{tr('Loading the season\'s hotspots...', 'Memuat titik panas musim ini...')}</p>
         ) : (
           <>
-            <p className="ka-season-kicker">{when.month} {when.year} . day {idx + 1} of {season.days.length}</p>
+            <p className="ka-season-kicker">{when.month} {when.year} . {tr(`day ${idx + 1} of ${season.days.length}`, `hari ${idx + 1} dari ${season.days.length}`)}</p>
             <h1 className="ka-season-date"><time dateTime={day.date}>{day.date}</time></h1>
-            <p className="ka-season-weekday">{when.weekday}<span className="ka-season-short"> . one day of data</span> (UTC)</p>
+            <p className="ka-season-weekday">{when.weekday}<span className="ka-season-short"> . {tr('one day of data', 'satu hari data')}</span> (UTC)</p>
             <dl className="ka-season-stats">
               <div className="ka-season-stat-fire">
-                <dt>Hotspots<span className="ka-season-wide"> seen today</span></dt>
-                <dd>{fmt(n)}</dd>
+                <dt>{tr('Hotspots', 'Titik panas')}<span className="ka-season-wide"> {tr('detected today', 'terdeteksi hari ini')}</span></dt>
+                <dd>{fmt(n, lang)}</dd>
               </div>
               <div className="ka-season-stat-re">
-                <dt>Re-appeared<span className="ka-season-wide"> after a gap</span><span className="ka-season-narrow"> so far</span></dt>
-                <dd>{fmt(rSoFar)} <small>season so far{rToday ? `, ${fmt(rToday)} today` : ''}</small></dd>
+                <dt>{tr('Re-appeared', 'Muncul lagi')}<span className="ka-season-wide"> {tr('after a gap', 'setelah jeda')}</span><span className="ka-season-narrow"> {tr('so far', 'sejauh ini')}</span></dt>
+                <dd>{fmt(rSoFar, lang)} <small>{tr('season so far', 'sejak awal musim')}{rToday ? `, ${fmt(rToday, lang)} ${tr('today', 'hari ini')}` : ''}</small></dd>
               </div>
               {vd ? (
                 <div className="ka-season-stat-blind">
-                  <dt><span className="ka-sw ka-sw-blind" aria-hidden="true" />No-clear-view share<span className="ka-season-wide"> today</span></dt>
-                  <dd>{vd.blind === null ? 'n/a' : pct1(vd.blind)} <small>Aug to Oct {seasonBlind === null ? 'n/a' : pct1(seasonBlind)}</small></dd>
+                  <dt><span className="ka-sw ka-sw-blind" aria-hidden="true" />{noLook}</dt>
+                  <dd>{vd.blind === null ? na : pct1(vd.blind, lang)} <small>{augOct} {seasonBlind === null ? na : pct1(seasonBlind, lang)}</small></dd>
                 </div>
               ) : null}
             </dl>
+            {/* the smoke note, said once, where the share is shown */}
+            {vd ? (
+              <p className="ka-season-note">
+                {tr('Cloud only: the MODIS fire mask does not flag thick smoke, so the true unseen share is higher.',
+                  'Hanya awan: masker api MODIS tidak menandai asap tebal, jadi bagian yang sebenarnya tidak terlihat lebih besar.')}
+              </p>
+            ) : null}
             <div className="ka-season-capwrap">
               <div ref={capRef} id="ka-season-caption" className={`ka-season-caption${capOpen ? ' is-open' : ''}`} aria-live={playing ? 'off' : 'polite'}>
                 {lines.map((l) => <p key={l}>{l}</p>)}
               </div>
               <button type="button" className="ka-season-more" aria-expanded={capOpen} aria-controls="ka-season-caption"
-                style={{ visibility: capMore ? 'visible' : 'hidden' }} onClick={() => setCapOpen((v) => !v)}>{capOpen ? 'Less' : 'More'}</button>
+                style={{ visibility: capMore ? 'visible' : 'hidden' }} onClick={() => setCapOpen((v) => !v)}>{capOpen ? tr('Less', 'Ringkas') : tr('More', 'Lainnya')}</button>
             </div>
             {vis ? (
               <details className="ka-season-dist">
-                <summary>No-clear-view share by district</summary>
+                <summary>{tr('No cloud-free look, by district', 'Tanpa pandangan bebas awan, per kabupaten/kota')}</summary>
                 <table>
-                  <thead><tr><th scope="col">District</th><th scope="col">{day.date.slice(5)}</th><th scope="col">Aug to Oct</th></tr></thead>
+                  <thead><tr><th scope="col">{tr('District', 'Kabupaten/kota')}</th><th scope="col">{day.date.slice(5)}</th><th scope="col">{augOct}</th></tr></thead>
                   <tbody>
                     {vis.file.districts.map((dd, k) => {
                       const c = vd?.d[k];
@@ -705,45 +729,46 @@ export function Season({ year = 2019 }: { year?: number }) {
                       return (
                         <tr key={dd.name}>
                           <th scope="row">{dd.name}</th>
-                          <td>{c && z ? pct1((100 * c[1]) / z) : 'n/a'}</td>
-                          <td>{dd.blind === null ? 'n/a' : pct1(dd.blind)}</td>
+                          <td>{c && z ? pct1((100 * c[1]) / z, lang) : na}</td>
+                          <td>{dd.blind === null ? na : pct1(dd.blind, lang)}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                   <tfoot>
                     <tr>
-                      <th scope="row">Central Kalimantan</th>
-                      <td>{vd?.blind == null ? 'n/a' : pct1(vd.blind)}</td>
-                      <td>{seasonBlind === null ? 'n/a' : pct1(seasonBlind)}</td>
+                      <th scope="row">{kalteng}</th>
+                      <td>{vd?.blind == null ? na : pct1(vd.blind, lang)}</td>
+                      <td>{seasonBlind === null ? na : pct1(seasonBlind, lang)}</td>
                     </tr>
                   </tfoot>
                 </table>
-                <p>For land with no FIRMS hotspot, the hatched share is labelled U by the FireMask (no clear view). It does not estimate fires hidden from satellites.</p>
+                <p>{tr('Of each district\'s land with no fire detected, the share with no cloud-free look from Terra or Aqua that day. It does not estimate fire under cloud.',
+                  'Dari lahan tanpa deteksi api di tiap kabupaten/kota, bagian yang tanpa pandangan bebas awan dari Terra maupun Aqua hari itu. Ini bukan perkiraan api di bawah awan.')}</p>
               </details>
             ) : null}
             <ul className="ka-season-legend">
-              <li><span className="ka-sw ka-sw-today" aria-hidden="true" />Hotspot detected this day (bigger: more radiative power)</li>
-              <li><span className="ka-sw ka-sw-ghost" aria-hidden="true" />Hotspots of the previous 7 days, fading</li>
-              <li><span className="ka-sw ka-sw-ring" aria-hidden="true" />Re-appeared after a gap of 2 or more days</li>
+              <li><span className="ka-sw ka-sw-today" aria-hidden="true" />{tr('Hotspot this day (bigger: more radiative power)', 'Titik panas hari ini (lebih besar: daya lebih tinggi)')}</li>
+              <li><span className="ka-sw ka-sw-ghost" aria-hidden="true" />{tr(`Hotspots of the previous ${TRAIL} days, fading`, `Titik panas ${TRAIL} hari sebelumnya, memudar`)}</li>
+              <li><span className="ka-sw ka-sw-ring" aria-hidden="true" />{tr('Re-appeared after a gap of 2 or more days', 'Muncul lagi setelah jeda 2 hari atau lebih')}</li>
               {vis ? (
                 <>
-                  <li><span className="ka-sw ka-sw-blind" aria-hidden="true" />No clear view (U): no FIRMS hotspot detected; the FireMask reports an observation gap</li>
-                  <li><span className="ka-sw ka-sw-nodata" aria-hidden="true" />No data: no usable Terra or Aqua look</li>
+                  <li><span className="ka-sw ka-sw-blind" aria-hidden="true" />{tr('No cloud-free look (no fire detected, only cloud)', 'Tanpa pandangan bebas awan (tanpa deteksi api)')}</li>
+                  <li><span className="ka-sw ka-sw-nodata" aria-hidden="true" />{tr('No data: no usable Terra or Aqua look', 'Tanpa data: Terra dan Aqua tidak dapat dipakai')}</li>
                 </>
               ) : null}
-              <li><span className="ka-sw ka-sw-box" aria-hidden="true" />Data area: a box, not the province border</li>
+              <li><span className="ka-sw ka-sw-box" aria-hidden="true" />{tr('Data area: a box, not the province border', 'Area data: sebuah kotak, bukan batas provinsi')}</li>
             </ul>
           </>
         )}
       </section>
 
-      <section className="ka-season-dock" aria-label="Playback">
+      <section className="ka-season-dock" aria-label={tr('Playback', 'Pemutaran')}>
         <div className="ka-season-controls">
-          <button type="button" className="ka-season-step" aria-label="Previous day" disabled={!season || idx === 0} onClick={() => go(idx - 1)}>
+          <button type="button" className="ka-season-step" aria-label={tr('Previous day', 'Hari sebelumnya')} disabled={!season || idx === 0} onClick={() => go(idx - 1)}>
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <button type="button" className="ka-season-play" aria-label={playing ? 'Pause' : idx >= last && season ? 'Play again from 1 August' : 'Play'}
+          <button type="button" className="ka-season-play" aria-label={playing ? tr('Pause', 'Jeda') : idx >= last && season ? tr('Play again from 1 August', 'Putar lagi dari 1 Agustus') : tr('Play', 'Putar')}
             aria-keyshortcuts="Space" disabled={!season} onClick={toggle}>
             {playing ? (
               <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="0.8" /><rect x="9.5" y="2.5" width="3" height="11" rx="0.8" /></svg>
@@ -751,58 +776,68 @@ export function Season({ year = 2019 }: { year?: number }) {
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.6v10.8a.6.6 0 0 0 .9.5l8.6-5.4a.6.6 0 0 0 0-1L5.4 2.1a.6.6 0 0 0-.9.5z" /></svg>
             )}
           </button>
-          <button type="button" className="ka-season-step" aria-label="Next day" disabled={!season || idx >= last} onClick={() => go(idx + 1)}>
+          <button type="button" className="ka-season-step" aria-label={tr('Next day', 'Hari berikutnya')} disabled={!season || idx >= last} onClick={() => go(idx + 1)}>
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <div className="ka-season-speed" role="group" aria-label="Speed">
+          <div className="ka-season-speed" role="group" aria-label={tr('Speed', 'Kecepatan')}>
             {SPEEDS.map((s) => (
               <button key={s} type="button" aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}x</button>
             ))}
           </div>
           {vis ? (
             <button type="button" className="ka-season-blindbtn" aria-pressed={showBlind} onClick={() => setShowBlind((v) => !v)}>
-              <span className="ka-sw ka-sw-blind" aria-hidden="true" /><span className="ka-season-blindtxt">No-clear-view share</span>
+              <span className="ka-sw ka-sw-blind" aria-hidden="true" /><span className="ka-season-blindtxt">{noLook}</span>
             </button>
           ) : null}
-          <span className="ka-season-rate">{fmt(BASE_FPS * speed)} days per second</span>
+          <span className="ka-season-rate">{fmt(BASE_FPS * speed, lang)} {tr('days per second', 'hari per detik')}</span>
           {glLost ? (
-            <span className="ka-season-status" role="alert">The browser dropped this page's map graphics (WebGL), which happens after many maps in one tab. Reload the page.</span>
+            <span className="ka-season-status" role="alert">{tr('The browser dropped this page\'s map graphics (WebGL), which happens after many maps in one tab. Reload the page.',
+              'Peramban menghentikan grafik peta halaman ini (WebGL); ini terjadi setelah banyak peta dibuka dalam satu tab. Muat ulang halaman.')}</span>
           ) : noFrames && season && day ? (
-            <span className="ka-season-status" role="status">A still NASA photo of {day.date}: this browser is not drawing the animated map right now, so the hotspots are not on it.</span>
+            <span className="ka-season-status" role="status">{tr(`A still NASA photo of ${day.date}: the animated map is not being drawn right now, so the hotspots are not on it.`,
+              `Foto diam NASA ${day.date}: peta animasi sedang tidak digambar, jadi titik panas tidak tampil di atasnya.`)}</span>
           ) : season && day && !photoReady ? (
             <span className="ka-season-status" role="status">
-              {photoFail === day.date ? `The NASA photo of ${day.date} did not come (asked ${PHOTO_RETRIES + 1} times); the hotspots are shown without it.`
-                : `Loading the photo of ${day.date}...`}
+              {photoFail === day.date
+                ? tr(`The NASA photo of ${day.date} did not come (asked ${PHOTO_RETRIES + 1} times); the hotspots are shown without it.`,
+                  `Foto NASA ${day.date} tidak datang (diminta ${PHOTO_RETRIES + 1} kali); titik panas ditampilkan tanpa foto.`)
+                : tr(`Loading the photo of ${day.date}...`, `Memuat foto ${day.date}...`)}
             </span>
           ) : null}
-          <span className="ka-season-hint" aria-hidden="true"><kbd>Space</kbd> play . <kbd>&larr;</kbd><kbd>&rarr;</kbd> one day</span>
+          <span className="ka-season-hint" aria-hidden="true"><kbd>{tr('Space', 'Spasi')}</kbd> {tr('play', 'putar')} . <kbd>&larr;</kbd><kbd>&rarr;</kbd> {tr('one day', 'satu hari')}</span>
         </div>
-        {season ? <Scrubber season={season} idx={idx} onPick={go} /> : <div className="ka-season-scrub ka-season-scrub-empty" />}
+        {season ? <Scrubber season={season} idx={idx} onPick={go} tr={tr} lang={lang} /> : <div className="ka-season-scrub ka-season-scrub-empty" />}
         <div className={`ka-season-foot${srcOpen ? ' is-open' : ''}`}>
-          <span>Each frame is one day of satellite data.<span className="ka-season-short"> Nothing is drawn between days.</span></span>{' '}
+          <span>{tr('Each frame is one day of satellite data.', 'Setiap bingkai adalah satu hari data satelit.')}<span className="ka-season-short"> {tr('Nothing is drawn between days.', 'Tidak ada yang digambar di antara hari.')}</span></span>{' '}
           <button type="button" className="ka-season-src" aria-expanded={srcOpen} aria-controls="ka-season-foot-body"
-            onClick={() => setSrcOpen((v) => !v)}>{srcOpen ? 'Hide sources' : 'Sources and method'}</button>
+            onClick={() => setSrcOpen((v) => !v)}>{srcOpen ? tr('Hide sources', 'Sembunyikan sumber') : tr('Sources and method', 'Sumber dan metode')}</button>
           <div id="ka-season-foot-body" className="ka-season-foot-body">
-            Hotspots: NASA FIRMS VIIRS S-NPP 375 m.
-            Imagery: NASA GIBS / Worldview ({photoName(season?.days[0]?.date ?? `${year}-08-01`)} true colour of the same day; black wedges are gaps between passes{year < 2016 ? '; GIBS has VIIRS true colour only from 24 November 2015' : ''}).
+            {tr('Hotspots: NASA FIRMS VIIRS S-NPP 375 m.', 'Titik panas: NASA FIRMS VIIRS S-NPP 375 m.')}{' '}
+            {tr(`Imagery: NASA GIBS / Worldview (${photoName(season?.days[0]?.date ?? `${year}-08-01`)} true colour of the same day; black wedges are gaps between passes${year < 2016 ? '; GIBS has VIIRS true colour only from 24 November 2015' : ''}).`,
+              `Citra: NASA GIBS / Worldview (warna asli ${photoName(season?.days[0]?.date ?? `${year}-08-01`)} pada hari yang sama; baji hitam adalah celah antar lintasan${year < 2016 ? '; GIBS baru memiliki warna asli VIIRS sejak 24 November 2015' : ''}).`)}
             {vis ? (
-              <> No-clear-view share: NASA MODIS Terra and Aqua daily fire mask (MOD14A1, MYD14A1 C6.1) via Microsoft Planetary Computer,
-                read {vis.file.source.firemask.read_utc.slice(0, 10)}. Districts: geoBoundaries (BPS, WFP, OCHA ROAP), {vis.file.source.districts.license}.</>
-            ) : visErr ? <> The observation-gap layer could not be loaded ({visErr}).</> : null}
+              <> {tr(`No cloud-free look: NASA MODIS Terra and Aqua daily fire mask (MOD14A1, MYD14A1 C6.1) via Microsoft Planetary Computer, read ${vis.file.source.firemask.read_utc.slice(0, 10)}. Districts: geoBoundaries (BPS, WFP, OCHA ROAP), ${vis.file.source.districts.license}.`,
+                `Tanpa pandangan bebas awan: masker api harian NASA MODIS Terra dan Aqua (MOD14A1, MYD14A1 C6.1) melalui Microsoft Planetary Computer, dibaca ${vis.file.source.firemask.read_utc.slice(0, 10)}. Kabupaten/kota: geoBoundaries (BPS, WFP, OCHA ROAP), ${vis.file.source.districts.license}.`)}</>
+            ) : visErr ? (
+              <> {tr('The cloud layer could not be loaded', 'Lapisan awan gagal dimuat')} ({visErr === NOT_BUILT ? tr(`not built yet for ${year}`, `belum tersedia untuk ${year}`) : visErr}).</>
+            ) : null}
             {src ? (
-              <> Data file: {fmt(season?.kept ?? 0)} hotspots kept of {fmt(src.rows_total)} rows in the FIRMS {year} Indonesia archive
-                {season && season.kept !== src.rows_kept ? ' (the file\'s own count differs)' : ''}, sha256 <code title={src.sha256}>{src.sha256.slice(0, 12)}</code>.</>
+              <> {tr(`Data file: ${fmt(season?.kept ?? 0, lang)} hotspots kept of ${fmt(src.rows_total, lang)} rows in the FIRMS ${year} Indonesia archive${season && season.kept !== src.rows_kept ? ' (the file\'s own count differs)' : ''}.`,
+                `Berkas data: ${fmt(season?.kept ?? 0, lang)} titik panas dipakai dari ${fmt(src.rows_total, lang)} baris arsip FIRMS Indonesia ${year}${season && season.kept !== src.rows_kept ? ' (hitungan berkas itu sendiri berbeda)' : ''}.`)}</>
             ) : null}
             {season ? (
               <details className="ka-season-rule">
-                <summary>How "re-appeared after a gap" is counted</summary>
-                <span>{season.file.reappear_rule}</span> <span>Filter: {season.file.source.filter_text}</span>
+                <summary>{tr('How "re-appeared after a gap" is counted', 'Cara menghitung "muncul lagi setelah jeda"')}</summary>
+                {lang === 'id' ? <span>Sebuah titik panas dihitung muncul lagi bila titik terdekat sebelumnya di sekitarnya terlihat beberapa hari lebih awal, tanpa titik di antaranya. Ini menandai jeda dalam rekaman, bukan sebabnya. Aturan lengkap dari berkas data (bahasa Inggris): </span> : null}
+                <span lang="en">{season.file.reappear_rule}</span> <span lang="en">Filter: {season.file.source.filter_text}</span>
               </details>
             ) : null}
             {vis ? (
               <details className="ka-season-rule">
-                <summary>How observation gaps are counted</summary>
-                <span>{vis.file.rule}</span>
+                <summary>{tr('How "no cloud-free look" is counted', 'Cara menghitung "tanpa pandangan bebas awan"')}</summary>
+                <span>{tr(
+                  'Each cell is 0.01 degree (about 1.1 km) and takes the class of the MODIS 1 km pixel at its centre. A cell with no fire detected that day (no MODIS fire class, and no VIIRS hotspot shown on the map) has a cloud-free look when Terra or Aqua classed it as cloud-free land at least once that day, and no cloud-free look when neither did and at least one classed it as cloud. No data: neither had a usable look. The fire mask is a daily composite of every pass, day and night, so one cloud-free pass is enough. Share = cells with no cloud-free look out of all no-fire cells with either class. Only cells inside the 14 districts are counted; cells that are mostly water are left out. The mask is MODIS only: it says nothing about what VIIRS could see, and a cloud-free look is not proof that nothing burned.',
+                  'Setiap sel berukuran 0,01 derajat (sekitar 1,1 km) dan mengambil kelas piksel MODIS 1 km di pusatnya. Sel tanpa deteksi api pada hari itu (tanpa kelas api MODIS, dan tanpa titik panas VIIRS yang tampil di peta) punya pandangan bebas awan bila Terra atau Aqua mengelaskannya sebagai daratan bebas awan setidaknya sekali pada hari itu, dan tanpa pandangan bebas awan bila keduanya tidak, sementara setidaknya satu mengelaskannya sebagai awan. Tanpa data: keduanya tidak punya pengamatan yang dapat dipakai. Masker api adalah komposit harian dari semua lintasan, siang dan malam, sehingga satu lintasan bebas awan sudah cukup. Bagian = sel tanpa pandangan bebas awan dari semua sel tanpa api yang punya salah satu kelas itu. Hanya sel di dalam 14 kabupaten/kota yang dihitung; sel yang sebagian besar berupa air tidak diikutkan. Masker ini hanya MODIS: tidak menyatakan apa pun tentang yang dapat dilihat VIIRS, dan pandangan bebas awan bukan bukti bahwa tidak ada yang terbakar.')}</span>
               </details>
             ) : null}
           </div>
@@ -813,27 +848,38 @@ export function Season({ year = 2019 }: { year?: number }) {
 }
 
 /** The captions of a day, from the data only. */
-function captions(s: Season, i: number, v: VisDay | null): string[] {
+function captions(s: Season, i: number, v: VisDay | null, tr: Tr, lang: Lang): string[] {
   const day = s.days[i]!;
   const n = day.pts.length;
   const r = s.rePts[i]?.length ?? 0;
   const prev = s.days.slice(Math.max(0, i - TRAIL), i).map((d) => d.pts.length);
   const peak = prev.length ? Math.max(...prev) : 0;
   const out: string[] = [];
-  // U share = fraction of land without a FIRMS hotspot that the FireMask marks as having no clear view.
+  // the share of the land with no fire detected that had no cloud-free look from Terra or Aqua (cloud only). A low
+  // share never reads as "the view was clear": on a day full of smoke it is near zero, and the caption says why.
   const blind = v?.blind ?? null;
   if (v && blind !== null) {
-    // the clear share rounds down, so 99.96 reads "99.9%", never "100.0%"
     out.push(blind >= BLIND_NOTE
-      ? `The FireMask labels ${pct1(blind)} of land with no detected hotspot as U (hatched, no clear view). This is not an estimate of fires hidden from satellites.`
-      : `Terra and Aqua saw clear ground on ${pct1(Math.floor((1000 * v.T) / (v.T + v.U)) / 10)} of the land with no fire detected today.`);
+      ? tr(`${pct1(blind, lang)} of the land with no fire detected had no cloud-free look today (hatched). This is not an estimate of fire under cloud.`,
+        `${pct1(blind, lang)} lahan tanpa deteksi api tanpa pandangan bebas awan hari ini (berarsir). Ini bukan perkiraan api di bawah awan.`)
+      : tr(`${pct1(blind, lang)} of the land with no fire detected had no cloud-free look today. Smoke is not part of this count.`,
+        `${pct1(blind, lang)} lahan tanpa deteksi api tanpa pandangan bebas awan hari ini. Asap tidak termasuk dalam hitungan ini.`));
   }
   if (prev.length && n < LOW_SHARE * peak) {
-    out.push(`Hotspots seen: ${fmt(n)} (${fmt(peak)} on the busiest of the 7 days before).${blind === null
-      ? ' Look at the photo: where smoke or cloud covers the peat, a low count is not an absence of fire.' : ''}`);
+    out.push(tr(`Hotspots detected: ${fmt(n, lang)} (${fmt(peak, lang)} on the busiest of the ${TRAIL} days before).`,
+      `Titik panas terdeteksi: ${fmt(n, lang)} (${fmt(peak, lang)} pada hari tersibuk dari ${TRAIL} hari sebelumnya).`)
+      + (blind === null ? tr(' Look at the photo: where cloud or smoke covers the ground, a low count may only mean the ground was not seen.',
+        ' Lihat fotonya: di lahan yang tertutup awan atau asap, hitungan rendah bisa hanya berarti daratan tidak terlihat.') : ''));
   }
-  if (r > 0) out.push(`${fmt(r)} hotspots re-appeared near where they were last seen, after 2 or more days with none.`);
-  if (!out.length) out.push(`${parts(day.date).month} ${parts(day.date).year} in Central Kalimantan: ${fmt(n)} hotspots detected this day.`);
+  if (r > 0) {
+    out.push(tr(`${fmt(r, lang)} hotspots re-appeared near where they were last detected, after 2 or more days with none.`,
+      `${fmt(r, lang)} titik panas muncul lagi di dekat lokasi deteksi terakhirnya, setelah 2 hari atau lebih tanpa deteksi.`));
+  }
+  if (!out.length) {
+    const w = parts(day.date, lang);
+    out.push(tr(`${w.month} ${w.year} in Central Kalimantan: ${fmt(n, lang)} hotspots detected this day.`,
+      `${w.month} ${w.year} di Kalimantan Tengah: ${fmt(n, lang)} titik panas terdeteksi hari ini.`));
+  }
   return out;
 }
 
@@ -861,7 +907,7 @@ function fitView(page: HTMLElement | null) {
 // ------------------------------------------------------------------------------------------------ scrubber
 
 /** Bars of the daily counts for every day (clickable, draggable); the current day in teal. */
-function Scrubber({ season, idx, onPick }: { season: Season; idx: number; onPick: (i: number) => void }) {
+function Scrubber({ season, idx, onPick, tr, lang }: { season: Season; idx: number; onPick: (i: number) => void; tr: Tr; lang: Lang }) {
   const ref = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const [hover, setHover] = useState<number | null>(null);
@@ -891,12 +937,12 @@ function Scrubber({ season, idx, onPick }: { season: Season; idx: number; onPick
   return (
     <div className="ka-season-scrubwrap">
       <div className="ka-season-scrub-read" aria-hidden="true">
-        <span><b>{shownDay.date}</b> {fmt(shownDay.pts.length)} hotspots{season.rePts[show]?.length ? `, ${fmt(season.rePts[show]!.length)} re-appeared` : ''}</span>
-        <span>Largest day: {fmt(season.max)} on {peak.date}</span>
+        <span><b>{shownDay.date}</b> {fmt(shownDay.pts.length, lang)} {tr('hotspots', 'titik panas')}{season.rePts[show]?.length ? `, ${fmt(season.rePts[show]!.length, lang)} ${tr('re-appeared', 'muncul lagi')}` : ''}</span>
+        <span>{tr(`Largest day: ${fmt(season.max, lang)} on ${peak.date}`, `Hari terbesar: ${fmt(season.max, lang)} pada ${peak.date}`)}</span>
       </div>
-      <div ref={ref} className="ka-season-scrub" role="slider" tabIndex={0} aria-label="Day of the season"
+      <div ref={ref} className="ka-season-scrub" role="slider" tabIndex={0} aria-label={tr('Day of the season', 'Hari dalam musim')}
         aria-valuemin={1} aria-valuemax={days.length} aria-valuenow={idx + 1}
-        aria-valuetext={`${days[idx]!.date}: ${fmt(days[idx]!.pts.length)} hotspots`}
+        aria-valuetext={`${days[idx]!.date}: ${fmt(days[idx]!.pts.length, lang)} ${tr('hotspots', 'titik panas')}`}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => setHover(null)}>
         <svg viewBox={`0 0 ${width} ${H}`} preserveAspectRatio="none" aria-hidden="true">
           <line x1="0" x2={width} y1={H - 0.5} y2={H - 0.5} className="ka-season-base" />
@@ -910,7 +956,7 @@ function Scrubber({ season, idx, onPick }: { season: Season; idx: number; onPick
       </div>
       <div className="ka-season-axis" aria-hidden="true">
         {months.map(({ d, i }) => (
-          <span key={d.date} style={{ left: `${(i / days.length) * 100}%` }}>{MONTHS[Number(d.date.slice(5, 7)) - 1]?.slice(0, 3)}</span>
+          <span key={d.date} style={{ left: `${(i / days.length) * 100}%` }}>{monthName(Number(d.date.slice(5, 7)), lang)}</span>
         ))}
       </div>
     </div>

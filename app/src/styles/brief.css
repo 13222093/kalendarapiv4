@@ -1,0 +1,191 @@
+/* KalenderApi (new file): the printable brief (#/brief, pages/Brief.tsx). Theme tokens only (tokens.css, theme.css,
+   brand.css), so the dark and light themes both work on screen. In print the same tokens are set to black on white,
+   the tools are hidden and the sections flow in two columns on one A4 page. */
+
+.ka-brief {
+  min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: var(--sp-4) var(--sp-4) var(--sp-12);
+  background: var(--bg); color: var(--text); font-size: var(--fs-15); line-height: 1.5;
+}
+.ka-brief *, .ka-brief *::before, .ka-brief *::after { box-sizing: border-box; }
+
+/* tools (screen only): back to the record, the area, the language, print */
+.ka-brief-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3);
+  max-width: 880px; margin: 0 auto var(--sp-4); color: var(--text-2);
+}
+.ka-brief-back {
+  display: inline-flex; align-items: center; min-height: var(--ctl); margin-right: auto;
+  color: var(--text-2); font-size: var(--fs-14); font-weight: 600; text-decoration: none;
+}
+.ka-brief-back:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.ka-brief-picker { display: inline-flex; align-items: center; gap: var(--sp-2); min-width: 0; font-size: var(--fs-13); font-weight: 600; }
+.ka-brief-picker select {
+  min-width: 0; max-width: min(56vw, 240px); min-height: var(--ctl); padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text);
+  font: inherit; font-size: var(--fs-14); font-weight: 500; cursor: pointer;
+}
+.ka-brief-picker select option, .ka-brief-picker select optgroup { background: var(--surface); color: var(--text); }
+.ka-brief-print {
+  min-height: var(--ctl); padding: 0 var(--sp-4); border: 1px solid var(--accent); border-radius: var(--radius-md);
+  background: var(--accent); color: var(--bg); font: inherit; font-size: var(--fs-14); font-weight: 650; cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), opacity var(--t-fast) var(--ease-out);
+}
+.ka-brief-print:active { transform: scale(0.97); }
+.ka-brief-print:disabled { opacity: 0.5; cursor: default; }
+:is(.ka-brief-back, .ka-brief-picker select, .ka-brief-print):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (pointer: coarse) { .ka-brief-back, .ka-brief-picker select, .ka-brief-print { min-height: var(--ctl-touch); } }
+
+.ka-brief-status {
+  max-width: 880px; margin: var(--sp-8) auto; padding: var(--sp-5);
+  border: 1px dashed var(--border-strong); border-radius: var(--radius-md); color: var(--text-2);
+}
+.ka-brief-status a { color: var(--accent); }
+
+/* the sheet */
+.ka-brief-sheet {
+  max-width: 880px; margin: 0 auto; padding: var(--sp-6);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+}
+.ka-brief-head { padding-bottom: var(--sp-3); border-bottom: 2px solid var(--text); }
+.ka-brief-eyebrow {
+  margin: 0; color: var(--text-2); font-size: var(--fs-12); font-weight: 650;
+  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+}
+.ka-brief h1 { margin: var(--sp-1) 0 0; font-size: clamp(1.6rem, 5vw, 2.25rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; text-wrap: balance; }
+.ka-brief-sub { margin: var(--sp-1) 0 0; color: var(--text-2); font-size: var(--fs-14); }
+.ka-brief-for { margin: var(--sp-1) 0 0; color: var(--text-2); font-size: var(--fs-14); }
+.ka-brief-for strong { color: var(--text); }
+/* the verdict: the one sentence to act on, before anything else */
+.ka-brief-verdict {
+  margin: var(--sp-3) 0 0; padding: var(--sp-2) var(--sp-3); border-left: 4px solid var(--accent);
+  background: var(--surface-2); font-size: var(--fs-16); font-weight: 600; line-height: 1.4; text-wrap: pretty;
+}
+.ka-brief-meta { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-6); margin: var(--sp-3) 0 0; font-size: var(--fs-13); }
+.ka-brief-meta div { display: flex; flex-wrap: wrap; gap: 0 var(--sp-2); min-width: 0; }
+.ka-brief-meta dt { color: var(--text-2); }
+.ka-brief-meta dd { margin: 0; font-weight: 600; }
+.ka-brief-unit { margin: var(--sp-2) 0 0; color: var(--text-2); font-size: var(--fs-13); line-height: 1.45; }
+.ka-brief-unit strong { color: var(--text); }
+
+.ka-brief-body { margin-top: var(--sp-5); }
+@media (min-width: 760px) { .ka-brief-body { columns: 2; column-gap: var(--sp-8); } }
+.ka-brief-sec { margin: 0 0 var(--sp-5); break-inside: avoid; }
+/* two columns of even height: a section stays whole, except the long one ("Can a zero be trusted?"), which may
+   continue in the next column between its parts (never inside its table, its list or the rule) */
+.ka-brief-sec.ka-brief-zero { break-inside: auto; }
+.ka-brief-sec h2 { break-after: avoid; }
+.ka-brief-sec :is(p, .ka-brief-table, .ka-brief-list, .ka-brief-bars) { break-inside: avoid; }
+.ka-brief-sec h2 {
+  margin: 0 0 var(--sp-2); padding-bottom: var(--sp-1); border-bottom: 1px solid var(--border-strong);
+  font-size: var(--fs-16); font-weight: 700; line-height: 1.3;
+}
+.ka-brief-sec p { margin: 0 0 var(--sp-2); text-wrap: pretty; }
+.ka-brief-sec > :last-child { margin-bottom: 0; }
+.ka-brief .ka-brief-src { color: var(--text-3); font-size: var(--fs-12); line-height: 1.4; }
+.ka-brief small { color: var(--text-2); font-size: var(--fs-12); font-weight: 400; }
+
+/* the twelve medians: outlined bars, the peak months solid */
+.ka-brief-bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; margin: 0 0 var(--sp-2); }
+.ka-brief-bar { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.ka-brief-bar-v { color: var(--text-2); font-size: 10px; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ka-brief-bar-t { display: flex; align-items: flex-end; width: 100%; height: 64px; border-bottom: 1px solid var(--text); }
+.ka-brief-bar-t i {
+  display: block; width: 100%; border: 1px solid var(--text-2); border-bottom: 0;
+  background: color-mix(in srgb, var(--text-2) 28%, transparent);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.ka-brief-bar.is-peak .ka-brief-bar-t i { border-color: var(--accent); background: var(--accent); }
+.ka-brief-bar-m { color: var(--text-2); font-size: 11px; line-height: 1.2; white-space: nowrap; }
+.ka-brief-bar.is-peak :is(.ka-brief-bar-v, .ka-brief-bar-m) { color: var(--text); font-weight: 700; }
+
+/* the three worst years */
+.ka-brief-years { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-2); padding: 0; list-style: none; counter-reset: ka-brief-y; }
+.ka-brief-years li {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: baseline; column-gap: var(--sp-3);
+  counter-increment: ka-brief-y;
+}
+.ka-brief-years li::before { content: counter(ka-brief-y) "."; color: var(--text-3); font-weight: 600; }
+.ka-brief-year { font-size: var(--fs-20); font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.ka-brief-num { font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; }
+.ka-brief-flag { grid-column: 2 / -1; color: var(--text-2); font-size: var(--fs-12); line-height: 1.4; }
+
+/* the latest month */
+.ka-brief .ka-brief-big { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--sp-3); }
+.ka-brief-big span { font-weight: 600; }
+.ka-brief-big strong { font-size: var(--fs-stat-m); font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+
+.ka-brief-list { display: grid; gap: var(--sp-1); margin: 0 0 var(--sp-2); padding-left: 1.15em; }
+.ka-brief-list li { text-wrap: pretty; }
+
+.ka-brief-table { width: 100%; margin: 0 0 var(--sp-2); border-collapse: collapse; font-size: var(--fs-13); font-variant-numeric: tabular-nums; }
+.ka-brief-table :is(th, td) { padding: 3px 0 3px var(--sp-3); border-bottom: 1px solid var(--border); text-align: right; vertical-align: bottom; }
+.ka-brief-table :is(th, td):first-child { padding-left: 0; text-align: left; }
+.ka-brief-table thead th { border-bottom-color: var(--text); color: var(--text-2); font-size: var(--fs-12); font-weight: 600; line-height: 1.3; }
+.ka-brief-table tbody th { font-weight: 600; }
+
+/* the reporting rule: the one line to act on */
+.ka-brief .ka-brief-rule { padding: var(--sp-2) var(--sp-3); border: 2px solid var(--text); border-radius: var(--radius-sm); }
+
+/* "Why this number?": evidence, assumption and data date of each headline number */
+.ka-brief-whys { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-2); font-size: var(--fs-13); line-height: 1.45; }
+.ka-brief-whys div { break-inside: avoid; }
+.ka-brief-whys dt { font-weight: 700; }
+.ka-brief-whys dd { margin: 0; text-wrap: pretty; }
+.ka-brief-whys b { font-weight: 650; }
+
+.ka-brief-url a { color: inherit; overflow-wrap: anywhere; }
+.ka-brief-foot {
+  margin: var(--sp-2) 0 0; padding-top: var(--sp-2); border-top: 1px solid var(--border-strong);
+  color: var(--text-3); font-size: var(--fs-12); text-align: center;
+}
+
+@media (max-width: 560px) {
+  .ka-brief { padding: var(--sp-3) var(--sp-3) var(--sp-10); }
+  .ka-brief-sheet { padding: var(--sp-4); }
+  .ka-brief-picker { flex: 1 1 auto; }
+  .ka-brief-picker select { flex: 1 1 auto; max-width: none; }
+  .ka-brief-bars { gap: 2px; }
+  .ka-brief-bar-v { font-size: 9px; }
+  .ka-brief-bar-m { font-size: 10px; }
+}
+
+/* print: one A4 page, black on white, no tools */
+@page { size: A4 portrait; margin: 8mm 11mm; }
+@media print {
+  html, body { background: #fff !important; }
+  .ka-brief {
+    --bg: #fff; --surface: #fff; --surface-2: #fff; --text: #000; --text-2: #000; --text-3: #1a1a1a;
+    --border: #8a8a8a; --border-strong: #000; --accent: #000;
+    min-height: 0; padding: 0; background: #fff; color: #000; font-size: 8pt; line-height: 1.28;
+  }
+  .ka-brief-tools { display: none; }
+  .ka-brief-status { margin: 0; }
+  .ka-brief-sheet { max-width: none; padding: 0; border: 0; border-radius: 0; background: #fff; }
+  .ka-brief-head { padding-bottom: 2mm; }
+  .ka-brief h1 { margin-top: 0.3mm; font-size: 17pt; }
+  .ka-brief-eyebrow { font-size: 7pt; }
+  .ka-brief-sub, .ka-brief-for, .ka-brief-meta, .ka-brief-unit { font-size: 7.6pt; }
+  .ka-brief-sub, .ka-brief-for { margin-top: 0.5mm; }
+  .ka-brief-verdict { margin-top: 1.5mm; padding: 1mm 2mm; border-left-width: 1.2mm; background: #fff; font-size: 9.6pt; line-height: 1.3; }
+  .ka-brief-whys { gap: 1mm; margin-bottom: 1.2mm; font-size: 7.4pt; line-height: 1.25; }
+  .ka-brief-table { font-size: 7.4pt; line-height: 1.2; }
+  .ka-brief-meta { gap: 0 5mm; margin-top: 1.2mm; }
+  .ka-brief-unit { margin-top: 0.6mm; line-height: 1.25; }
+  .ka-brief-body { columns: 2; column-gap: 7mm; margin-top: 2.5mm; }
+  .ka-brief-sec { margin-bottom: 2.6mm; }
+  .ka-brief-sec h2 { margin-bottom: 1.2mm; padding-bottom: 0.6mm; font-size: 10.5pt; }
+  .ka-brief-sec p { margin-bottom: 1.2mm; }
+  .ka-brief .ka-brief-src, .ka-brief-flag, .ka-brief small, .ka-brief-table thead th, .ka-brief-foot { font-size: 6.8pt; line-height: 1.25; }
+  .ka-brief-bars { gap: 1mm; margin-bottom: 1.2mm; }
+  .ka-brief-bar-t { height: 13mm; }
+  .ka-brief-bar-v, .ka-brief-bar-m { font-size: 6.5pt; }
+  .ka-brief-years { gap: 1mm; margin-bottom: 1.2mm; }
+  .ka-brief-year { font-size: 12pt; }
+  .ka-brief-big strong { font-size: 15pt; }
+  .ka-brief-list { gap: 0.6mm; margin-bottom: 1.2mm; }
+  .ka-brief-table { margin-bottom: 1.2mm; }
+  .ka-brief-table :is(th, td) { padding: 0.2mm 0 0.2mm 2mm; }
+  .ka-brief .ka-brief-rule { padding: 1.2mm 2mm; border-width: 1.5pt; }
+  .ka-brief-foot { margin-top: 1mm; padding-top: 1mm; }
+  .ka-brief a { color: #000; text-decoration: none; }
+}

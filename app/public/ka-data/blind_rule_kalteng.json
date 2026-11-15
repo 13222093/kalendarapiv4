@@ -1,0 +1,1869 @@
+{
+ "title": "Central Kalimantan: district-days with no cloud-free look (cloud) for most of the district",
+ "rule": "A district-day counts when more than half of the no-fire cell-days of the district on that day had no cloud-free look from Terra or Aqua, because of cloud: U / (T + U) > 0.5.",
+ "threshold": 0.5,
+ "definition": {
+  "cell_day": "One 0.01 degree cell on one UTC day, classed from the MODIS FireMask of Terra and Aqua. T: no fire and at least one cloud-free look at the land. U: no fire and no cloud-free look, with cloud in at least one of the two masks. Cells with fire or with no data are in neither.",
+  "district_day": "One of the 14 districts on one day. It counts (district_days_above) when U / (T + U) > 0.5: cloud left more than half of its no-fire cells with no cloud-free look.",
+  "district_days": "All counted district-days: the number that the days with no cloud-free look (cloud) are out of. 0 district-days had no no-fire cell at all and are in neither number.",
+  "days_counted": "Only days with a FireMask file of both Terra and Aqua for the whole box are counted, so each counted day had the same chances of a cloud-free look; a day with no cloud-free look for lack of a file is listed under days_left_out and is not counted.",
+  "worst_day": "Per season, the single counted day with the highest share of no-fire cell-days with no cloud-free look (cloud), over all 14 districts together: U / (T + U) of that day, with the number of fire cells (F) of the same day.",
+  "scope": "total, districts and seasons hold the Aug to Oct seasons only; the Jan to Mar 2023 quarter, with far more cloud and so far more days with no cloud-free look, is kept apart under wet_season_contrast."
+ },
+ "lower_bound_note": "Thick smoke is not flagged as cloud by the MODIS FireMask, so a day under thick smoke is not counted here: the count is a lower bound on days with no cloud-free look.",
+ "excluded": {
+  "season": "2019",
+  "why": "The 2019 season is locked by a registered test of a sibling project: no count of days with no cloud-free look (cloud) was made for it and its file was not opened."
+ },
+ "seasons_included": [
+  "2014",
+  "2015",
+  "2016",
+  "2017",
+  "2018",
+  "2020",
+  "2021",
+  "2022",
+  "2023",
+  "2023_janmar",
+  "2024",
+  "2026"
+ ],
+ "total": {
+  "seasons": 11,
+  "district_days_above": 1482,
+  "district_days": 13510,
+  "share_pct": 11.0
+ },
+ "districts": [
+  {
+   "name": "Barito Selatan",
+   "district_days_above": 77,
+   "district_days": 965,
+   "share_pct": 8.0
+  },
+  {
+   "name": "Barito Timur",
+   "district_days_above": 87,
+   "district_days": 965,
+   "share_pct": 9.0
+  },
+  {
+   "name": "Barito Utara",
+   "district_days_above": 81,
+   "district_days": 965,
+   "share_pct": 8.4
+  },
+  {
+   "name": "Gunung Mas",
+   "district_days_above": 125,
+   "district_days": 965,
+   "share_pct": 13.0
+  },
+  {
+   "name": "Kapuas",
+   "district_days_above": 80,
+   "district_days": 965,
+   "share_pct": 8.3
+  },
+  {
+   "name": "Katingan",
+   "district_days_above": 103,
+   "district_days": 965,
+   "share_pct": 10.7
+  },
+  {
+   "name": "Kota Palangka Raya",
+   "district_days_above": 100,
+   "district_days": 965,
+   "share_pct": 10.4
+  },
+  {
+   "name": "Kotawaringin Barat",
+   "district_days_above": 120,
+   "district_days": 965,
+   "share_pct": 12.4
+  },
+  {
+   "name": "Kotawaringin Timur",
+   "district_days_above": 112,
+   "district_days": 965,
+   "share_pct": 11.6
+  },
+  {
+   "name": "Lamandau",
+   "district_days_above": 136,
+   "district_days": 965,
+   "share_pct": 14.1
+  },
+  {
+   "name": "Murung Raya",
+   "district_days_above": 134,
+   "district_days": 965,
+   "share_pct": 13.9
+  },
+  {
+   "name": "Pulang Pisau",
+   "district_days_above": 80,
+   "district_days": 965,
+   "share_pct": 8.3
+  },
+  {
+   "name": "Seruyan",
+   "district_days_above": 120,
+   "district_days": 965,
+   "share_pct": 12.4
+  },
+  {
+   "name": "Sukamara",
+   "district_days_above": 127,
+   "district_days": 965,
+   "share_pct": 13.2
+  }
+ ],
+ "seasons": [
+  {
+   "year": 2014,
+   "season": "2014",
+   "window": "1 Aug to 31 Oct 2014",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2014.json",
+   "sha256": "fe80782a203964827e866cac4a3f6d970162a40a26eb69defbb74a1dd76f334b",
+   "days": 92,
+   "days_counted": 91,
+   "days_left_out": [
+    {
+     "date": "2014-10-26",
+     "no_file_from": [
+      "terra"
+     ]
+    }
+   ],
+   "district_days_above": 65,
+   "district_days": 1274,
+   "share_pct": 5.1,
+   "worst_day": {
+    "date": "2014-10-15",
+    "share_no_cloud_free_look": 0.9319,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 8443,
+    "no_fire_cells_no_cloud_free_look": 115516
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 7,
+     "district_days": 91,
+     "share_pct": 7.7
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 4,
+     "district_days": 91,
+     "share_pct": 4.4
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 4,
+     "district_days": 91,
+     "share_pct": 4.4
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 8,
+     "district_days": 91,
+     "share_pct": 8.8
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 1,
+     "district_days": 91,
+     "share_pct": 1.1
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 3,
+     "district_days": 91,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 3,
+     "district_days": 91,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 5,
+     "district_days": 91,
+     "share_pct": 5.5
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 4,
+     "district_days": 91,
+     "share_pct": 4.4
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 6,
+     "district_days": 91,
+     "share_pct": 6.6
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 7,
+     "district_days": 91,
+     "share_pct": 7.7
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 3,
+     "district_days": 91,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 5,
+     "district_days": 91,
+     "share_pct": 5.5
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 5,
+     "district_days": 91,
+     "share_pct": 5.5
+    }
+   ]
+  },
+  {
+   "year": 2015,
+   "season": "2015",
+   "window": "1 Aug to 31 Oct 2015",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2015.json",
+   "sha256": "de0577686d88cbeb6135e9893a109202ceef4810827dba82d6ffa475bc26be68",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 37,
+   "district_days": 1288,
+   "share_pct": 2.9,
+   "worst_day": {
+    "date": "2015-10-29",
+    "share_no_cloud_free_look": 0.7882,
+    "fire_cells": 48,
+    "no_fire_cells_with_cloud_free_look": 26246,
+    "no_fire_cells_no_cloud_free_look": 97682
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 3,
+     "district_days": 92,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 1,
+     "district_days": 92,
+     "share_pct": 1.1
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 3,
+     "district_days": 92,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 1,
+     "district_days": 92,
+     "share_pct": 1.1
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 3,
+     "district_days": 92,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    }
+   ]
+  },
+  {
+   "year": 2016,
+   "season": "2016",
+   "window": "1 Aug to 31 Oct 2016",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2016.json",
+   "sha256": "6ea0bfe3e7b93937fa380d380c55f8c1962d610178e43fc9beee1a003cd41849",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 194,
+   "district_days": 1288,
+   "share_pct": 15.1,
+   "worst_day": {
+    "date": "2016-10-20",
+    "share_no_cloud_free_look": 0.9555,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 5508,
+    "no_fire_cells_no_cloud_free_look": 118290
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 10,
+     "district_days": 92,
+     "share_pct": 10.9
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 19,
+     "district_days": 92,
+     "share_pct": 20.7
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 23,
+     "district_days": 92,
+     "share_pct": 25.0
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 15,
+     "district_days": 92,
+     "share_pct": 16.3
+    }
+   ]
+  },
+  {
+   "year": 2017,
+   "season": "2017",
+   "window": "1 Aug to 31 Oct 2017",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2017.json",
+   "sha256": "1b0814ac1e6512dde48705c38ca334981b4d802180a521d2b8735a2c03b024b5",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 210,
+   "district_days": 1288,
+   "share_pct": 16.3,
+   "worst_day": {
+    "date": "2017-08-17",
+    "share_no_cloud_free_look": 0.955,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 5569,
+    "no_fire_cells_no_cloud_free_look": 118246
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 15,
+     "district_days": 92,
+     "share_pct": 16.3
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 19,
+     "district_days": 92,
+     "share_pct": 20.7
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 15,
+     "district_days": 92,
+     "share_pct": 16.3
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 16,
+     "district_days": 92,
+     "share_pct": 17.4
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 15,
+     "district_days": 92,
+     "share_pct": 16.3
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 22,
+     "district_days": 92,
+     "share_pct": 23.9
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 21,
+     "district_days": 92,
+     "share_pct": 22.8
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 15,
+     "district_days": 92,
+     "share_pct": 16.3
+    }
+   ]
+  },
+  {
+   "year": 2018,
+   "season": "2018",
+   "window": "1 Aug to 31 Oct 2018",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2018.json",
+   "sha256": "98bed3210279062af6cdff6704885f069b888fbc2f20fd9dc2b7aa7b2a3ad071",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 122,
+   "district_days": 1288,
+   "share_pct": 9.5,
+   "worst_day": {
+    "date": "2018-08-01",
+    "share_no_cloud_free_look": 0.8269,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 21454,
+    "no_fire_cells_no_cloud_free_look": 102481
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 8,
+     "district_days": 92,
+     "share_pct": 8.7
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 6,
+     "district_days": 92,
+     "share_pct": 6.5
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 8,
+     "district_days": 92,
+     "share_pct": 8.7
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 8,
+     "district_days": 92,
+     "share_pct": 8.7
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 7,
+     "district_days": 92,
+     "share_pct": 7.6
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 9,
+     "district_days": 92,
+     "share_pct": 9.8
+    }
+   ]
+  },
+  {
+   "year": 2020,
+   "season": "2020",
+   "window": "1 Aug to 31 Oct 2020",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2020.json",
+   "sha256": "7b7679e083e6c58d510b78155e5654fdf8a9f23dcdf306e9e21fa206e4095606",
+   "days": 92,
+   "days_counted": 75,
+   "days_left_out": [
+    {
+     "date": "2020-08-17",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-18",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-19",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-20",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-21",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-22",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-23",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-24",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-25",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-26",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-27",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-28",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-29",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-30",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-08-31",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-09-01",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2020-09-02",
+     "no_file_from": [
+      "aqua"
+     ]
+    }
+   ],
+   "district_days_above": 209,
+   "district_days": 1050,
+   "share_pct": 19.9,
+   "worst_day": {
+    "date": "2020-10-17",
+    "share_no_cloud_free_look": 0.9279,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 8919,
+    "no_fire_cells_no_cloud_free_look": 114866
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 12,
+     "district_days": 75,
+     "share_pct": 16.0
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 9,
+     "district_days": 75,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 10,
+     "district_days": 75,
+     "share_pct": 13.3
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 15,
+     "district_days": 75,
+     "share_pct": 20.0
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 16,
+     "district_days": 75,
+     "share_pct": 21.3
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 13,
+     "district_days": 75,
+     "share_pct": 17.3
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 16,
+     "district_days": 75,
+     "share_pct": 21.3
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 18,
+     "district_days": 75,
+     "share_pct": 24.0
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 14,
+     "district_days": 75,
+     "share_pct": 18.7
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 16,
+     "district_days": 75,
+     "share_pct": 21.3
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 22,
+     "district_days": 75,
+     "share_pct": 29.3
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 12,
+     "district_days": 75,
+     "share_pct": 16.0
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 14,
+     "district_days": 75,
+     "share_pct": 18.7
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 22,
+     "district_days": 75,
+     "share_pct": 29.3
+    }
+   ]
+  },
+  {
+   "year": 2021,
+   "season": "2021",
+   "window": "1 Aug to 31 Oct 2021",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2021.json",
+   "sha256": "abeed716bca6c04bbeacbbc63568af1386a8a4595ce3ee4e623418ee41db685c",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 271,
+   "district_days": 1288,
+   "share_pct": 21.0,
+   "worst_day": {
+    "date": "2021-08-28",
+    "share_no_cloud_free_look": 0.8372,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 20152,
+    "no_fire_cells_no_cloud_free_look": 103631
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 10,
+     "district_days": 92,
+     "share_pct": 10.9
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 22,
+     "district_days": 92,
+     "share_pct": 23.9
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 14,
+     "district_days": 92,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 19,
+     "district_days": 92,
+     "share_pct": 20.7
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 17,
+     "district_days": 92,
+     "share_pct": 18.5
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 27,
+     "district_days": 92,
+     "share_pct": 29.3
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 26,
+     "district_days": 92,
+     "share_pct": 28.3
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 27,
+     "district_days": 92,
+     "share_pct": 29.3
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 18,
+     "district_days": 92,
+     "share_pct": 19.6
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 13,
+     "district_days": 92,
+     "share_pct": 14.1
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 24,
+     "district_days": 92,
+     "share_pct": 26.1
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 27,
+     "district_days": 92,
+     "share_pct": 29.3
+    }
+   ]
+  },
+  {
+   "year": 2022,
+   "season": "2022",
+   "window": "1 Aug to 31 Oct 2022",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2022.json",
+   "sha256": "5b9f0696c5efc6d3885ba356cf10c403f6855d7577b318ff61968b5b3c36bc37",
+   "days": 92,
+   "days_counted": 79,
+   "days_left_out": [
+    {
+     "date": "2022-10-11",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-12",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-13",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-14",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-15",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-16",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-17",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-18",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-19",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-20",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-21",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-22",
+     "no_file_from": [
+      "terra"
+     ]
+    },
+    {
+     "date": "2022-10-23",
+     "no_file_from": [
+      "terra"
+     ]
+    }
+   ],
+   "district_days_above": 208,
+   "district_days": 1106,
+   "share_pct": 18.8,
+   "worst_day": {
+    "date": "2022-09-05",
+    "share_no_cloud_free_look": 0.8565,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 17748,
+    "no_fire_cells_no_cloud_free_look": 105972
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 9,
+     "district_days": 79,
+     "share_pct": 11.4
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 14,
+     "district_days": 79,
+     "share_pct": 17.7
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 9,
+     "district_days": 79,
+     "share_pct": 11.4
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 14,
+     "district_days": 79,
+     "share_pct": 17.7
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 12,
+     "district_days": 79,
+     "share_pct": 15.2
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 15,
+     "district_days": 79,
+     "share_pct": 19.0
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 15,
+     "district_days": 79,
+     "share_pct": 19.0
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 17,
+     "district_days": 79,
+     "share_pct": 21.5
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 16,
+     "district_days": 79,
+     "share_pct": 20.3
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 21,
+     "district_days": 79,
+     "share_pct": 26.6
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 13,
+     "district_days": 79,
+     "share_pct": 16.5
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 16,
+     "district_days": 79,
+     "share_pct": 20.3
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 17,
+     "district_days": 79,
+     "share_pct": 21.5
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 20,
+     "district_days": 79,
+     "share_pct": 25.3
+    }
+   ]
+  },
+  {
+   "year": 2023,
+   "season": "2023",
+   "window": "1 Aug to 31 Oct 2023",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2023.json",
+   "sha256": "e8e4424a9a13a2e6cbb48fbbcd722110e7afbfb60223de217d0cad958dbe713b",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 39,
+   "district_days": 1288,
+   "share_pct": 3.0,
+   "worst_day": {
+    "date": "2023-10-18",
+    "share_no_cloud_free_look": 0.4486,
+    "fire_cells": 87,
+    "no_fire_cells_with_cloud_free_look": 68289,
+    "no_fire_cells_no_cloud_free_look": 55555
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 1,
+     "district_days": 92,
+     "share_pct": 1.1
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 0,
+     "district_days": 92,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 2,
+     "district_days": 92,
+     "share_pct": 2.2
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 0,
+     "district_days": 92,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 0,
+     "district_days": 92,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 3,
+     "district_days": 92,
+     "share_pct": 3.3
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 4,
+     "district_days": 92,
+     "share_pct": 4.3
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 0,
+     "district_days": 92,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 6,
+     "district_days": 92,
+     "share_pct": 6.5
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 3,
+     "district_days": 92,
+     "share_pct": 3.3
+    }
+   ]
+  },
+  {
+   "year": 2024,
+   "season": "2024",
+   "window": "1 Aug to 31 Oct 2024",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2024.json",
+   "sha256": "6e80a556099c9cdba4539804466b301c1bd5ce54f1af0598ed6327984a138356",
+   "days": 92,
+   "days_counted": 92,
+   "days_left_out": [],
+   "district_days_above": 119,
+   "district_days": 1288,
+   "share_pct": 9.2,
+   "worst_day": {
+    "date": "2024-10-17",
+    "share_no_cloud_free_look": 0.8521,
+    "fire_cells": 0,
+    "no_fire_cells_with_cloud_free_look": 18303,
+    "no_fire_cells_no_cloud_free_look": 105463
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 6,
+     "district_days": 92,
+     "share_pct": 6.5
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 8,
+     "district_days": 92,
+     "share_pct": 8.7
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 6,
+     "district_days": 92,
+     "share_pct": 6.5
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 11,
+     "district_days": 92,
+     "share_pct": 12.0
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 9,
+     "district_days": 92,
+     "share_pct": 9.8
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 10,
+     "district_days": 92,
+     "share_pct": 10.9
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 10,
+     "district_days": 92,
+     "share_pct": 10.9
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 7,
+     "district_days": 92,
+     "share_pct": 7.6
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 9,
+     "district_days": 92,
+     "share_pct": 9.8
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 5,
+     "district_days": 92,
+     "share_pct": 5.4
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 12,
+     "district_days": 92,
+     "share_pct": 13.0
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 9,
+     "district_days": 92,
+     "share_pct": 9.8
+    }
+   ]
+  },
+  {
+   "year": 2026,
+   "season": "2026",
+   "window": "1 Aug to 31 Oct 2026",
+   "aug_oct": true,
+   "file": "visibility_kalteng_2026.json",
+   "sha256": "c5b4c4940331e14b3546ee4bcdc8b2a3a01bbc470f016324d31e24fcb7ff451f",
+   "days": 92,
+   "days_counted": 76,
+   "days_left_out": [
+    {
+     "date": "2026-10-16",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-17",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-18",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-19",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-20",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-21",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-22",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-23",
+     "no_file_from": [
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-24",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-25",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-26",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-27",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-28",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-29",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-30",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    },
+    {
+     "date": "2026-10-31",
+     "no_file_from": [
+      "terra",
+      "aqua"
+     ]
+    }
+   ],
+   "district_days_above": 8,
+   "district_days": 1064,
+   "share_pct": 0.8,
+   "worst_day": {
+    "date": "2026-09-09",
+    "share_no_cloud_free_look": 0.3791,
+    "fire_cells": 613,
+    "no_fire_cells_with_cloud_free_look": 76525,
+    "no_fire_cells_no_cloud_free_look": 46731
+   },
+   "districts": [
+    {
+     "name": "Barito Selatan",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Barito Timur",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Barito Utara",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Gunung Mas",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Kapuas",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Katingan",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Kota Palangka Raya",
+     "district_days_above": 2,
+     "district_days": 76,
+     "share_pct": 2.6
+    },
+    {
+     "name": "Kotawaringin Barat",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Kotawaringin Timur",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Lamandau",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Murung Raya",
+     "district_days_above": 1,
+     "district_days": 76,
+     "share_pct": 1.3
+    },
+    {
+     "name": "Pulang Pisau",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Seruyan",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    },
+    {
+     "name": "Sukamara",
+     "district_days_above": 0,
+     "district_days": 76,
+     "share_pct": 0.0
+    }
+   ]
+  }
+ ],
+ "wet_season_contrast": {
+  "note": "Wet-season quarter for contrast: cloud is frequent, so district-days with no cloud-free look are many. Not part of total, districts or seasons.",
+  "total": {
+   "seasons": 1,
+   "district_days_above": 442,
+   "district_days": 1148,
+   "share_pct": 38.5
+  },
+  "districts": [
+   {
+    "name": "Barito Selatan",
+    "district_days_above": 36,
+    "district_days": 82,
+    "share_pct": 43.9
+   },
+   {
+    "name": "Barito Timur",
+    "district_days_above": 38,
+    "district_days": 82,
+    "share_pct": 46.3
+   },
+   {
+    "name": "Barito Utara",
+    "district_days_above": 25,
+    "district_days": 82,
+    "share_pct": 30.5
+   },
+   {
+    "name": "Gunung Mas",
+    "district_days_above": 32,
+    "district_days": 82,
+    "share_pct": 39.0
+   },
+   {
+    "name": "Kapuas",
+    "district_days_above": 31,
+    "district_days": 82,
+    "share_pct": 37.8
+   },
+   {
+    "name": "Katingan",
+    "district_days_above": 35,
+    "district_days": 82,
+    "share_pct": 42.7
+   },
+   {
+    "name": "Kota Palangka Raya",
+    "district_days_above": 25,
+    "district_days": 82,
+    "share_pct": 30.5
+   },
+   {
+    "name": "Kotawaringin Barat",
+    "district_days_above": 30,
+    "district_days": 82,
+    "share_pct": 36.6
+   },
+   {
+    "name": "Kotawaringin Timur",
+    "district_days_above": 34,
+    "district_days": 82,
+    "share_pct": 41.5
+   },
+   {
+    "name": "Lamandau",
+    "district_days_above": 29,
+    "district_days": 82,
+    "share_pct": 35.4
+   },
+   {
+    "name": "Murung Raya",
+    "district_days_above": 30,
+    "district_days": 82,
+    "share_pct": 36.6
+   },
+   {
+    "name": "Pulang Pisau",
+    "district_days_above": 35,
+    "district_days": 82,
+    "share_pct": 42.7
+   },
+   {
+    "name": "Seruyan",
+    "district_days_above": 30,
+    "district_days": 82,
+    "share_pct": 36.6
+   },
+   {
+    "name": "Sukamara",
+    "district_days_above": 32,
+    "district_days": 82,
+    "share_pct": 39.0
+   }
+  ],
+  "seasons": [
+   {
+    "year": 2023,
+    "season": "2023_janmar",
+    "window": "1 Jan to 31 Mar 2023",
+    "aug_oct": false,
+    "file": "visibility_kalteng_2023_janmar.json",
+    "sha256": "17cb8f5da5c80957eba13a5f098fb74721ae2b746db7e03424d5c0443fc778ad",
+    "days": 90,
+    "days_counted": 82,
+    "days_left_out": [
+     {
+      "date": "2023-02-26",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-02-27",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-02-28",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-03-01",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-03-02",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-03-03",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-03-04",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     },
+     {
+      "date": "2023-03-05",
+      "no_file_from": [
+       "terra",
+       "aqua"
+      ]
+     }
+    ],
+    "district_days_above": 442,
+    "district_days": 1148,
+    "share_pct": 38.5,
+    "worst_day": {
+     "date": "2023-02-12",
+     "share_no_cloud_free_look": 0.998,
+     "fire_cells": 0,
+     "no_fire_cells_with_cloud_free_look": 248,
+     "no_fire_cells_no_cloud_free_look": 123323
+    },
+    "districts": [
+     {
+      "name": "Barito Selatan",
+      "district_days_above": 36,
+      "district_days": 82,
+      "share_pct": 43.9
+     },
+     {
+      "name": "Barito Timur",
+      "district_days_above": 38,
+      "district_days": 82,
+      "share_pct": 46.3
+     },
+     {
+      "name": "Barito Utara",
+      "district_days_above": 25,
+      "district_days": 82,
+      "share_pct": 30.5
+     },
+     {
+      "name": "Gunung Mas",
+      "district_days_above": 32,
+      "district_days": 82,
+      "share_pct": 39.0
+     },
+     {
+      "name": "Kapuas",
+      "district_days_above": 31,
+      "district_days": 82,
+      "share_pct": 37.8
+     },
+     {
+      "name": "Katingan",
+      "district_days_above": 35,
+      "district_days": 82,
+      "share_pct": 42.7
+     },
+     {
+      "name": "Kota Palangka Raya",
+      "district_days_above": 25,
+      "district_days": 82,
+      "share_pct": 30.5
+     },
+     {
+      "name": "Kotawaringin Barat",
+      "district_days_above": 30,
+      "district_days": 82,
+      "share_pct": 36.6
+     },
+     {
+      "name": "Kotawaringin Timur",
+      "district_days_above": 34,
+      "district_days": 82,
+      "share_pct": 41.5
+     },
+     {
+      "name": "Lamandau",
+      "district_days_above": 29,
+      "district_days": 82,
+      "share_pct": 35.4
+     },
+     {
+      "name": "Murung Raya",
+      "district_days_above": 30,
+      "district_days": 82,
+      "share_pct": 36.6
+     },
+     {
+      "name": "Pulang Pisau",
+      "district_days_above": 35,
+      "district_days": 82,
+      "share_pct": 42.7
+     },
+     {
+      "name": "Seruyan",
+      "district_days_above": 30,
+      "district_days": 82,
+      "share_pct": 36.6
+     },
+     {
+      "name": "Sukamara",
+      "district_days_above": 32,
+      "district_days": 82,
+      "share_pct": 39.0
+     }
+    ]
+   }
+  ]
+ },
+ "all_windows_total": {
+  "seasons": 12,
+  "district_days_above": 1924,
+  "district_days": 14658,
+  "share_pct": 13.1
+ },
+ "source": {
+  "built_by": "kalenderapi-v4-integrated/pipeline/visibility/build_blind_rule.py",
+  "input": "visibility_kalteng_<season>.json in the same folder: per day and district, the no-fire cells with a cloud-free look (T) and with no cloud-free look (U), from the MODIS MOD14A1 and MYD14A1 FireMask, Collection 6.1; sha256 of each file under seasons",
+  "generated_utc": "2026-11-15T12:49:16Z"
+ }
+}

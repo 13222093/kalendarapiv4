@@ -1,4 +1,4 @@
-/* Project 4 (new file): the Indonesia record page (#/record, pages/Record.tsx and components/record/*). Theme tokens
+/* KalenderApi (new file): the Indonesia record page (#/record, pages/Record.tsx and components/record/*). Theme tokens
    only (tokens.css, theme.css, brand.css), so the dark "Mission control" and light "Field ledger" themes both work. */
 
 /* charts sit on the card surface, like the Dashboard's */
@@ -228,3 +228,95 @@ a.ka-rec-season:focus-visible { outline: 2px solid var(--focus); outline-offset:
 .ka-rec-all-tests[open] > summary { margin-bottom: 10px; }
 @media (max-width: 620px) { .ka-rec-featured-tests { grid-template-columns: 1fr; } }
 .ka-rec-featured-ci { margin: 4px 0; color: var(--text-2); font-size: var(--fs-12); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------------------------------------ pick a period,
+   downloads, the district finder (RangePanel, DownloadPanel, AreaSearch) */
+
+/* the latest month, right under the area picker */
+.ka-rec-top { display: grid; gap: var(--sp-2); min-width: 0; }
+.ka-rec-brief { color: var(--accent); font-size: var(--fs-13); font-weight: 600; text-underline-offset: 3px; }
+:root[data-theme="light"] .ka-rec-brief { color: var(--accent-strong); }
+.ka-rec-brief:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.ka-rec-note.is-error, .ka-rec-dl-status.is-error { color: var(--critical); }
+
+/* fields: the month and year selects, the search box, the latitude and longitude boxes */
+:is(.ka-rec-mpick, .ka-rec-latlon) :is(select, input), .ka-rec-find-box input {
+  min-height: var(--ctl); min-width: 0; padding: 0 var(--sp-3); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  background-color: var(--surface-2); color: var(--text); font: inherit; font-size: var(--fs-14);
+}
+:is(.ka-rec-mpick, .ka-rec-latlon) :is(select, input):focus-visible, .ka-rec-find-box input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-rec-mpick select option { background: var(--surface); color: var(--text); }
+@media (pointer: coarse) { :is(.ka-rec-mpick, .ka-rec-latlon) :is(select, input), .ka-rec-find-box input { min-height: var(--ctl-touch); } }
+
+/* the district finder */
+.ka-rec-find { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-3) var(--sp-5); min-width: 0; }
+.ka-rec-find-box { position: relative; display: grid; gap: var(--sp-1); flex: 1 1 280px; max-width: 440px; min-width: 0; }
+.ka-rec-find-box label, .ka-rec-latlon-form label { color: var(--text-2); font-size: var(--fs-13); font-weight: 600; }
+.ka-rec-find-box input { width: 100%; }
+.ka-rec-find-list {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; max-height: min(52vh, 380px); overflow-y: auto;
+  padding: var(--sp-1); border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface);
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.28));
+}
+.ka-rec-find-prov {
+  margin: 0; padding: var(--sp-2) var(--sp-2) 2px; color: var(--text-3); font-size: var(--fs-12); font-weight: 600;
+  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+}
+.ka-rec-find-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); width: 100%; min-height: var(--ctl);
+  padding: 0 var(--sp-2); border: 0; border-radius: var(--radius-sm, 4px); background: none; color: var(--text); font: inherit;
+  font-size: var(--fs-14); text-align: left; cursor: pointer;
+}
+.ka-rec-find-opt[aria-selected="true"] { background: var(--surface-3); }
+.ka-rec-find-tag { color: var(--text-3); font-size: var(--fs-12); white-space: nowrap; }
+.ka-rec-find-none { margin: 0; padding: var(--sp-2); color: var(--text-2); font-size: var(--fs-13); }
+@media (pointer: coarse) { .ka-rec-find-opt { min-height: var(--ctl-touch); } }
+.ka-rec-latlon { flex: 1 1 280px; min-width: 0; color: var(--text-2); font-size: var(--fs-13); }
+.ka-rec-latlon > summary { width: fit-content; min-height: var(--ctl); display: inline-flex; align-items: center; color: var(--accent); font-weight: 600; cursor: pointer; }
+:root[data-theme="light"] .ka-rec-latlon > summary { color: var(--accent-strong); }
+.ka-rec-latlon > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.ka-rec-latlon-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2) var(--sp-3); margin: var(--sp-1) 0 var(--sp-2); }
+.ka-rec-latlon-form label { display: grid; gap: var(--sp-1); }
+.ka-rec-latlon-form input { width: 9.5rem; max-width: 100%; }
+
+/* pick a period */
+.ka-rec-range { display: grid; gap: var(--sp-4); min-width: 0; }
+.ka-rec-range-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3) var(--sp-5); }
+.ka-rec-mpick { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.ka-rec-mpick > legend { float: left; width: 3.2rem; padding: 0; color: var(--text-2); font-size: var(--fs-13); font-weight: 600; line-height: var(--ctl); }
+.ka-rec-quick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin: 0; color: var(--text-2); font-size: var(--fs-13); }
+.ka-rec-chip {
+  min-height: var(--ctl-sm); padding: 0 var(--sp-3); border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: var(--fs-13); cursor: pointer;
+}
+.ka-rec-chip:hover { border-color: var(--text-3); background: var(--surface-3); }
+.ka-rec-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.ka-rec-chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (pointer: coarse) { .ka-rec-chip { min-height: var(--ctl-touch); } }
+.ka-rec-range-now { margin: 0; color: var(--text); font-size: var(--fs-14); line-height: 1.5; }
+
+/* downloads */
+.ka-rec-dl { display: grid; gap: var(--sp-4); min-width: 0; }
+.ka-rec-dl-group { display: grid; gap: var(--sp-2); min-width: 0; }
+.ka-rec-dl-title { margin: 0; color: var(--text); font-size: var(--fs-14); font-weight: 650; }
+.ka-rec-dl-btns { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.ka-rec-dl-status { min-height: 1.4em; margin: 0; color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-12); overflow-wrap: anywhere; }
+
+/* the picked range in the calendar: its months keep their colour, the others fade */
+.ka-rec-cal-grid[data-range] .ka-rec-cell:not([data-in], .is-out) { opacity: 0.3; }
+.ka-rec-cal-grid[data-range] .ka-rec-cell:not([data-in]):is(:hover, :focus-visible, [aria-selected="true"]) { opacity: 0.75; }
+.ka-rec-cal-range { margin: 0; color: var(--text); font-size: var(--fs-13); }
+.ka-rec-lg-out { --c: var(--ember-500); opacity: 0.3; }
+/* the seam's words come from the page's language */
+.ka-rec-cal-row.is-seam[data-seam]::before { content: attr(data-seam); }
+/* a month a registered test covers, not computed here: fine upright lines (never the cloud hatching) */
+.ka-rec-cell[data-held], .ka-rec-lg[data-held] {
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--text) 22%, transparent) 0 1px, transparent 1px 4px);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* the season cards: as many as are built (read from the files), in rows that fit */
+@media (min-width: 761px) { .ka-rec-seasons { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } }
+.ka-rec-ddays { overflow-x: auto; }
+.ka-rec-ddays .ui-table { font-size: var(--fs-13); }
+.ka-rec-ddays:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

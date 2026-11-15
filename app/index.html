@@ -6,24 +6,19 @@
     <title>KalenderApi: a zero is not always a zero</title>
     <meta
       name="description"
-      content="Indonesia's fire record across MODIS and VIIRS: inspect the 2012 sensor handoff, a harmonized series, its validation, and observation gaps."
+      content="A zero is not always a zero. KalenderApi puts Indonesia's MODIS and VIIRS fire detections on one scale and marks the days MODIS had no cloud-free look at the ground."
     />
     <meta name="color-scheme" content="light dark" />
-    <!-- Link previews (chat apps, social sites): absolute URLs of the published site; the picture is public/og-image.jpg
-         (1200 x 630), the burning calendar of Central Kalimantan. -->
+    <!-- Link previews (chat apps, social sites): the absolute URL of the published site. No preview picture is set:
+         the project has none of its own yet, and a text-only card is better than another project's picture. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="KalenderApi" />
     <meta property="og:title" content="KalenderApi: a zero is not always a zero" />
-    <meta property="og:description" content="Inspect Indonesia’s MODIS and VIIRS handoff, harmonized fire record, validation results, and observation gaps." />
-    <meta property="og:url" content="https://warren-530.github.io/fire-harmony/" />
-    <meta property="og:image" content="https://warren-530.github.io/fire-harmony/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Burning calendar of Central Kalimantan, 2001 to 2026, next to the title Fire Harmony" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:description" content="Indonesia's MODIS and VIIRS fire detections on one scale, and the days MODIS had no cloud-free look at the ground." />
+    <meta property="og:url" content="https://kalenderapi.vercel.app/" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="KalenderApi: a zero is not always a zero" />
-    <meta name="twitter:description" content="Indonesia’s MODIS and VIIRS handoff, harmonized fire record, validation results, and observation gaps." />
-    <meta name="twitter:image" content="https://warren-530.github.io/fire-harmony/og-image.jpg" />
+    <meta name="twitter:description" content="Indonesia's MODIS and VIIRS fire detections on one scale, and the days MODIS had no cloud-free look at the ground." />
     <!-- Hexagon and flame in the ember colours of tokens.css (--ember-500, --ember-100). -->
     <link
       rel="icon"
@@ -37,8 +32,8 @@
     <script>
       (function () {
         var t = null, d = document.documentElement, h = location.hash;
-        // project 4: a first visit (no hash at all) opens the Indonesia landing page; '#/' stays Fire Harmony's explorer
-        if (!h) { h = '#/home'; try { history.replaceState(null, '', location.pathname + location.search + h); } catch (e) { location.hash = h; } }
+        // KalenderApi: a first visit (no hash at all) opens the Story, whose last frame is the home; '#/' stays the explorer
+        if (!h) { h = '#/story'; try { history.replaceState(null, '', location.pathname + location.search + h); } catch (e) { location.hash = h; } }
         try { t = localStorage.getItem('fh_theme'); } catch (e) { /* private mode */ }
         d.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');   // light unless the visitor picked dark
         if (!h || h === '#/' || h.indexOf('#/?') === 0) d.setAttribute('data-boot', 'map');

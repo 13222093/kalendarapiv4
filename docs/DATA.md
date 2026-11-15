@@ -14,6 +14,10 @@ machine in this session; nothing is copied from another run. Paths are relative 
 | Central Kalimantan visibility files 2015, 2023 | `app/public/ka-data/visibility_kalteng_{2015,2023}.json`, `vis2015/`, `vis2023/` (92 PNG each) | built |
 | Monthly observability, `prov-kalimantan-tengah`, Aug-Oct 2015, 2019, 2023 | inside `monthly_prov-kalimantan-tengah.json`, listed in `index.json` `obs_months` | 9 months filled, all other months `obs_class: null` |
 | 2019 season and visibility files | `app/public/ka-data/*2019*` | **not touched, not rerun** |
+| **Added 15 November.** District records, 514 kabupaten/kota x 313 months | `app/public/ss-data/districts/` | built: a share-out of the province record, `approximate: true` (section 13) |
+| **Added 15 November.** Season and visibility files, Aug to Oct 2014, 2016, 2017, 2018, 2020, 2021, 2022, 2024, 2026 and Jan to Mar 2023 | `app/public/ka-data/kalteng_<Y>_season.json`, `visibility_kalteng_<Y>.json`, `vis<Y>/`; the wet quarter as `kalteng_2023_janmar_season.json`, `visibility_kalteng_2023_janmar.json`, `vis2023janmar/` | built; 2026 is provisional (near-real-time points, FireMask incomplete after 15 October); **2025 not built**, no FireMask in the catalogue (section 14) |
+| **Added 15 November.** District-days with no cloud-free look, 11 Aug to Oct seasons and the wet quarter, 2019 left out | `app/public/ka-data/blind_rule_kalteng.json` | built (section 14.5) |
+| **Added 15 November.** Monthly observability, 23 more months | `monthly_prov-kalimantan-tengah.json`, `index.json` `obs_months` (32 months) | built; 2019 rows copied as published, not recomputed (section 14.4) |
 
 `index.json` was written last (after every other file in `ss-data`). Its absence means an unfinished bundle.
 
@@ -121,6 +125,9 @@ For the Central Kalimantan districts (`build_visibility.py`): `data-raw/geobound
 size and sha256 of every file are inside `visibility_kalteng_<Y>.json` under `source.firemask.items`.
 
 ### 4.5 Files this run wrote that the app reads (sha256)
+
+(State of 14 November. On 15 November `index.json` and `monthly_prov-kalimantan-tengah.json` were rewritten with more
+observability months; their new sha256 values are in section 14.4. The other six files are unchanged.)
 
 | File | sha256 |
 |---|---|
@@ -381,3 +388,327 @@ see 8.1 for the effect. Every other Second Sight module ran unmodified on Python
 | viirs-snpp | 2023 | 253,388 | 20,067,598 | `2dba3b772b5a3a2cc0feed128af74637810021dd41dc34d584cb99b40411665a` |
 | viirs-snpp | 2024 | 104,186 | 8,238,988 | `23be16b48fb6ac3a21fd2130e66149d305af71c62bbb39e76a6a0632a9dd69bd` |
 | viirs-snpp | 2025 | 96,056 | 7,584,099 | `11abffff52dedfe985a8f03c59b8ebff55a903bd0de07d4897f76d734788d811` |
+
+## 13. District records (kabupaten/kota), added 15 November 2026
+
+A monthly record for 514 districts, written to `app/public/ss-data/districts/`. It is a **share-out of the province
+record**, not a separate harmonization: `index.json` there carries `"approximate": true` and the method in two sentences.
+
+### 13.1 Command and run time
+
+```
+.venv/Scripts/python.exe pipeline/districts/build_districts.py
+```
+
+Run from the project root with the venv of section 2 (pandas, pyarrow, shapely, geopandas; nothing was installed).
+**17.7 s** wall clock (second and final run, 2026-11-15 12:29 UTC; the first run took 12.3 s). No network access.
+The script deletes and rewrites `monthly_kab-*.json` in its own folder and writes `index.json` last.
+
+### 13.2 Method
+
+1. Each 0.05 degree grid cell of `ss-data/grid005` goes to the district whose polygon contains the cell centre
+   (45,218 cells). A centre that falls outside every polygon but within 0.05 degree of one goes to the nearest district
+   (3,938 cells, mostly coast). 114 cells are further away and are left out: 0.031% of all fire cell-days.
+2. A district belongs to the province (gbHumanitarian ADM1, the layer of the bundle's province records) that it overlaps
+   most. Every district overlaps its province by 99.5% or more of its area.
+3. District value = district raw count of the sensor named in the province's `sensor_used` for that month x
+   (province `H` / province raw count of that sensor); the same factor for `H_lo` and `H_hi`; 0 when the province raw
+   count is 0. `H`, `H_lo`, `H_hi` are rounded to 2 decimals.
+4. `baseline_median` (median of `H` over the same calendar month, 2003 to 2022) and `pct_rank` (rank among the same
+   calendar month of earlier years, ties count half) follow `vendor/second-sight/pipeline/science/baseline.py`. The
+   script applies its own implementation to the `H` series of 33 province files and gets their `baseline_median` and
+   `pct_rank` back with a largest difference of 0.0 and the same null pattern (`definition_check` in `index.json`).
+   For districts they are computed on the rounded `H`.
+5. `flag_nrt` and `flag_partial` are copied from the province row; `obs_class` and `agreement` are null.
+
+Three things differ from a plain copy of the province logic, all written into `index.json`:
+
+- **Five units of the ADM2 layer are not districts and were left out:** `Danau`, `Danau Toba`, `Hutan`, `Waduk Cirata`,
+  `Wadung Kedungombo` (lakes, reservoirs, one forest polygon). 519 units minus 5 gives 514, the number of kabupaten and kota.
+- **Province-wide zero months.** The bundle writes `H: null` and `sensor_used: null` in 702 province rows where no
+  active satellite saw fire anywhere in the province (all raw counts 0). In those months the district value is 0
+  (the rule "province raw count 0 gives 0"), and `sensor_used` stays null as in the province row.
+- **Locked months.** For the 14 districts of Kalimantan Tengah, the rows 2019-01 to 2019-10 have null `H`, `H_lo`,
+  `H_hi`, raw counts, `baseline_median` and `pct_rank` (140 rows). Those grid rows are dropped before anything is
+  summed, and the province is left out of the grid check for those ten months (section 11 explains the lock). Their
+  baseline and ranks therefore leave 2019 out for January to October, and `mean_cell_days_per_year` uses 24 years.
+
+`mean_cell_days_per_year` is the mean yearly sum of `H` over the complete years 2001 to 2025. `low_data` is true below 50:
+378 of the 514 districts.
+
+### 13.3 Inputs and checksums
+
+| Input | sha256 |
+|---|---|
+| `data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson` (gbOpen ADM2, boundary id IDN-ADM2-22746128, 519 units, 11,002,896 bytes) | `146653d488331086ddc43d159a261b01ea6dd08c7ed422e34a9886c3c690430c` |
+| `data-raw/ss/support/boundaries/geoBoundaries-IDN-ADM1-gbHumanitarian_simplified.geojson` (34 provinces) | `6a92013432cb64c03915a84fe53281fcacadd2b66cf69d502d8259fd6d23fb3e` |
+| `app/public/ss-data/index.json` (province list, baseline period) | `6a389dc0b2f717fd5c5b6a53d6cdebb01756d2219928b963886ef043e3ad867a` |
+| `app/public/ss-data/monthly_IDN.json` (unit check) | `cb72f706837b4b4fe485acc584e878c86c60332c71c6bdeb1de9119768170e91` |
+| `app/public/ss-data/grid005/grid005_2000.parquet` to `grid005_2026.parquet` (27 files, 10,693,349 bytes) | sha256 of the sorted list of `<name> <sha256>` lines: `b36610e4641ff0adaafed9f52c4630f92e2190b35bfdc21a69c1c652984bec89` |
+| `app/public/ss-data/monthly_prov-*.json` (34 files, as they were at 12:29 UTC) | same kind of list hash: `bd20d97e264086b74ef1dca8a5a351d12b14c2ab41e92a1697e561b7bf9b49f3` |
+
+Licence of the district layer: the geoBoundaries API (read 2026-11-15) gives **CC BY 3.0 IGO** for IDN ADM2 gbOpen
+(source: BPS, World Food Programme, OCHA ROAP). The geoBoundaries database itself is CC BY 4.0. `index.json` records
+CC BY 3.0 IGO with a note.
+
+### 13.4 Grid check
+
+**Unit.** National sums of grid `n_cells` against `monthly_IDN.json`, every month, each satellite: difference 0 in every
+month (Aqua 968,940 cell-days over 293 months, Terra 453,184 over 313, S-NPP 2,458,771 over 179, NOAA-20 1,185,698
+over 104). The grid and the province files use the same unit. NOAA-21 rows in the grid have no raw column in the bundle
+and are not used.
+
+**Per province and satellite** (34 x 4 = 136 pairs; the full list is `grid_check` in `districts/index.json`). Grid cells
+summed through the districts against the province file's raw column:
+
+| Measure | Result |
+|---|---|
+| difference of the sums over all months, median of the 136 absolute values | 0.42% |
+| pairs within 1% / within 2% | 100 / 124 of 136 |
+| pairs above 5% | 7: Daerah Istimewa Yogyakarta (Aqua +14.8%, S-NPP -9.2%, NOAA-20 -8.7%), DKI Jakarta (Aqua -12.5%, S-NPP -8.5%, NOAA-20 -10.9%), Kepulauan Riau (NOAA-20 +5.5%) |
+| largest monthly difference, months with at least 100 province cell-days (`max_abs_pct_diff`; 120 pairs have such a month) | median 3.6%, largest 14.2% (Sulawesi Tengah, NOAA-20) |
+| the main fire provinces, sums over all months | Riau -0.3% to +0.3%, Kalimantan Tengah -0.2%, Sumatera Selatan -0.2% to -0.1%, Kalimantan Barat +0.2% to +0.3%, Jambi +0.7% to +1.6%, Papua +0.5% to +1.7% |
+
+The differences come from 0.05 degree cells that straddle a province border and from the two boundary layers (gbOpen
+ADM2 here, gbHumanitarian ADM1 in the bundle). Districts add up to their province to within this difference, not
+exactly. In 14 district-months a district has grid fire while its province's raw count is 0; the rule gives 0 there.
+
+### 13.5 Output
+
+| File | Content | Bytes |
+|---|---|---:|
+| `districts/index.json` | method, checks, 514 district entries | 452,114 |
+| `districts/monthly_kab-<slug>.json` (514 files) | 313 rows each (2000-11 to 2026-11), 160,882 rows, the province row fields in the same order | 40,533,718 |
+| `districts/districts.geojson` | 514 polygons, properties `aoi_id`, `name`, `province`; simplified with tolerance 0.002 degree, coordinates to 4 decimals | 2,763,787 |
+| `districts/cells.json` | 49,156 grid cells with fire and the index of their district (`g_id = floor((lat + 90) / 0.05) * 7200 + floor((lon + 180) / 0.05)`) | 629,267 |
+
+The folder holds 517 files, 44,378,886 bytes. sha256 at 12:29 UTC: `index.json` `b303bfbe7644a69e9ab552df24808a585263629e6c184764269b06fb2dc4d6ba`,
+`districts.geojson` `f827cf1fbfc982249947d50b82d7120ca526a813b97132032de52bf870f63bf4`,
+`cells.json` `e69e6e9946066034c63d6d36bb8859cb8ee79f332e5f95980f534742da39932d`.
+
+## 14. More Central Kalimantan seasons and the district-day count, added 15 November 2026
+
+Built today: Aug to Oct of 2014, 2016, 2017, 2018, 2020, 2021, 2022, 2024 and 2026, and the wet-season quarter Jan to Mar
+2023. With 2015 and 2023 from 14 November that makes 11 Aug to Oct seasons and one wet quarter. **2019 was not rerun and
+its files were not opened or rewritten.** **Aug to Oct 2025 could not be built** (14.2).
+
+### 14.1 Commands and run times (all times UTC, 15 November)
+
+Per season `<Y>`, with the venv python of section 2 (`build_visibility.py` needs numpy, Pillow, tifffile):
+
+```
+python -I pipeline/visibility/build_season.py data-raw/ss/raw_csv/viirs-snpp/viirs-snpp_<Y>_Indonesia.csv app/public/ka-data/kalteng_<Y>_season.json <download_utc from data_manifest.json> <Y>
+python -I pipeline/visibility/build_visibility.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson <Y>
+```
+
+Wet quarter (new optional window arguments; without them both scripts behave as before):
+
+```
+python -I pipeline/visibility/build_season.py data-raw/ss/raw_csv/viirs-snpp/viirs-snpp_2023_Indonesia.csv app/public/ka-data/kalteng_2023_janmar_season.json 2026-11-14T06:32:28Z 2023 01-01 03-31
+python -I pipeline/visibility/build_visibility.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson 2023 01-01 03-31 janmar
+```
+
+2026 (the points are not in the FIRMS country archive yet; they come from the near-real-time parquet of section 4.2):
+
+```
+python -I pipeline/visibility/nrt_parquet_to_csv.py data-raw/ss data-raw/kalteng_nrt/viirs-snpp_2026_from_nrt_mirror.csv 2026      (12 s)
+python -I pipeline/visibility/build_season.py data-raw/kalteng_nrt/viirs-snpp_2026_from_nrt_mirror.csv app/public/ka-data/kalteng_2026_season.json 2026-11-14T06:38:17Z 2026
+python -I pipeline/visibility/build_visibility.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson 2026
+```
+
+Then:
+
+```
+python -I pipeline/visibility/build_blind_rule.py app/public/ka-data                                                     (under 1 s)
+python pipeline/visibility/monthly_observability.py --bundle-src data-raw/ss/bundle --out app/public/ss-data --ka-data app/public/ka-data --years 2014 2015 2016 2017 2018 2020 2021 2022 2023 2024 2026 --files visibility_kalteng_2023_janmar.json --keep-published 2019 --report data-raw/obs_months.json      (3 s)
+```
+
+Season plus visibility, three seasons running side by side (most of the time is the FireMask download): Jan to Mar 2023
+3 min 57 s, 2021 3 min 19 s, 2024 3 min 42 s, 2017 3 min 29 s, 2020 3 min 40 s, 2022 3 min 37 s, 2018 3 min 24 s, 2016
+4 min 10 s, 2014 3 min 53 s, 2026 2 min 54 s. First start 12:32:17, last end 12:47:09: **about 15 minutes** for all ten.
+Jan to Mar 2023, 2017, 2020, 2021, 2022 and 2024 were then run once more from the downloaded files (5 to 11 s each) after
+`build_visibility.py` learned to record days without a sensor file (14.3); their counts did not change. Logs:
+`data-raw/vis<Y>.log`, `data-raw/vis2023janmar.log`. The FireMask folder `data-raw/modis14a1` now holds 586 files.
+
+### 14.2 What was not available
+
+- **Aug to Oct 2025: not built.** The Planetary Computer catalogue (`modis-14A1-061`) returns 0 MOD14A1/MYD14A1 items
+  over the box for 2025-08-01 to 2025-10-31 (it returns 94 for January to July 2025 and 114 for the whole year). NASA's
+  own archive needs a login, which this run does not use. No 2025 season or visibility file is published: a first attempt
+  wrote `kalteng_2025_season.json` and 92 images showing only "no data" before the visibility step stopped; both were
+  removed, and `build_visibility.py` now stops before writing anything when the catalogue returns no file.
+- **2026, 16 to 31 October:** the catalogue has no Aqua file for 16 to 23 October and, for 24 to 31 October, Terra only
+  for the northern tile and Aqua only for the southern one (46 files instead of 48). The files are probably not
+  published yet. Those 16 days are in the visibility file but marked (14.3).
+- **Jan to Mar 2023:** the catalogue has no file of either sensor for 26 February to 5 March 2023 (period A2023057).
+- Other days without a file of one sensor (a sensor that was off, or a gap in the catalogue; this run did not check
+  which): Aqua 17 August to 2 September 2020, Terra 11 to 23 October 2022, Terra on 26 October 2014.
+
+### 14.3 Seasons (same box, cells and rule as section 7; F, T, U, N in cell-days)
+
+`no_file_days` is a new key in a visibility file, present only when the catalogue had no file of a sensor for part or all
+of the box on some day. On such a day the class rests on the other sensor, so its blind share is not comparable.
+
+| Season | FireMask files | bytes | VIIRS rows kept | zero days | busiest day | land cells | F | T | U | N | blind U/(T+U) | daily median (q1 to q3) | no data | days without a sensor file |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---|---:|---|
+| 1 Aug to 31 Oct 2014 | 48 | 29,163,433 | 89,683 | 0 | 2014-10-02 (4,635) | 123,960 | 49,401 | 10,288,416 | 1,047,052 | 19,451 | 9.2% | 3.5% (0.4 to 12.9) | 0.2% | 1 (2014-10-26) |
+| 1 Aug to 31 Oct 2016 | 52 | 37,087,959 | 10,699 | 7 | 2016-09-14 (1,472) | 123,798 | 3,277 | 8,960,987 | 2,413,872 | 11,280 | 21.2% | 12.6% (3.2 to 30.9) | 0.1% | none |
+| 1 Aug to 31 Oct 2017 | 48 | 34,284,771 | 6,942 | 3 | 2017-09-23 (490) | 123,820 | 2,219 | 8,865,640 | 2,511,619 | 11,962 | 22.1% | 16.4% (4.6 to 31.4) | 0.1% | none |
+| 1 Aug to 31 Oct 2018 | 48 | 29,378,731 | 28,485 | 1 | 2018-09-27 (1,289) | 123,937 | 11,491 | 9,847,468 | 1,526,974 | 16,271 | 13.4% | 4.5% (0.7 to 18.1) | 0.1% | none |
+| 1 Aug to 31 Oct 2020 | 50 | 34,178,365 | 7,125 | 9 | 2020-09-18 (732) | 123,790 | 2,537 | 8,603,939 | 2,760,078 | 22,126 | 24.3% | 15.8% (5.3 to 38.5) | 0.2% | 17 (2020-08-17 to 2020-09-02) |
+| 1 Aug to 31 Oct 2021 | 50 | 36,403,084 | 5,302 | 7 | 2021-09-23 (631) | 123,792 | 1,278 | 8,449,050 | 2,928,438 | 10,098 | 25.7% | 19.2% (4.5 to 38.9) | 0.1% | none |
+| 1 Aug to 31 Oct 2022 | 46 | 33,946,780 | 3,785 | 21 | 2022-08-19 (521) | 123,729 | 856 | 7,981,422 | 3,389,178 | 11,612 | 29.8% | 17.6% (8.6 to 47.7) | 0.1% | 13 (2022-10-11 to 2022-10-23) |
+| 1 Jan to 31 Mar 2023 | 48 | 37,202,615 | 393 | 36 | 2023-01-17 (43) | 123,571 | 184 | 5,950,284 | 4,179,328 | 991,594 | 41.3% | 43.1% (15.6 to 59.9) | 8.9% | 8 (2023-02-26 to 2023-03-05) |
+| 1 Aug to 31 Oct 2024 | 54 | 35,129,216 | 11,989 | 4 | 2024-09-03 (907) | 123,766 | 4,133 | 9,773,983 | 1,595,225 | 13,131 | 14.0% | 7.2% (1.3 to 20.7) | 0.1% | none |
+| 1 Aug to 31 Oct 2026 | 46 | 24,979,659 | 203,491 | 1 | 2026-10-22 (10,092) | 123,946 | 91,240 | 10,387,132 | 895,464 | 29,196 | 7.9% | 0.4% (0.0 to 3.3) | 0.3% | 16 (2026-10-16 to 2026-10-31) |
+
+The season totals above include the days without a sensor file (the 8.9% no data of Jan to Mar 2023 is the eight days
+with no file at all). Some catalogue searches return a file twice or a thirteenth period, hence 50 to 54 files.
+
+**2026 is provisional.** All 203,491 points kept for Aug to Oct 2026 are near-real-time rows. They carry no `type`, so the
+"presumed vegetation fire" test that the archive years get cannot be applied to them (the file's `filter_text` says so,
+and `source.provisional` is true); the confidence filter and the box are the same. The season file records the mirror
+URL, the parquet's sha256 (`a372343a…`, the value in `data_manifest.json`) and the converted CSV's sha256.
+
+The season files hold, per point, the "re-appeared after a gap" marks that `build_season.py` writes for the page (the
+unchanged v1.0 rule, as in the 2015 and 2023 files). No total, test or analysis of them was made or is reported here.
+
+### 14.4 Monthly observability (rule of section 7.1)
+
+A month is filled only when the file holds all of its days and none of them is a day without a sensor file. 23 months
+were added; `obs_months` in `ss-data/index.json` now lists 32. The three 2019 months were **copied as published**
+(`--keep-published 2019`: the 2019 file is not opened and nothing is recomputed); the six months of 2015 and 2023 were
+recomputed from unchanged files and came out identical. A comparison of `monthly_prov-kalimantan-tengah.json` before and
+after: 23 rows changed, all in the observability fields only; every 2019 row identical.
+
+| Month | F | T | U | N | f_cloud | f_missing | O | obs_class |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| 2014-08 | 4,101 | 3,442,954 | 389,492 | 6,213 | 0.1016 | 0.0016 | 0.8969 | good |
+| 2014-09 | 24,551 | 3,487,347 | 200,452 | 6,450 | 0.0544 | 0.0017 | 0.9440 | good |
+| 2016-08 | 831 | 3,281,472 | 550,366 | 5,069 | 0.1436 | 0.0013 | 0.8552 | good |
+| 2016-09 | 1,252 | 3,031,179 | 677,836 | 3,673 | 0.1828 | 0.0010 | 0.8164 | good |
+| 2016-10 | 1,194 | 2,648,336 | 1,185,670 | 2,538 | 0.3093 | 0.0007 | 0.6903 | good |
+| 2017-08 | 101 | 2,879,497 | 955,103 | 3,719 | 0.2491 | 0.0010 | 0.7502 | good |
+| 2017-09 | 1,144 | 3,044,656 | 664,512 | 4,288 | 0.1792 | 0.0012 | 0.8199 | good |
+| 2017-10 | 974 | 2,941,487 | 892,004 | 3,955 | 0.2327 | 0.0010 | 0.7665 | good |
+| 2018-08 | 3,462 | 3,481,955 | 350,558 | 6,072 | 0.0915 | 0.0016 | 0.9071 | good |
+| 2018-09 | 5,867 | 3,281,739 | 424,989 | 5,515 | 0.1147 | 0.0015 | 0.8840 | good |
+| 2018-10 | 2,162 | 3,083,774 | 751,427 | 4,684 | 0.1959 | 0.0012 | 0.8031 | good |
+| 2020-10 | 986 | 2,631,407 | 1,201,743 | 3,354 | 0.3135 | 0.0009 | 0.6859 | good |
+| 2021-08 | 104 | 2,947,332 | 886,616 | 3,500 | 0.2313 | 0.0009 | 0.7680 | good |
+| 2021-09 | 223 | 2,588,735 | 1,121,653 | 3,149 | 0.3023 | 0.0008 | 0.6971 | good |
+| 2021-10 | 951 | 2,912,983 | 920,169 | 3,449 | 0.2401 | 0.0009 | 0.7593 | good |
+| 2022-08 | 184 | 3,230,504 | 601,823 | 3,088 | 0.1570 | 0.0008 | 0.8423 | good |
+| 2022-09 | 428 | 2,626,051 | 1,083,192 | 2,199 | 0.2920 | 0.0006 | 0.7076 | good |
+| 2023-01 | 116 | 2,052,647 | 1,777,042 | 896 | 0.4640 | 0.0002 | 0.5359 | **partial** |
+| 2024-08 | 235 | 3,284,172 | 547,766 | 4,573 | 0.1429 | 0.0012 | 0.8560 | good |
+| 2024-09 | 2,714 | 3,349,114 | 356,292 | 4,860 | 0.0962 | 0.0013 | 0.9027 | good |
+| 2024-10 | 1,184 | 3,140,697 | 691,167 | 3,698 | 0.1804 | 0.0010 | 0.8188 | good |
+| 2026-08 | 19,436 | 3,809,448 | 5,439 | 8,003 | 0.0014 | 0.0021 | 0.9965 | good |
+| 2026-09 | 37,195 | 3,546,566 | 127,542 | 7,077 | 0.0347 | 0.0019 | 0.9634 | good |
+
+Skipped because of days without a sensor file: 2014-10, 2020-08, 2020-09, 2022-10, 2023-02, 2023-03, 2026-10.
+January 2023 is the first month in the data that is not `good`. After this step: `ss-data/index.json` sha256
+`70a2db763c4ba3634d8c42e76bbfc1e763fddb06196c0248dd29d79bd9f67ff8` (only `obs_months` differs from before),
+`monthly_prov-kalimantan-tengah.json` `84615a320d1ad4333cdf054e0840b08ae037c0f65b0da3da67d1ea5bdb6f389b`. These replace the
+two values in 4.5 and the two "as they were at 12:29 UTC" inputs of 13.3; the district records do not use the changed fields.
+
+### 14.5 District-days with no cloud-free look (`app/public/ka-data/blind_rule_kalteng.json`)
+
+Rule: a district-day counts when more than half of the district's no-fire cell-days of that day had no cloud-free look
+from Terra or Aqua, U / (T + U) > 0.5. Input: the per-day, per-district T and U stored in each visibility file. Only
+days with a file of both sensors are counted. 2019 is left out and its file is not opened. The file states that thick
+smoke is not flagged as cloud by the MODIS FireMask, so the count is a lower bound.
+
+| Season | days counted | district-days | above the threshold | share | day with the highest share of no-fire cell-days with no cloud-free look (share, fire cells that day) |
+|---|---:|---:|---:|---:|---|
+| 1 Aug to 31 Oct 2014 | 91 of 92 | 1,274 | 65 | 5.1% | 2014-10-15 (93.2%, 0) |
+| 1 Aug to 31 Oct 2015 | 92 of 92 | 1,288 | 37 | 2.9% | 2015-10-29 (78.8%, 48) |
+| 1 Aug to 31 Oct 2016 | 92 of 92 | 1,288 | 194 | 15.1% | 2016-10-20 (95.5%, 0) |
+| 1 Aug to 31 Oct 2017 | 92 of 92 | 1,288 | 210 | 16.3% | 2017-08-17 (95.5%, 0) |
+| 1 Aug to 31 Oct 2018 | 92 of 92 | 1,288 | 122 | 9.5% | 2018-08-01 (82.7%, 0) |
+| 1 Aug to 31 Oct 2020 | 75 of 92 | 1,050 | 209 | 19.9% | 2020-10-17 (92.8%, 0) |
+| 1 Aug to 31 Oct 2021 | 92 of 92 | 1,288 | 271 | 21.0% | 2021-08-28 (83.7%, 0) |
+| 1 Aug to 31 Oct 2022 | 79 of 92 | 1,106 | 208 | 18.8% | 2022-09-05 (85.7%, 0) |
+| 1 Aug to 31 Oct 2023 | 92 of 92 | 1,288 | 39 | 3.0% | 2023-10-18 (44.9%, 87) |
+| 1 Aug to 31 Oct 2024 | 92 of 92 | 1,288 | 119 | 9.2% | 2024-10-17 (85.2%, 0) |
+| 1 Aug to 31 Oct 2026 | 76 of 92 | 1,064 | 8 | 0.8% | 2026-09-09 (37.9%, 613) |
+| **11 Aug to Oct seasons** (`total`) | | **13,510** | **1,482** | **11.0%** | |
+| 1 Jan to 31 Mar 2023 (`wet_season_contrast`) | 82 of 90 | 1,148 | 442 | 38.5% | 2023-02-12 (99.8%, 0) |
+| all 12 windows (`all_windows_total`) | | 14,658 | 1,924 | 13.1% | |
+
+`total`, `districts` and `seasons` in the file hold the Aug to Oct seasons only, so the wet quarter is never added in
+unnoticed. Per district, Aug to Oct seasons (965 district-days each) and the wet quarter (82 each):
+
+| District | Aug to Oct, above the threshold | share | Jan to Mar 2023 | share |
+|---|---:|---:|---:|---:|
+| Barito Selatan | 77 | 8.0% | 36 | 43.9% |
+| Barito Timur | 87 | 9.0% | 38 | 46.3% |
+| Barito Utara | 81 | 8.4% | 25 | 30.5% |
+| Gunung Mas | 125 | 13.0% | 32 | 39.0% |
+| Kapuas | 80 | 8.3% | 31 | 37.8% |
+| Katingan | 103 | 10.7% | 35 | 42.7% |
+| Kota Palangka Raya | 100 | 10.4% | 25 | 30.5% |
+| Kotawaringin Barat | 120 | 12.4% | 30 | 36.6% |
+| Kotawaringin Timur | 112 | 11.6% | 34 | 41.5% |
+| Lamandau | 136 | 14.1% | 29 | 35.4% |
+| Murung Raya | 134 | 13.9% | 30 | 36.6% |
+| Pulang Pisau | 80 | 8.3% | 35 | 42.7% |
+| Seruyan | 120 | 12.4% | 30 | 36.6% |
+| Sukamara | 127 | 13.2% | 32 | 39.0% |
+
+No district-day had zero no-fire cells. sha256 of `blind_rule_kalteng.json` (40,958 bytes):
+`b517f5e282972f18d43647ac777190c7bc88a6662e7495a9866f73bcbec4fc2f`.
+
+### 14.6 New files in `app/public/ka-data/` (sha256)
+
+| File | bytes | sha256 |
+|---|---:|---|
+| `kalteng_2014_season.json` | 2,151,481 | `559302be6e4571299ac0c3d56262b02b0a1a9dfc330201c6b5bc5241bf5d7db1` |
+| `kalteng_2016_season.json` | 260,366 | `c6f93707aa4bf4af2fc8b812621a9599f8a05c7c7d7eaf4de8bcc6dd468a2fd1` |
+| `kalteng_2017_season.json` | 170,347 | `69e7c364a7957f7b5492ee7e40fcf4f667ba2429386cd8033f0785ea70273c06` |
+| `kalteng_2018_season.json` | 683,260 | `df58c2c7127a1c99d518fa877bd273dc394a09cee045c44f98a2af8afafef2c8` |
+| `kalteng_2020_season.json` | 172,813 | `66a16452207c6788fe42bcc60e8f0db8a7757d40be2b5424b2d129cc8d0d9d92` |
+| `kalteng_2021_season.json` | 130,970 | `6fa3035132bd1f6cc925fb1b782c30653e2c87de231b1169ae645e4f43f808fb` |
+| `kalteng_2022_season.json` | 95,068 | `5b2c0c499c2b45e5db717a25a02a526834f8b8e4c0368366f526434aa8c05510` |
+| `kalteng_2023_janmar_season.json` | 15,429 | `5274f3fb10e7cd46871d6c7c6fcfcd7b4518a4a1919bc19c0a8100e08d99b11b` |
+| `kalteng_2024_season.json` | 291,218 | `0c54d3a8d281388ef0f00042468208f78d964d40eee09ffee8f63f1a68340759` |
+| `kalteng_2026_season.json` | 4,782,617 | `8dc75e34ab0b1f217634b069ea797591391d89d6214f187fdf2a00b09c6cd865` |
+| `visibility_kalteng_2014.json` | 37,707 | `fe80782a203964827e866cac4a3f6d970162a40a26eb69defbb74a1dd76f334b` |
+| `visibility_kalteng_2016.json` | 38,708 | `6ea0bfe3e7b93937fa380d380c55f8c1962d610178e43fc9beee1a003cd41849` |
+| `visibility_kalteng_2017.json` | 38,003 | `1b0814ac1e6512dde48705c38ca334981b4d802180a521d2b8735a2c03b024b5` |
+| `visibility_kalteng_2018.json` | 37,464 | `98bed3210279062af6cdff6704885f069b888fbc2f20fd9dc2b7aa7b2a3ad071` |
+| `visibility_kalteng_2020.json` | 39,190 | `7b7679e083e6c58d510b78155e5654fdf8a9f23dcdf306e9e21fa206e4095606` |
+| `visibility_kalteng_2021.json` | 38,464 | `abeed716bca6c04bbeacbbc63568af1386a8a4595ce3ee4e623418ee41db685c` |
+| `visibility_kalteng_2022.json` | 38,428 | `5b9f0696c5efc6d3885ba356cf10c403f6855d7577b318ff61968b5b3c36bc37` |
+| `visibility_kalteng_2023_janmar.json` | 37,938 | `17cb8f5da5c80957eba13a5f098fb74721ae2b746db7e03424d5c0443fc778ad` |
+| `visibility_kalteng_2024.json` | 38,879 | `6e80a556099c9cdba4539804466b301c1bd5ce54f1af0598ed6327984a138356` |
+| `visibility_kalteng_2026.json` | 37,080 | `c5b4c4940331e14b3546ee4bcdc8b2a3a01bbc470f016324d31e24fcb7ff451f` |
+
+Image folders (one PNG per day): `vis2014`, `vis2016`, `vis2017`, `vis2018`, `vis2020`, `vis2021`, `vis2022`, `vis2024`,
+`vis2026` (92 each) and `vis2023janmar` (90), 215,445 to 484,422 bytes per folder. The 2015 and 2023 files of 14 November
+were not rewritten (same sha256 as in 4.5). `app/public/ka-data` is 25 MB in total.
+
+### 14.7 Code changed today (`pipeline/visibility/`, `pipeline/districts/`)
+
+- `build_season.py`: optional `<start MM-DD> <end MM-DD>` after the year. A CSV with a `<csv>.source.json` beside it
+  (written by `nrt_parquet_to_csv.py`) is treated as a converted near-real-time copy: rows without `type` are kept, and
+  the source block records the mirror, the row counts by quality and `provisional: true`. Without these, output is as
+  before: for 2015 and 2023 the filter text and the rule text were compared with the stored files and are identical.
+- `build_visibility.py`: optional `<start MM-DD> <end MM-DD> <tag>` after the year (reads `kalteng_<Y>_<tag>_season.json`,
+  writes `visibility_kalteng_<Y>_<tag>.json` and `vis<Y><tag>/`); stops when the catalogue returns no file; writes
+  `no_file_days` when a sensor file is missing; checks that the season file covers the window.
+- `monthly_observability.py`: months are taken from the days in each file; `--files` for other windows;
+  `--keep-published` copies a year's published rows without recomputing; months with a day without a sensor file are skipped.
+- New: `nrt_parquet_to_csv.py`, `build_blind_rule.py`, `pipeline/districts/build_districts.py`.
+
+### 14.8 The 2019 lock, today
+
+- Nothing was rerun, recomputed or written for Central Kalimantan or Pulang Pisau for 1 January to 31 October 2019.
+  `build_season.py` and `build_visibility.py` were not run for 2019; `build_blind_rule.py` skips any file with 2019 in its
+  name; `monthly_observability.py` copied the three published 2019 rows unchanged; the district records carry nulls for
+  the 14 Central Kalimantan districts in those ten months and the grid check skips them (section 13.2).
+- No re-appearance or hidden-fire statistic was computed for any period.
+- Housekeeping: the one-line total that `build_season.py` prints about its re-appeared marks was removed from today's
+  logs. The same clean-up command also passed over `data-raw/vis2015.log` and `data-raw/vis2023.log` of 14 November; they
+  had no such line, so their content is unchanged and only their modification time moved.

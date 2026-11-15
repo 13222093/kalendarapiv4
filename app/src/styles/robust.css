@@ -1,0 +1,54 @@
+/* Project 4, fourth round (after the science review): the robustness strip under the stat tiles of "Before and after",
+   and the evidence blocks of "How sure". Theme tokens only (dark and light); no fixed colours. */
+
+/* ------------------------------------------------------------------------------------------------ robustness strip */
+.ka-rob { display: grid; gap: var(--sp-3); min-width: 0; }
+.ka-rob-title { margin: 0; color: var(--text); font-size: var(--fs-14); font-weight: 650; line-height: 1.4; }
+.ka-rob-grid { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.ka-rob-item {
+  display: grid; align-content: start; gap: var(--sp-2); min-width: 0; padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2);
+}
+.ka-rob-label { margin: 0; color: var(--text); font-size: var(--fs-13); font-weight: 650; line-height: 1.35; }
+.ka-rob-years { margin: 0; color: var(--text-2); font-size: var(--fs-12); line-height: 1.45; text-wrap: pretty; }
+.ka-rob-vals { display: grid; gap: 2px; margin: 0; }
+.ka-rob-vals > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); min-width: 0; }
+.ka-rob-vals dt { min-width: 0; color: var(--text-2); font-size: var(--fs-13); line-height: 1.4; }
+.ka-rob-vals dd {
+  margin: 0; color: var(--text); font-family: var(--font-mono); font-size: var(--fs-16); font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ka-rob-vals [data-series="modis"] dd { color: var(--text-2); font-size: var(--fs-13); font-weight: 500; }
+.ka-rob-read { margin: 0; max-width: 72em; color: var(--text); font-size: var(--fs-14); line-height: 1.5; text-wrap: pretty; }
+.ka-rob-how { margin: 0; max-width: 72em; color: var(--text-2); font-size: var(--fs-12); line-height: 1.5; text-wrap: pretty; overflow-wrap: anywhere; }
+.ka-rob-how a { color: var(--accent); }
+:root[data-theme="light"] .ka-rob-how a { color: var(--accent-strong); }
+
+/* ------------------------------------------------------------------------------------------------ how sure */
+.ka-sure-lead { margin: 0; max-width: 72em; color: var(--text); font-size: var(--fs-14); line-height: 1.55; text-wrap: pretty; }
+.ka-sure-lead + .ka-sure-lead { margin-top: var(--sp-2); }
+.ka-sure-lead strong { font-weight: 650; }
+.ka-sure-table { margin-top: var(--sp-2); }
+.ka-sure-table .ui-table { font-size: var(--fs-13); }
+.ka-sure-table :is(th, td) { white-space: normal; }
+.ka-sure-table th[scope="row"] { min-width: 8.5rem; }
+.ka-sure-table .ka-rec-test-why { font-weight: 400; }
+.ka-sure-cols { margin-top: var(--sp-3); }
+.ka-sure-table tr[data-chosen="true"] > th { box-shadow: inset 3px 0 0 var(--harmonized); }
+.ka-sure-table tr[data-best="true"] td[data-col="loyo"] { font-weight: 650; }
+.ka-sure-decisions { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0 0; padding: 0; list-style: none; }
+.ka-sure-decisions li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); min-width: 0; color: var(--text-2); font-size: var(--fs-13); line-height: 1.45; }
+.ka-sure-decisions li > span:first-child { color: var(--text); font-weight: 600; }
+@media (max-width: 560px) {
+  .ka-sure-table :is(th, td)[data-col="sunset"] { display: none; }
+}
+
+/* ------------------------------------------------------------------------------------------------ this month (top tile) */
+.ka-month-title { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.ka-month-prov { color: var(--text); }
+.ka-month-lead { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-8); margin: 0; }
+.ka-month-stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); min-width: 0; margin: 0; color: var(--text-2); font-size: var(--fs-14); line-height: 1.4; }
+.ka-month-stat strong { color: var(--text); font-size: var(--fs-stat-m); line-height: 1.1; letter-spacing: -0.01em; }
+
+/* the legend under "Before and after": the harmonized entry is a full sentence now, so its swatch must not shrink */
+.ka-rec-ba .ka-rec-key .ka-rec-sw { flex: none; }

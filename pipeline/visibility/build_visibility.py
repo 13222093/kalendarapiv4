@@ -17,9 +17,12 @@ Outputs (into <ka_data_dir>)
   and, for any other year, only when it does not exist yet (the outlines do not depend on the year).
 
 Usage
-  python build_visibility.py <raw_dir> <ka_data_dir> <geoboundaries_geojson> [year]
+  python build_visibility.py <raw_dir> <ka_data_dir> <geoboundaries_geojson> [year] [<start MM-DD> <end MM-DD> <tag>]
   year defaults to 2019 (the v1.0 behaviour, output unchanged). Run build_season.py for the same year first: this
   script reads <ka_data_dir>/kalteng_<year>_season.json for the VIIRS hotspots.
+  The optional window replaces 1 Aug to 31 Oct (default unchanged). With a window the tag names the files, so nothing
+  of the Aug to Oct season is overwritten: it reads kalteng_<year>_<tag>_season.json and writes
+  visibility_kalteng_<year>_<tag>.json and vis<year><tag>/ (for example 2023 01-01 03-31 janmar).
   (needs numpy, Pillow and tifffile; downloads the MODIS files of that season into <raw_dir>/modis14a1 once, then
   reuses them. Files of different years do not collide: the file name carries the acquisition date.)
 """
@@ -222,15 +225,28 @@ def main():
     raw, ka, geo = sys.argv[1], sys.argv[2], sys.argv[3]
     YEAR = int(sys.argv[4]) if len(sys.argv) > 4 else YEAR
     START, END = date(YEAR, 8, 1), date(YEAR, 10, 31)
+    tag = ''
+    if len(sys.argv) > 5:      # optional window: <start MM-DD> <end MM-DD> <tag>
+        assert len(sys.argv) == 8, 'a window needs three arguments: <start MM-DD> <end MM-DD> <tag>'
+        START = date(YEAR, *(int(x) for x in sys.argv[5].split('-')))
+        END = date(YEAR, *(int(x) for x in sys.argv[6].split('-')))
+        tag = sys.argv[7]
+        assert START <= END and re.fullmatch(r'[a-z0-9]+', tag), 'tag: lower-case letters and digits'
+    season_name = f'kalteng_{YEAR}_{tag}_season.json' if tag else f'kalteng_{YEAR}_season.json'
+    vis_dir = f'vis{YEAR}{tag}'
+    out_name = f'visibility_kalteng_{YEAR}_{tag}.json' if tag else f'visibility_kalteng_{YEAR}.json'
     items = fetch_items(raw)
     print(f'{len(items)} MODIS files', file=sys.stderr)
+    if not items:
+        raise SystemExit(f'no MOD14A1/MYD14A1 file in the catalogue for {START} to {END}: nothing written')
     v, r, c = grid_index()
     days, grids = read_firemask(raw, items, v, r, c)
     dist, outlines = district_raster(geo)
     inside = dist > 0
 
-    with open(os.path.join(ka, f'kalteng_{YEAR}_season.json'), encoding='utf-8') as f:
+    with open(os.path.join(ka, season_name), encoding='utf-8') as f:
         season = json.load(f)
+    assert season['days'][0]['date'] == START.isoformat() and season['days'][-1]['date'] == END.isoformat(),         f'{season_name} does not cover {START} to {END}'
     viirs = {}
     for d in season['days']:
         m = np.zeros((NY, NX), bool)
@@ -244,8 +260,14 @@ def main():
     n3 = sum((T[d] == 3).astype(int) + (A[d] == 3) for d in days)
     n5 = sum((T[d] == 5).astype(int) + (A[d] == 5) for d in days)
     land = inside & ~(n3 > n5)
+    # days on which the catalogue has no file of a sensor for part or all of the land cells (255 = no file)
+    no_file = {}
+    for d in days:
+        miss = [s for s, g in (('terra', T[d]), ('aqua', A[d])) if bool((g[land] == 255).any())]
+        if miss:
+            no_file[d] = miss
 
-    os.makedirs(os.path.join(ka, f'vis{YEAR}'), exist_ok=True)
+    os.makedirs(os.path.join(ka, vis_dir), exist_ok=True)
     jj, ii = np.mgrid[0:NY, 0:NX]
     hatch_dark = (ii + jj) % 5 == 0
     hatch_light = (ii + jj) % 5 == 1
@@ -286,7 +308,7 @@ def main():
         idx[(st == U_) & hatch_dark] = 1
         idx[(st == U_) & hatch_light] = 2
         idx[(st == N_) & dots] = 3
-        write_png(os.path.join(ka, f'vis{YEAR}', f'{d}.png'), idx)
+        write_png(os.path.join(ka, vis_dir, f'{d}.png'), idx)
 
         usable = lambda g: round(100 * float((land & np.isin(g, (4, 5, 7, 8, 9))).sum()) / max(1, int(land.sum())), 1)
         out_days.append({'date': d, **counts, 'blind': pct(counts['U'], counts['T'] + counts['U']),
@@ -296,7 +318,8 @@ def main():
     daily = np.array([x['blind'] for x in out_days if x['blind'] is not None])
     zero_days = tot['T'] + tot['U']
     result = {
-        'title': f'What could Terra and Aqua see? Central Kalimantan, 1 Aug to 31 Oct {YEAR}',
+        'title': f'What could Terra and Aqua see? Central Kalimantan, {START.day} {START.strftime("%b")} to '
+                 f'{END.day} {END.strftime("%b")} {YEAR}',
         'rule': RULE,
         'grid': {'bbox': [W, S, E, N], 'step_deg': STEP, 'width': NX, 'height': NY, 'land_cells': int(land.sum()),
                  'note': 'Images are drawn only inside the 14 districts; water cells are left out.'},
@@ -321,7 +344,7 @@ def main():
                 'read_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'items': items,
             },
-            'hotspots': f'kalteng_{YEAR}_season.json (NASA FIRMS VIIRS S-NPP 375 m), the points the map draws',
+            'hotspots': f'{season_name} (NASA FIRMS VIIRS S-NPP 375 m), the points the map draws',
             'districts': {
                 'name': 'geoBoundaries gbOpen IDN ADM2 (simplified), build 12 Dec 2023, from BPS, WFP and OCHA ROAP',
                 'license': 'CC BY 3.0 IGO',
@@ -331,7 +354,18 @@ def main():
             },
         },
     }
-    with open(os.path.join(ka, f'visibility_kalteng_{YEAR}.json'), 'w', encoding='utf-8') as f:
+    if no_file:   # only when a file is missing, so a complete season keeps its keys
+        result['no_file_days'] = {
+            'note': 'On these days the catalogue has no MOD14A1 (terra) or MYD14A1 (aqua) file for part or all of the '
+                    'box (the sensor was off, or the file is not published yet), so cells there had no look from that '
+                    'sensor and their class rests on the other one. Blind shares of these days are not comparable '
+                    'with days that have both sensors.',
+            'days': no_file,
+        }
+        print(f'days with a missing sensor file: {len(no_file)} ({min(no_file)} to {max(no_file)})', file=sys.stderr)
+    if tag:   # only for a non-default window, so the default output keeps its keys
+        result['window'] = {'start': START.isoformat(), 'end': END.isoformat(), 'tag': tag, 'images': vis_dir}
+    with open(os.path.join(ka, out_name), 'w', encoding='utf-8') as f:
         json.dump(result, f, separators=(',', ':'))
     districts_path = os.path.join(ka, 'kalteng_districts.json')
     if YEAR == 2019 or not os.path.exists(districts_path):   # the outlines do not depend on the year
