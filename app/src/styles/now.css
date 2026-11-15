@@ -187,6 +187,53 @@
   .now-page { background: none; }
 }
 
+/* ---- the command centre: actions, map, evidence. The list of actions follows PeatForge's decision queue
+   (queue.css: one bordered list, rows parted by hairlines, each a title, the fact, one control), in our tokens. */
+.now-main { max-width: 1360px; display: flex; flex-direction: column; }
+.now-main > * { min-width: 0; }
+.now-main > .now-hero { order: 1; }
+.now-main > .now-loop { order: 2; }
+.now-main > .now-report { order: 3; }
+.now-main > section[aria-labelledby="now-h-do"] { order: 4; }
+.now-main > section[aria-labelledby="now-h-normal"] { order: 5; }
+.now-main > section[aria-labelledby="now-h-zero"] { order: 6; }
+.now-main > section[aria-labelledby="now-h-peat"] { order: 7; }
+.now-main > .now-fine { order: 9; }
+.now-loop { margin-top: 18px; scroll-margin-top: 72px; }
+.now-page [id^="now-h-"] { scroll-margin-top: 72px; }
+button.now-badge { font: inherit; cursor: pointer; }
+
+.now-hero .now-hero-grid { display: flex; flex-direction: column; gap: 16px; }
+.now-act { order: 1; min-width: 0; }
+.now-mapside { order: 2; }
+.now-figs { order: 3; }
+.now-act .now-kicker { margin: 0 0 2px; color: var(--accent); }
+.now-card .now-act h2 { margin: 0 0 10px; font-size: 24px; }
+.now-act p.now-level-name { font-size: 40px; }
+.now-todo { list-style: none; counter-reset: todo; margin: 12px 0 8px; padding: 0; border: 1px solid var(--border-strong); border-radius: 12px; overflow: hidden; }
+.now-todo li { counter-increment: todo; position: relative; display: grid; gap: 4px; padding: 12px 12px 12px 44px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 13.5px; line-height: 1.4; color: var(--text-2); }
+.now-todo li:first-child { border-top: 0; }
+.now-todo li::before { content: counter(todo); position: absolute; left: 12px; top: 12px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent-strong); font-family: var(--font-mono); font-size: 12px; }
+.now-todo b { font-size: 14.5px; color: var(--text); }
+.now-todo-fact { font-family: var(--font-mono); font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+.now-todo .now-btn { justify-self: start; margin-top: 2px; }
+.now-figs .now-tiles { margin-top: 10px; margin-bottom: 0; }
+.now-hero .now-figs p.now-stat-mid { font-size: 32px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.now-figs .now-stat .now-btn { margin-top: 6px; }
+@media (min-width: 1100px) {
+  .now-hero .now-hero-grid { display: grid; grid-template-columns: minmax(270px, 320px) minmax(0, 1fr) minmax(250px, 290px); align-items: start; }
+  .now-act { grid-column: 1; grid-row: 1; }
+  .now-mapside { grid-column: 2; grid-row: 1; position: sticky; top: 72px; }
+  .now-figs { grid-column: 3; grid-row: 1; }
+  .now-figs .now-stats { grid-template-columns: minmax(0, 1fr); }
+  .now-hero .now-figs p.now-stat-value { font-size: 40px; }
+  .now-hero .now-figs p.now-stat-mid { font-size: 28px; }
+  .now-hero .now-figs p.now-stat-time { font-size: 18px; }
+  .now-figs .now-stat { padding: 10px 12px; }
+  .now-figs .now-by { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 12px; }
+  .now-hero .now-mapside .now-map { height: 640px; }
+}
+
 /* ---- the way back: a resident's report, written for WhatsApp */
 .now-report .now-kicker { margin: 0 0 2px; color: var(--accent); }
 .now-report-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0; }

@@ -555,6 +555,8 @@ export function Now() {
   }, [name, tr]);
 
   const num = (v: number, digits = 0) => fmtNumber(v, lang, digits);
+  // in-page jumps scroll; a "#id" link would change the hash this app routes on
+  const jumpTo = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const place = aoi ? districtTitle(name, lang) : '';
   const levelName = (l: Level) => LEVEL_NAME[l][lang];
   const cut = (i: 0 | 1 | 2) => num(STATUS_CUTS[i] * 100);
@@ -596,10 +598,10 @@ export function Now() {
             <div className="now-titlerow">
               <h1 className="now-title">{aoi ? place : tr('Loading the districts…', 'Memuat daftar kabupaten…')}</h1>
               {aoi ? (
-                <a className={`now-badge now-badge-${result.level ?? 'none'}`} href="#now-h-do">
+                <button type="button" className={`now-badge now-badge-${result.level ?? 'none'}`} onClick={() => jumpTo('now-h-act')}>
                   <span>{tr('Level', 'Tingkat')}</span>
                   <b>{liveState.state === 'loading' ? '…' : result.level ? levelName(result.level) : tr('Not set', 'Belum ditentukan')}</b>
-                </a>
+                </button>
               ) : null}
             </div>
             {aoi ? <p className="now-sub">{aoi.province}{' · '}{tr('where the hotspots are, how many, and who to tell', 'di mana titik panasnya, berapa banyak, dan siapa yang dikabari')}</p> : null}
@@ -640,9 +642,61 @@ export function Now() {
             {/* ---- right now */}
             <section className="now-card now-hero" aria-labelledby="now-h-now">
               <div className="now-hero-grid">
+              {/* LEFT: what to do now, for the disaster office. Rows chosen by the level and by what the page holds. */}
+              <div className="now-act" role="group" aria-labelledby="now-h-act">
+                <p className="now-kicker">{tr('For the disaster office (BPBD)', 'Untuk BPBD kabupaten')}</p>
+                <h2 id="now-h-act">{tr('What to do now', 'Yang dilakukan sekarang')}</h2>
+                <div className={`now-level now-level-${result.level ?? 'none'}`}>
+                  <p className="now-level-label">{tr('Level', 'Tingkat')}</p>
+                  <p className="now-level-name">{liveState.state === 'loading' ? '…' : result.level ? levelName(result.level) : tr('Not set', 'Belum ditentukan')}</p>
+                  <p className="now-level-why">{liveState.state === 'loading' ? tr('Reading the hotspots…', 'Membaca titik panas…') : whyText[result.why]}</p>
+                </div>
+                <ol className="now-todo">
+                  {liveState.state === 'unavailable' ? (
+                    <li>
+                      <b>{tr('Read the hotspots again', 'Baca ulang titik panas')}</b>
+                      <span>{tr('Live hotspots could not be read, so no level is set.', 'Titik panas langsung tidak dapat dibaca, sehingga tingkat belum ditentukan.')}</span>
+                      <button type="button" className="now-btn now-btn-quiet" onClick={() => setTick((t) => t + 1)}>{tr('Read again', 'Baca ulang')}</button>
+                    </li>
+                  ) : null}
+                  {counts?.newest ? (
+                    <li>
+                      <b>{tr('Check the newest hotspot on the ground', 'Cek titik panas terbaru di lapangan')}</b>
+                      <span className="now-todo-fact">{counts.newest[1].toFixed(4)}, {counts.newest[0].toFixed(4)} · {wib(pointMs(counts.newest), lang)} · {SENSOR_LABEL[counts.newest[4]]}</span>
+                      <button type="button" className="now-btn now-btn-quiet"
+                        onClick={() => { const n = counts.newest; if (n) void copyText(`${n[1].toFixed(4)}, ${n[0].toFixed(4)}`).then((ok) => setCopied(ok ? 'coord' : 'fail-coord')); }}>
+                        {copied === 'coord' ? tr('Copied', 'Tersalin') : tr('Copy coordinates', 'Salin koordinat')}
+                      </button>
+                    </li>
+                  ) : null}
+                  {sites[0] ? (
+                    <li>
+                      <b>{tr('Re-check peat where fire came back', 'Cek ulang gambut tempat api muncul lagi')}</b>
+                      <span className="now-todo-fact">{sites[0].lat.toFixed(3)}, {sites[0].lon.toFixed(3)} · {tr(`detected on ${num(sites[0].days)} days, came back ${num(sites[0].comeBacks)} time${sites[0].comeBacks === 1 ? '' : 's'}`, `terdeteksi ${num(sites[0].days)} hari, muncul lagi ${num(sites[0].comeBacks)} kali`)}</span>
+                      <button type="button" className="now-btn now-btn-quiet" onClick={() => jumpTo('now-h-peat')}>{tr('See the peat list', 'Lihat daftar gambut')}</button>
+                    </li>
+                  ) : null}
+                  {result.level === 'calm' ? (
+                    <li><b>{tr('No alert needed today; keep the routine patrol', 'Hari ini tidak perlu peringatan; lanjutkan patroli rutin')}</b></li>
+                  ) : result.level ? (
+                    <li>
+                      <b>{tr('Tell the village', 'Kabari desa')}</b>
+                      <span>{whyText[result.why]}</span>
+                      <button type="button" className="now-btn now-btn-primary now-btn-quiet" onClick={() => jumpTo('now-alert-loop')}>{tr('Open the alert', 'Buka peringatan')}</button>
+                    </li>
+                  ) : null}
+                  <li>
+                    <b>{tr('On a clouded day, report "not observed", not "no hotspots"', 'Pada hari berawan, laporkan "tidak teramati", bukan "tidak ada titik panas"')}</b>
+                    <span>{blindRow
+                      ? tr(`Cloud hid most of this district on ${num(blindRow.district_days_above)} of ${num(blindRow.district_days)} district-days (${num(blindRow.share_pct, 1)}%) of past August to October seasons.`, `Awan menutupi sebagian besar kabupaten ini pada ${num(blindRow.district_days_above)} dari ${num(blindRow.district_days)} hari-kabupaten (${num(blindRow.share_pct, 1)}%) pada musim Agustus sampai Oktober yang lalu.`)
+                      : tr('Under cloud a satellite cannot see the ground.', 'Di bawah awan satelit tidak dapat melihat permukaan tanah.')}</span>
+                  </li>
+                </ol>
+                <p className="now-small">{tr('These are KalenderApi\'s suggestions from the rules on this page, not an official procedure.', 'Ini saran KalenderApi dari aturan di halaman ini, bukan prosedur resmi.')}</p>
+              </div>
               <div className="now-figs">
               <div className="now-head">
-                <h2 id="now-h-now" className="now-eyebrow">{tr('Right now', 'Saat ini')}</h2>
+                <h2 id="now-h-now" className="now-eyebrow">{tr('The evidence', 'Buktinya')}</h2>
                 <button type="button" className="now-btn now-btn-quiet" onClick={() => setTick((t) => t + 1)} disabled={liveState.state === 'loading'}>
                   {liveState.state === 'loading' ? tr('Reading…', 'Membaca…') : tr('Read again', 'Baca ulang')}
                 </button>
@@ -698,6 +752,36 @@ export function Now() {
                   </details>
                 </>
               ) : null}
+              {/* the science, as tiles: this month on one scale, whether a zero can be trusted, peat */}
+              <div className="now-stats now-tiles">
+                {mf ? (
+                  <div className="now-stat">
+                    <p className="now-stat-label">{tr('This month on one scale (MODIS + VIIRS)', 'Bulan ini pada satu skala (MODIS + VIIRS)')}</p>
+                    <p className="now-stat-value now-stat-mid">{num(mf.H, 1)} {mf.status ? <span className={`now-chip now-chip-${mf.status}`}>{STATUS_NAME[mf.status][lang]}</span> : null}</p>
+                    <p className="now-small">{tr(`fire cell-days, ${mf.label}${mf.partial ? ' so far' : ''}`, `sel-hari api, ${mf.label}${mf.partial ? ' sejauh ini' : ''}`)}{mf.median != null ? tr(`; the usual ${mf.monthOnly}: ${num(mf.median, mf.median % 1 ? 1 : 0)}`, `; ${mf.monthOnly} biasanya: ${num(mf.median, mf.median % 1 ? 1 : 0)}`) : ''}</p>
+                  </div>
+                ) : null}
+                <div className="now-stat">
+                  <p className="now-stat-label">{tr('Can a zero be trusted here?', 'Apakah nol bisa dipercaya di sini?')}</p>
+                  {blindRow ? (
+                    <>
+                      <p className="now-stat-value now-stat-mid">{num(blindRow.share_pct, 1)}%</p>
+                      <p className="now-small">{tr(`of past Aug to Oct district-days were mostly under cloud (${num(blindRow.district_days_above)} of ${num(blindRow.district_days)})`, `hari-kabupaten Agu sampai Okt yang lalu sebagian besar tertutup awan (${num(blindRow.district_days_above)} dari ${num(blindRow.district_days)})`)}</p>
+                    </>
+                  ) : <p className="now-small">{tr('No cloud history layer for this district. Judge cloud from the photo on the map.', 'Belum ada lapisan riwayat awan untuk kabupaten ini. Nilai awan dari foto pada peta.')}</p>}
+                </div>
+                {peat ? (
+                  <div className="now-stat">
+                    <p className="now-stat-label">{tr('Peat', 'Gambut')}</p>
+                    <p className="now-stat-value now-stat-mid">{peat.persistentSites != null ? num(peat.persistentSites) : num(peat.sites.length)}</p>
+                    <p className="now-small">
+                      {tr(`persistent peat sites, Aug to Oct ${peat.season ?? ''}${peat.provisional ? ' (provisional)' : ''}`, `lokasi gambut persisten, Agu sampai Okt ${peat.season ?? ''}${peat.provisional ? ' (sementara)' : ''}`)}
+                      {peat.comeBacks ? tr(`; fire detected again after a gap ${num(peat.comeBacks.total)} times`, `; api terdeteksi lagi setelah jeda ${num(peat.comeBacks.total)} kali`) : ''}
+                    </p>
+                    <button type="button" className="now-btn now-btn-quiet" onClick={() => jumpTo('now-h-peat')}>{tr('See the peat list', 'Lihat daftar gambut')}</button>
+                  </div>
+                ) : null}
+              </div>
               </div>
 
               <div className="now-mapside">
@@ -729,12 +813,6 @@ export function Now() {
               </p>
               </details>
 
-              {/* ---- who uses this */}
-              <ul className="now-who" aria-label={tr('Who uses this page', 'Siapa yang memakai halaman ini')}>
-                <li><NowIcon kind="bpbd" /><span><b>{tr('District disaster office (BPBD)', 'BPBD kabupaten')}</b>{tr('sees where and how much, and sets the level.', 'melihat di mana dan berapa banyak, lalu menetapkan tingkat.')}</span></li>
-                <li><NowIcon kind="residents" /><span><b>{tr('The village', 'Desa')}</b>{tr('gets a plain message to pass on.', 'menerima pesan sederhana untuk diteruskan.')}</span></li>
-                <li><NowIcon kind="crew" /><span><b>{tr('Manggala Agni crew', 'Regu Manggala Agni')}</b>{tr('gets coordinates of hotspots and peat sites.', 'menerima koordinat titik panas dan lokasi gambut.')}</span></li>
-              </ul>
 
               {counts && counts.recent.length ? (
                 <div className="now-scroll" tabIndex={0} role="region" aria-label={tr('Newest hotspots in the district', 'Titik panas terbaru di kabupaten')}>
@@ -938,8 +1016,10 @@ export function Now() {
 
             {/* ---- the alert loop we build next, as a demo: the office approves, a phone receives, the resident answers
                  (components/now/AlertLoop.tsx; it sends nothing) */}
-            <AlertLoop district={districtTitle(aoiName(aoi, msgLang), msgLang)} levelLabel={result.level ? levelName(result.level) : null}
-              message={message('residents')} />
+            <div className="now-loop" id="now-alert-loop">
+              <AlertLoop district={districtTitle(aoiName(aoi, msgLang), msgLang)} levelLabel={result.level ? levelName(result.level) : null}
+                message={message('residents')} />
+            </div>
 
             {/* ---- the way back: a resident's report to the office, written for WhatsApp */}
             <ReportBack place={districtTitle(aoiName(aoi, msgLang), msgLang)} msgLang={msgLang} phone={phones.residents || phones.bpbd || phones.crew} />
