@@ -5,7 +5,7 @@
 // VIIRS one 375 m, so about seven VIIRS pixels fit in one MODIS pixel) and the rule of the peat index (a gap is two
 // days or more with no detection). Nothing here says that a fire was present under cloud: the cloud panel draws a
 // question mark.
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTr } from '../../lib/lang';
 
 // ------------------------------------------------------------------------------------------------ parts
@@ -39,10 +39,13 @@ function PixelPanel({ tone }: { tone: 'modis' | 'viirs' }) {
   const x0 = 40, y0 = 104, side = 140, cell = side * 0.375;
   const fx = x0 + cell / 2, fy = y0 + cell * 1.5;   // the fire: in the first column, second row
   return (
-    <svg className={`ka-d ka-d-pix is-${tone}`} viewBox="0 0 220 280" aria-hidden="true" focusable="false">
+    <div className={`ka-d-stage is-${tone}`} aria-hidden="true">
+    <Sat3d />
+    <svg className={`ka-d ka-d-pix is-${tone}`} viewBox="0 0 220 280" focusable="false">
       <path className="ka-d-beam" d={`M110 44 L${x0} ${y0} L${x0 + side} ${y0} Z`} />
-      <Sat x={110} y={26} tone={tone} />
       <rect className="ka-d-ground" x={x0} y={y0} width={side} height={side} />
+      {/* MODIS: the whole 1 km pixel answers, faintly, when the scan passes */}
+      {tone === 'modis' ? <rect className="ka-d-lit" x={x0} y={y0} width={side} height={side} /> : null}
       {tone === 'viirs' ? (
         <>
           <rect className="ka-d-hit" x={x0} y={y0 + cell} width={cell} height={cell} />
@@ -50,7 +53,9 @@ function PixelPanel({ tone }: { tone: 'modis' | 'viirs' }) {
         </>
       ) : null}
       <rect className="ka-d-cell" x={x0} y={y0} width={side} height={side} />
-      <Flame x={fx} y={fy + 2} s={tone === 'viirs' ? 9 : 9} />
+      <Flame x={fx} y={fy + 2} s={9} />
+      {/* the scan line that sweeps the ground */}
+      <rect className="ka-d-scan" x={x0} y={y0} width={side} height={12} />
       {/* the width of one pixel */}
       {tone === 'modis' ? (
         <>
@@ -64,13 +69,43 @@ function PixelPanel({ tone }: { tone: 'modis' | 'viirs' }) {
         </>
       )}
     </svg>
+    </div>
+  );
+}
+
+/** A satellite built from CSS 3D boxes (a body of six faces, two solar panels, the instrument underneath). It tumbles
+ *  slowly and drifts along its track; under reduced motion it is one still pose. Styles: home.css, .ka-sat3d. */
+function Sat3d() {
+  return (
+    <div className="ka-sat3d">
+      <div className="ka-sat3d-drift">
+        <div className="ka-sat3d-spin">
+          <i className="ka-sat3d-f is-front" /><i className="ka-sat3d-f is-back" /><i className="ka-sat3d-f is-left" />
+          <i className="ka-sat3d-f is-right" /><i className="ka-sat3d-f is-top" /><i className="ka-sat3d-f is-bottom" />
+          <i className="ka-sat3d-p is-l" /><i className="ka-sat3d-p is-r" />
+          <i className="ka-sat3d-eye" />
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function SatellitePixels({ modisSince, viirsSince }: { modisSince: number | null; viirsSince: number }) {
   const tr = useTr();
+  // the motion runs only while the drawing is on screen (home.css pauses it otherwise), so it costs nothing elsewhere
+  const pair = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = pair.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setLive(true); return undefined; }
+    const watch = new IntersectionObserver((entries) => setLive(entries.some((e) => e.isIntersecting)));
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
   return (
-    <div className="ka-d-pair">
+    <div ref={pair} className={`ka-d-pair is-sats${live ? ' is-live' : ''}`}>
+      {/* the sky the two satellites fly in: a few stars, and the curve of the Earth with its airglow */}
+      <div className="ka-d-sky" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><span /></div>
       <figure className="ka-d-fig">
         <PixelPanel tone="modis" />
         <figcaption>

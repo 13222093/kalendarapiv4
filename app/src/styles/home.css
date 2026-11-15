@@ -6,9 +6,37 @@
   --home-pad: clamp(16px, 2.4vw, 36px);
   --home-on-accent: var(--on-accent, var(--bg));
   min-height: 100vh; min-height: 100dvh;
-  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+  background-color: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
   overflow-x: clip;
+  /* the backdrop, "peat night": sparse stars (bone, gold, ember). They are painted only in the margins beside the
+     sections and in the haze band, never under text, and nothing in them moves: scrolling stays cheap. */
+  --stars:
+    radial-gradient(circle at 38px 54px, var(--star) 0 0.9px, transparent 1.5px), radial-gradient(circle at 212px 128px, var(--star) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 131px 263px, var(--star) 0 1px, transparent 1.6px), radial-gradient(circle at 160px 40px, var(--star) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle at 62px 172px, var(--star) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 96px 410px, var(--star-gold) 0 1.2px, transparent 1.9px), radial-gradient(circle at 250px 300px, var(--star-ember) 0 1.1px, transparent 1.8px);
+  --stars-size: 300px 300px, 300px 300px, 300px 300px, 300px 300px, 300px 300px, 520px 520px, 640px 640px;
+  --star: color-mix(in srgb, var(--text) 62%, transparent);
+  --star-gold: color-mix(in srgb, var(--ka-viirs) 70%, transparent);
+  --star-ember: color-mix(in srgb, var(--accent-strong) 70%, transparent);
 }
+/* a haze band low on the page, like smoke at the horizon; the footer's small text sits on a scrim above it */
+.ka-home-main { position: relative; }
+.ka-home-main::after {
+  content: ""; display: block; height: 170px; margin-top: 28px; pointer-events: none;
+  background-image: var(--stars), linear-gradient(to top, color-mix(in srgb, var(--ka-smoke) 34%, transparent), color-mix(in srgb, var(--accent) 7%, transparent) 55%, transparent);
+  background-size: var(--stars-size), auto;
+}
+/* the scrim: text never sits on the stars. The hero and the sections are painted in the page colour, so the stars
+   show in the margins beside them, in the satellites' sky and in the haze band. */
+.ka-home-hero, .ka-home-sec { background: var(--bg); }
+.ka-home-sec { position: relative; }
+.ka-home-sec::before, .ka-home-sec::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 50vw; pointer-events: none;
+  background-image: var(--stars); background-size: var(--stars-size);
+}
+.ka-home-sec::before { right: 100%; }
+.ka-home-sec::after { left: 100%; background-position: 110px 70px; }
 .ka-home *, .ka-home *::before, .ka-home *::after { box-sizing: border-box; }
 .ka-home a { color: var(--link, var(--accent-strong)); text-underline-offset: 3px; }
 .ka-home :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -282,7 +310,7 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 .ka-home-answers td { color: var(--text-2); }
 .ka-home-answers td:last-child { white-space: nowrap; padding-right: 0; font-weight: 600; }
 
-.ka-home-foot { max-width: 1180px; margin: 56px auto 0; padding: 18px var(--home-pad) 36px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-3); }
+.ka-home-foot { position: relative; background: var(--bg); max-width: none; margin: 0; padding-inline: max(var(--home-pad), calc((100% - 1180px) / 2 + var(--home-pad))) !important; padding: 18px var(--home-pad) 36px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-3); }
 .ka-home-foot p { margin: 0 0 6px; max-width: 96ch; }
 
 /* ------------------------------------------------------------------------------------------------ narrower screens */
@@ -311,7 +339,8 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
   .ka-rib-say { font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ka-home *, .ka-home *::before, .ka-home *::after { transition: none !important; }
+  /* no motion: every drawing rests on its still frame */
+  .ka-home *, .ka-home *::before, .ka-home *::after { transition: none !important; animation: none !important; }
 }
 
 /* ------------------------------------------------------------------------------------------------ the drawings
@@ -344,7 +373,59 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 .ka-d-pix .ka-d-ground { fill: var(--surface-2); }
 .ka-d-pix .ka-d-cell { fill: none; stroke: var(--tone); stroke-width: 2.5; }
 .ka-d-pix .ka-d-gridline { fill: none; stroke: var(--tone); stroke-width: 1.2; }
-.ka-d-pix .ka-d-hit { fill: color-mix(in srgb, var(--tone) 45%, transparent); }
+.ka-d-pix .ka-d-hit { fill: color-mix(in srgb, var(--tone) 50%, transparent); animation: ka-hit 5.2s linear infinite; }
+.ka-d-pix .ka-d-lit { fill: var(--tone); opacity: 0.1; animation: ka-lit 5.2s linear infinite; }
+.ka-d-pix .ka-d-scan { fill: var(--tone); opacity: 0; animation: ka-scan 5.2s linear infinite; }
+.ka-d-pix.is-modis .ka-d-flame { opacity: 0.55; }
+.ka-d-stage.is-viirs :is(.ka-d-hit, .ka-d-scan) { animation-delay: -2.6s; }
+
+/* the satellite, in CSS 3D */
+.ka-d-stage { position: relative; --sat: var(--ka-modis); max-width: 260px; margin: 0 auto; }
+.ka-d-stage.is-viirs { --sat: var(--ka-viirs); }
+.ka-sat3d { position: absolute; left: 50%; top: 9.5%; width: 0; height: 0; perspective: 360px; --u: clamp(20px, 2.1vw, 28px); z-index: 1; }
+.ka-sat3d-drift, .ka-sat3d-spin { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.ka-sat3d-drift { animation: ka-sat-drift 9s ease-in-out infinite alternate; }
+.ka-sat3d-spin { transform: rotateX(-22deg) rotateY(-32deg); animation: ka-sat-tumble 13s ease-in-out infinite alternate; }
+.ka-d-stage.is-viirs .ka-sat3d-drift { animation-delay: -4.5s; }
+.ka-d-stage.is-viirs .ka-sat3d-spin { animation-delay: -6s; }
+.ka-sat3d-f { position: absolute; left: calc(var(--u) / -2); top: calc(var(--u) / -2); width: var(--u); height: var(--u); border: 1.5px solid var(--sat); background: var(--surface-3); }
+.ka-sat3d-f.is-front { transform: translateZ(calc(var(--u) / 2)); background: color-mix(in srgb, var(--sat) 16%, var(--surface-3)); }
+.ka-sat3d-f.is-back { transform: rotateY(180deg) translateZ(calc(var(--u) / 2)); }
+.ka-sat3d-f.is-left { transform: rotateY(-90deg) translateZ(calc(var(--u) / 2)); background: var(--surface-2); }
+.ka-sat3d-f.is-right { transform: rotateY(90deg) translateZ(calc(var(--u) / 2)); background: var(--surface-2); }
+.ka-sat3d-f.is-top { transform: rotateX(90deg) translateZ(calc(var(--u) / 2)); background: color-mix(in srgb, var(--sat) 38%, var(--surface-3)); }
+.ka-sat3d-f.is-bottom { transform: rotateX(-90deg) translateZ(calc(var(--u) / 2)); background: var(--surface); }
+.ka-sat3d-p {
+  position: absolute; top: calc(var(--u) * -0.32); width: calc(var(--u) * 1.55); height: calc(var(--u) * 0.64); border: 1px solid var(--sat);
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--sat) 42%, var(--surface)) 0 5px, var(--sat) 5px 6px); overflow: hidden;
+}
+.ka-sat3d-p.is-l { right: calc(var(--u) * 0.6); transform: rotateX(24deg); }
+.ka-sat3d-p.is-r { left: calc(var(--u) * 0.6); transform: rotateX(24deg); }
+.ka-sat3d-p::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, var(--text) 50%, transparent 65%); opacity: 0; animation: ka-sat-glint 6.5s ease-in-out infinite; }
+.ka-sat3d-eye { position: absolute; left: calc(var(--u) * -0.22); top: calc(var(--u) * 0.5); width: calc(var(--u) * 0.44); height: calc(var(--u) * 0.34); background: var(--sat); clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%); }
+@keyframes ka-sat-tumble { from { transform: rotateX(-26deg) rotateY(-44deg) rotateZ(-3deg); } to { transform: rotateX(-12deg) rotateY(40deg) rotateZ(3deg); } }
+@keyframes ka-sat-drift { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+@keyframes ka-sat-glint { 0%, 62%, 100% { opacity: 0; } 72% { opacity: 0.55; } 82% { opacity: 0; } }
+@keyframes ka-scan { 0% { transform: translateY(0); opacity: 0; } 8%, 90% { opacity: 0.85; } 100% { transform: translateY(128px); opacity: 0; } }
+@keyframes ka-hit { 0%, 30% { opacity: 0.5; } 38%, 78% { opacity: 1; } 88%, 100% { opacity: 0.5; } }
+@keyframes ka-lit { 0%, 100% { opacity: 0.05; } 12%, 88% { opacity: 0.2; } }
+
+/* the sky of the two satellites: a few stars that twinkle, and the Earth's limb with an ember and gold airglow */
+.ka-d-pair.is-sats { position: relative; isolation: isolate; padding: 14px 10px 0; }
+/* off screen, the motion is paused where it stands */
+.ka-d-pair.is-sats:not(.is-live) *, .ka-d-pair.is-sats:not(.is-live) *::after { animation-play-state: paused !important; }
+.ka-d-sky { position: absolute; inset: 0 -14px -10px; z-index: -1; overflow: hidden; border-radius: 14px; pointer-events: none; }
+.ka-d-sky span {
+  position: absolute; left: -35%; right: -35%; top: clamp(46px, 5.4vw, 78px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--surface) 96%, var(--surface-2));
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--ka-viirs) 70%, transparent), 0 -3px 10px color-mix(in srgb, var(--accent) 55%, transparent), 0 -14px 46px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.ka-d-sky i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--text); opacity: 0.5; animation: ka-twinkle 4.6s ease-in-out infinite; }
+.ka-d-sky i:nth-child(1) { left: 6%; top: 14px; } .ka-d-sky i:nth-child(2) { left: 21%; top: 34px; animation-delay: -1.2s; }
+.ka-d-sky i:nth-child(3) { left: 39%; top: 10px; animation-delay: -2.7s; background: var(--ka-viirs); } .ka-d-sky i:nth-child(4) { left: 52%; top: 30px; animation-delay: -0.6s; }
+.ka-d-sky i:nth-child(5) { left: 68%; top: 12px; animation-delay: -3.4s; } .ka-d-sky i:nth-child(6) { left: 83%; top: 36px; animation-delay: -1.9s; background: var(--accent-strong); }
+.ka-d-sky i:nth-child(7) { left: 94%; top: 16px; animation-delay: -4s; }
+@keyframes ka-twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.85; } }
 .ka-home-sats { display: grid; gap: 12px; }
 .ka-home-sats-line { margin: 0; font-size: 15px; color: var(--text-2); }
 
