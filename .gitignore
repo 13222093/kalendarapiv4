@@ -11,3 +11,6 @@ data-raw/
 *.parquet
 *.csv
 !vendor/second-sight/pipeline/support/*.csv
+
+# demo video renders (large; shared by link, not in the repo)
+docs/submission/video/

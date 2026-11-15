@@ -93,13 +93,19 @@ function useHomeData(): HomeData {
 
 // ------------------------------------------------------------------------------------------------ the page
 
-export function Home() {
+/** `embedded`: under the Story's final frame (pages/Story.tsx), which is the app's first screen. The page then has the
+ *  Story's own h1 and title, so this one's heading is an h2 and its menu scrolls back to the top. */
+export function Home({ embedded = false }: { embedded?: boolean } = {}) {
   const tr = useTr();
   const lang = useLang();
   const data = useHomeData();
   const { idx, districts, national, marks, land, peat } = data;
 
-  useEffect(() => { document.title = `KalenderApi · ${tr('One fire calendar from MODIS and VIIRS', 'Satu kalender api dari MODIS dan VIIRS')}`; }, [tr]);
+  useEffect(() => { if (!embedded) document.title = `KalenderApi · ${tr('One fire calendar from MODIS and VIIRS', 'Satu kalender api dari MODIS dan VIIRS')}`; }, [tr, embedded]);
+  const Title = embedded ? 'h2' : 'h1';
+  const toTop = embedded
+    ? (e: { preventDefault: () => void }) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); }
+    : undefined;
 
   const years = useMemo(() => sensorYears(national), [national]);
   const provinces = useMemo(() => idx?.aois.filter((a) => a.level === 'province').length ?? null, [idx]);
@@ -120,12 +126,14 @@ export function Home() {
   };
 
   return (
-    <div className="ka-home">
-      <a className="ka-home-skip" href="#ka-home-main" onClick={(e) => { e.preventDefault(); document.getElementById('ka-home-main')?.focus(); }}>
-        {tr('Skip to content', 'Lewati ke konten')}
-      </a>
+    <div className={'ka-home' + (embedded ? ' is-embedded' : '')}>
+      {embedded ? null : (
+        <a className="ka-home-skip" href="#ka-home-main" onClick={(e) => { e.preventDefault(); document.getElementById('ka-home-main')?.focus(); }}>
+          {tr('Skip to content', 'Lewati ke konten')}
+        </a>
+      )}
       <header className="ka-home-top">
-        <a className="ka-home-brand" href={HOME_HREF} aria-label="KalenderApi">
+        <a className="ka-home-brand" href={HOME_HREF} aria-label="KalenderApi" onClick={toTop}>
           <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
             <path className="ka-home-mark-hex" d="M16 1.5 28.6 8.75v14.5L16 30.5 3.4 23.25V8.75z" />
             <path className="ka-home-mark-flame" d="M16 7c1.5 3.5 5.5 5.8 5.5 10.6a5.5 5.5 0 0 1-11 0c0-2.4 1.2-4 2.5-5.2.1 1.7.9 2.9 2.1 3.4C14.6 12.8 15 9.8 16 7z" />
@@ -135,7 +143,7 @@ export function Home() {
         <nav className="ka-home-nav" aria-label={tr('Main', 'Utama')}>
           <ul>
             {HOME_MENU.map((p) => (
-              <li key={p.key}><a href={p.href} aria-current={p.key === 'home' ? 'page' : undefined}>{tr(p.en, p.id)}</a></li>
+              <li key={p.key}><a href={p.href} aria-current={p.key === 'home' ? 'page' : undefined} onClick={p.key === 'home' ? toTop : undefined}>{tr(p.en, p.id)}</a></li>
             ))}
           </ul>
         </nav>
@@ -146,9 +154,9 @@ export function Home() {
         {/* ------------------------------------------------------------ first screen: the calendar */}
         <section className="ka-home-hero" aria-labelledby="ka-home-h1">
           <div className="ka-home-intro">
-            <h1 id="ka-home-h1" className="ka-home-h1">
+            <Title id="ka-home-h1" className="ka-home-h1">
               {tr('One fire calendar for Indonesia, across two satellites.', 'Satu kalender api untuk Indonesia, dari dua satelit.')}
-            </h1>
+            </Title>
             <div className="ka-home-lede">
               <p>
                 {tr(
@@ -168,7 +176,7 @@ export function Home() {
             </div>
             <p className="ka-home-acts">
               <a className="ka-home-btn" href={nowAt(NOW_DISTRICT)}>{tr(`Today in ${nowName}`, `Hari ini di ${nowName}`)}</a>
-              <a className="ka-home-btn is-quiet" href="#/story">{tr('Watch the story', 'Tonton cerita')}</a>
+              {embedded ? null : <a className="ka-home-btn is-quiet" href="#/story">{tr('Watch the story', 'Tonton cerita')}</a>}
               <a className="ka-home-btn is-quiet" href="#ka-home-find" onClick={toFind}>{tr('Open your area’s calendar', 'Buka kalender wilayah Anda')}</a>
             </p>
           </div>
@@ -178,32 +186,45 @@ export function Home() {
           <HeroFacts land={land} />
         </section>
 
-        {/* ------------------------------------------------------------ 1. today in your district */}
-        <section className="ka-home-sec" id="ka-home-find" aria-labelledby="ka-home-find-h">
-          <p className="ka-home-eyebrow">{tr('Start here', 'Mulai di sini')}</p>
-          <h2 id="ka-home-find-h">{tr('Today in your district', 'Hari ini di kabupaten/kota Anda')}</h2>
-          <div className="ka-home-split">
-            {/* the home panel's own "Find your area" card (search, latitude and longitude, quick regions); its other
-                cards are hidden here by home.css */}
-            <div className="ka-home-findcard"><HubPanel /></div>
-            <div className="ka-home-officer">
-              <p className="ka-home-sub">{tr('What a district fire officer gets', 'Yang didapat petugas kebakaran kabupaten/kota')}</p>
-              <ol className="ka-home-steps">
-                <li>{tr('The district’s fire calendar: which months burn, year after year, on one scale.', 'Kalender api kabupaten/kota: bulan mana yang terbakar, dari tahun ke tahun, pada satu skala.')}</li>
-                <li>{tr('This month against the median of the same month.', 'Bulan ini dibanding median bulan yang sama.')}</li>
-                <li>{tr('The reporting rule: for a day when most of the district was under cloud, report “not observed”, not “no hotspots”, and ask for a ground check.',
-                  'Aturan pelaporan: untuk hari ketika sebagian besar wilayah berada di bawah awan, laporkan “tidak teramati”, bukan “nihil titik panas”, lalu minta pengecekan lapangan.')}</li>
-              </ol>
+        {/* ------------------------------------------------------------ MODIS and VIIRS, yearly */}
+        <section className="ka-home-sec" aria-labelledby="ka-home-yearly">
+          <p className="ka-home-eyebrow">MODIS · VIIRS</p>
+          <h2 id="ka-home-yearly">{tr('MODIS and VIIRS, yearly', 'MODIS dan VIIRS, per tahun')}</h2>
+          <div className="ka-home-split is-chart">
+            <SensorTrend years={years} />
+            <div>
+              {ratio ? (
+                <p>
+                  {tr(`Over the same months of ${ratio.from} to ${ratio.to}, VIIRS recorded `, `Pada bulan-bulan yang sama dari ${ratio.from} sampai ${ratio.to}, VIIRS mencatat `)}
+                  <b className="ka-home-em">{fmtNumber(ratio.ratio, lang, 1)} {tr('times', 'kali')}</b>
+                  {tr(` as many fire cell-days as MODIS in Indonesia (${fmtNumber(ratio.months, lang)} months; Suomi NPP against Aqua).`,
+                    ` lebih banyak sel-hari api daripada MODIS di Indonesia (${fmtNumber(ratio.months, lang)} bulan; Suomi NPP terhadap Aqua).`)}
+                </p>
+              ) : null}
+              <p className="ka-home-note">
+                {tr('A fire cell-day is one 1 km cell with a hotspot on one day. The one scale is that of MODIS Aqua. These are counts of detections, not burned area.',
+                  'Satu sel-hari api adalah satu sel 1 km dengan titik panas pada satu hari. Satu skala yang dipakai adalah skala MODIS Aqua. Ini hitungan deteksi, bukan luas terbakar.')}
+              </p>
               <p className="ka-home-links">
-                <a className="ka-home-btn" href={nowAt(NOW_DISTRICT)}>{tr(`Today in ${nowName}`, `Hari ini di ${nowName}`)}</a>
-                <a className="ka-home-btn is-quiet" href="#/brief?aoi=prov-kalimantan-tengah">{tr('A printable brief', 'Ringkasan siap cetak')}</a>
-                <a className="ka-home-btn is-quiet" href="#/method">{tr('The reporting rule', 'Aturan pelaporan')}</a>
+                <a className="ka-home-btn is-quiet" href={recordAt('IDN', 'jump')}>{tr('Before and after', 'Sebelum dan sesudah')}</a>
+                <a className="ka-home-btn is-quiet" href="#/method">{tr('How it is made and tested', 'Cara dibuat dan diuji')}</a>
               </p>
             </div>
           </div>
         </section>
 
-        {/* ------------------------------------------------------------ 2. Indonesia this month */}
+        {/* ------------------------------------------------------------ the challenge */}
+        <section className="ka-home-sec" aria-labelledby="ka-home-answers">
+          <p className="ka-home-eyebrow">{tr('The challenge', 'Tantangan')}</p>
+          <h2 id="ka-home-answers">{tr('How this answers the challenge', 'Cara aplikasi ini menjawab tantangan')}</h2>
+          <p className="ka-home-note">
+            {tr('“Harmonization of MODIS and VIIRS Hot Spots”: each thing the challenge asks for, and where it is in this app.',
+              '“Harmonization of MODIS and VIIRS Hot Spots”: setiap hal yang diminta tantangan, dan letaknya di aplikasi ini.')}
+          </p>
+          <Answers firstYear={firstYear} lastYear={lastYear} provinces={provinces} districts={districts.length} toFind={toFind} />
+        </section>
+
+        {/* ------------------------------------------------------------ Indonesia this month */}
         <section className="ka-home-sec" aria-labelledby="ka-home-month">
           <p className="ka-home-eyebrow">{monthLong ?? tr('Latest full month', 'Bulan penuh terakhir')}</p>
           <h2 id="ka-home-month">{tr('Indonesia this month', 'Indonesia bulan ini')}</h2>
@@ -243,7 +264,32 @@ export function Home() {
           </div>
         </section>
 
-        {/* ------------------------------------------------------------ 3. on peat, fire comes back */}
+        {/* ------------------------------------------------------------ today in your district */}
+        <section className="ka-home-sec" id="ka-home-find" aria-labelledby="ka-home-find-h">
+          <p className="ka-home-eyebrow">{tr('In practice', 'Dalam praktik')}</p>
+          <h2 id="ka-home-find-h">{tr('Today in your district', 'Hari ini di kabupaten/kota Anda')}</h2>
+          <div className="ka-home-split">
+            {/* the home panel's own "Find your area" card (search, latitude and longitude, quick regions); its other
+                cards are hidden here by home.css */}
+            <div className="ka-home-findcard"><HubPanel /></div>
+            <div className="ka-home-officer">
+              <p className="ka-home-sub">{tr('What a district fire officer gets', 'Yang didapat petugas kebakaran kabupaten/kota')}</p>
+              <ol className="ka-home-steps">
+                <li>{tr('The district’s fire calendar: which months burn, year after year, on one scale.', 'Kalender api kabupaten/kota: bulan mana yang terbakar, dari tahun ke tahun, pada satu skala.')}</li>
+                <li>{tr('This month against the median of the same month.', 'Bulan ini dibanding median bulan yang sama.')}</li>
+                <li>{tr('The reporting rule: for a day when most of the district was under cloud, report “not observed”, not “no hotspots”, and ask for a ground check.',
+                  'Aturan pelaporan: untuk hari ketika sebagian besar wilayah berada di bawah awan, laporkan “tidak teramati”, bukan “nihil titik panas”, lalu minta pengecekan lapangan.')}</li>
+              </ol>
+              <p className="ka-home-links">
+                <a className="ka-home-btn" href={nowAt(NOW_DISTRICT)}>{tr(`Today in ${nowName}`, `Hari ini di ${nowName}`)}</a>
+                <a className="ka-home-btn is-quiet" href="#/brief?aoi=prov-kalimantan-tengah">{tr('A printable brief', 'Ringkasan siap cetak')}</a>
+                <a className="ka-home-btn is-quiet" href="#/method">{tr('The reporting rule', 'Aturan pelaporan')}</a>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------------ on peat, fire comes back */}
         {peat ? (
           <section className="ka-home-sec" aria-labelledby="ka-home-peat">
             <p className="ka-home-eyebrow">{tr('Central Kalimantan · peat', 'Kalimantan Tengah · gambut')}</p>
@@ -261,7 +307,7 @@ export function Home() {
           </section>
         ) : null}
 
-        {/* ------------------------------------------------------------ 4. when zero is not zero */}
+        {/* ------------------------------------------------------------ when zero is not zero */}
         <section className="ka-home-sec" aria-labelledby="ka-home-zero">
           <p className="ka-home-eyebrow">{tr('Cloud', 'Awan')}</p>
           <h2 id="ka-home-zero">{tr('When zero is not zero', 'Ketika nol belum tentu nol')}</h2>
@@ -273,44 +319,6 @@ export function Home() {
             <a className="ka-home-btn is-quiet" href="#/season?y=2015">{tr('Play the season', 'Putar musim')}</a>
             <a className="ka-home-btn is-quiet" href="#/zero">{tr('Open the zero inspector', 'Buka pemeriksa nol')}</a>
           </p>
-        </section>
-
-        {/* ------------------------------------------------------------ 5. MODIS and VIIRS, yearly */}
-        <section className="ka-home-sec" aria-labelledby="ka-home-yearly">
-          <p className="ka-home-eyebrow">MODIS · VIIRS</p>
-          <h2 id="ka-home-yearly">{tr('MODIS and VIIRS, yearly', 'MODIS dan VIIRS, per tahun')}</h2>
-          <div className="ka-home-split is-chart">
-            <SensorTrend years={years} />
-            <div>
-              {ratio ? (
-                <p>
-                  {tr(`Over the same months of ${ratio.from} to ${ratio.to}, VIIRS recorded `, `Pada bulan-bulan yang sama dari ${ratio.from} sampai ${ratio.to}, VIIRS mencatat `)}
-                  <b className="ka-home-em">{fmtNumber(ratio.ratio, lang, 1)} {tr('times', 'kali')}</b>
-                  {tr(` as many fire cell-days as MODIS in Indonesia (${fmtNumber(ratio.months, lang)} months; Suomi NPP against Aqua).`,
-                    ` lebih banyak sel-hari api daripada MODIS di Indonesia (${fmtNumber(ratio.months, lang)} bulan; Suomi NPP terhadap Aqua).`)}
-                </p>
-              ) : null}
-              <p className="ka-home-note">
-                {tr('A fire cell-day is one 1 km cell with a hotspot on one day. The one scale is that of MODIS Aqua. These are counts of detections, not burned area.',
-                  'Satu sel-hari api adalah satu sel 1 km dengan titik panas pada satu hari. Satu skala yang dipakai adalah skala MODIS Aqua. Ini hitungan deteksi, bukan luas terbakar.')}
-              </p>
-              <p className="ka-home-links">
-                <a className="ka-home-btn is-quiet" href={recordAt('IDN', 'jump')}>{tr('Before and after', 'Sebelum dan sesudah')}</a>
-                <a className="ka-home-btn is-quiet" href="#/method">{tr('How it is made and tested', 'Cara dibuat dan diuji')}</a>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ------------------------------------------------------------ 6. the challenge */}
-        <section className="ka-home-sec" aria-labelledby="ka-home-answers">
-          <p className="ka-home-eyebrow">{tr('The challenge', 'Tantangan')}</p>
-          <h2 id="ka-home-answers">{tr('How this answers the challenge', 'Cara aplikasi ini menjawab tantangan')}</h2>
-          <p className="ka-home-note">
-            {tr('“Harmonization of MODIS and VIIRS Hot Spots”: each thing the challenge asks for, and where it is in this app.',
-              '“Harmonization of MODIS and VIIRS Hot Spots”: setiap hal yang diminta tantangan, dan letaknya di aplikasi ini.')}
-          </p>
-          <Answers firstYear={firstYear} lastYear={lastYear} provinces={provinces} districts={districts.length} toFind={toFind} />
         </section>
       </main>
 

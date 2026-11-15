@@ -174,7 +174,6 @@ function readHash(): string {
 }
 
 // The home page, the page of the condition right now and the cinematic story are outside the shared app shell.
-const HomePage = lazy(() => import('./pages/Home.tsx').then((m) => ({ default: m.Home })));
 const NowPage = lazy(() => import('./pages/Now.tsx').then((m) => ({ default: m.Now })));
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
@@ -193,13 +192,6 @@ function seasonYearOf(hash: string): number {
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
-  if (hash === '#/home' || hash.startsWith('#/home?')) {
-    return (
-      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
-        <HomePage />
-      </Suspense>
-    );
-  }
   if (hash === '#/now' || hash.startsWith('#/now?')) {
     return (
       <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
@@ -207,7 +199,8 @@ export function App() {
       </Suspense>
     );
   }
-  if (hash === '#/story' || hash.startsWith('#/story?')) {
+  // '#/home' is the Story's final frame with the home sections under it (pages/Home.tsx, rendered by the Story)
+  if (hash === '#/story' || hash.startsWith('#/story?') || hash === '#/home' || hash.startsWith('#/home?')) {
     return (
       <Suspense fallback={<div className="ka-story" />}>
         <Story />

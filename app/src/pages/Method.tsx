@@ -247,7 +247,7 @@ export function Method() {
               {change ? (
                 <article className="ka-method-fact">
                   <p className="ka-method-fact-label">Indonesia · {change.recent[0]}–{change.recent[1]} vs {change.early[0]}–{change.early[1]}</p>
-                  <p className="ka-method-fact-value">{signed(change.raw, lang)}% {tr('raw', 'mentah')} · {signed(change.harm, lang)}% {tr('on one scale', 'pada satu skala')}</p>
+                  <p className="ka-method-fact-value"><span>{signed(change.raw, lang)}% {tr('raw', 'mentah')} ·</span> <span>{signed(change.harm, lang)}% {tr('on one scale', 'pada satu skala')}</span></p>
                   <p>
                     {tr(
                       'Change in mean yearly fire cell-days. Raw: MODIS to 2011 joined to VIIRS from 2012, as recorded. One scale: Aqua MODIS’s own count in both periods, so no conversion is involved.',
@@ -260,7 +260,7 @@ export function Method() {
               {v?.raw?.loyo != null && v.ours?.loyo != null ? (
                 <article className="ka-method-fact">
                   <p className="ka-method-fact-label">{tr('Error on years left out of the fit', 'Galat pada tahun di luar penyesuaian')}</p>
-                  <p className="ka-method-fact-value">{errPct(v.ours.loyo, lang)} {tr('harmonized', 'terharmonisasi')} · {errPct(v.raw.loyo, lang)} {tr('raw', 'mentah')}</p>
+                  <p className="ka-method-fact-value"><span>{errPct(v.ours.loyo, lang)} {tr('harmonized', 'terharmonisasi')} ·</span> <span>{errPct(v.raw.loyo, lang)} {tr('raw', 'mentah')}</span></p>
                   <p>
                     {tr(
                       'Median absolute error of the national yearly total, in percent, when each year in turn is left out of the fit.',

@@ -1,17 +1,19 @@
-/* KalenderApi: "About and method" (#/method, pages/Method.tsx), in the Story's visual language: near-black ground,
-   large Space Grotesk headings, orange mono eyebrows, orange primary buttons. The page sits inside the app shell, so the
-   shell's own page padding is lifted for it and the dark ground runs edge to edge. */
+/* KalenderApi: "About and method" (#/method, pages/Method.tsx), in the Story's visual language: peat-night ground,
+   large Fraunces headings, ember mono eyebrows, ember primary buttons. The page sits inside the app shell, so the
+   shell's own page padding is lifted for it and the dark ground runs edge to edge. Colours come from the brand tokens
+   (styles/brand.css declares the dark set on .ka-method, so the page is the same in both themes). */
 .fh-main:has(.ka-method) { max-width: none; padding: 0; }
 
 .ka-method {
-  --m-bg: #0e0b08;
-  --m-text: #f4f7ff;
-  --m-body: #d6cab5;
-  --m-muted: #a79b86;
-  --m-accent: #f05a28;
-  --m-line: rgba(244, 236, 220, 0.2);
-  --m-card: rgba(22, 18, 13, 0.78);
-  --m-fail: #ff9d7a;
+  --m-bg: var(--bg);
+  --m-text: var(--text);
+  --m-body: var(--text-2);
+  --m-muted: var(--text-3);
+  --m-accent: var(--accent);
+  --m-line: var(--border-strong);
+  --m-card: var(--card);
+  --m-fail: var(--accent-strong);
+  --m-measure: 760px;                           /* one right edge for running text and the boxes that hold it */
   background: var(--m-bg);
   color: var(--m-body);
   font-family: var(--font-sans);
@@ -30,8 +32,8 @@
   padding: clamp(44px, 7vw, 92px) 0 clamp(28px, 4vw, 44px);
   border-bottom: 1px solid var(--m-line);
   background:
-    radial-gradient(90% 120% at 86% 0%, rgba(240, 90, 40, 0.13), transparent 60%),
-    radial-gradient(70% 90% at 0% 100%, rgba(125, 179, 255, 0.08), transparent 62%),
+    radial-gradient(90% 120% at 86% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+    radial-gradient(70% 90% at 0% 100%, color-mix(in srgb, var(--ka-viirs) 5%, transparent), transparent 62%),
     var(--m-bg);
 }
 .ka-method-eyebrow { margin: 0 0 12px; color: var(--m-accent); font: 500 12px/1.4 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -40,18 +42,20 @@
 .ka-method-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .ka-method-btn {
   min-height: 44px; display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px;
-  border: 1px solid rgba(244, 236, 220, 0.3); border-radius: 12px; background: rgba(22, 18, 13, 0.55);
-  color: #f4ecdc !important; font-size: 15px; font-weight: 600; line-height: 1.2; text-decoration: none;
+  border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface);
+  color: var(--m-text) !important; font-size: 15px; font-weight: 600; line-height: 1.2; text-decoration: none;
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
-.ka-method-btn:hover { background: rgba(240, 90, 40, 0.12); border-color: rgba(240, 90, 40, 0.55); }
-.ka-method-btn--primary { border-color: transparent; background: linear-gradient(180deg, #ff8f63, #f05a28); color: #1c0b04 !important; font-weight: 700; }
-.ka-method-btn--primary:hover { background: linear-gradient(180deg, #ffb59a, #ff8f63); border-color: transparent; }
-.ka-method-btn--quiet { border-color: transparent; color: #a79b86 !important; text-decoration: underline; text-decoration-color: rgba(159, 176, 204, 0.5); }
+.ka-method-btn:hover { background: var(--accent-soft); border-color: var(--m-accent); }
+.ka-method-btn--primary { border-color: transparent; background: linear-gradient(180deg, var(--accent-strong), var(--accent)); color: var(--on-accent) !important; font-weight: 700; }
+.ka-method-btn--primary:hover { background: linear-gradient(180deg, var(--focus), var(--accent-strong)); border-color: transparent; }
+/* the quiet one is a plain link: no box of its own */
+.ka-method-btn--quiet { padding-inline: 6px; border-color: transparent; background: none; color: var(--m-muted) !important; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.ka-method-btn--quiet:hover { border-color: transparent; background: none; color: var(--m-accent) !important; }
 .ka-method-toc { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 30px; }
 .ka-method-toc a {
   min-height: 32px; display: inline-flex; align-items: center; padding: 4px 11px; border: 1px solid var(--m-line); border-radius: 999px;
-  color: #a79b86; font: 500 12px/1.3 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.03em; text-decoration: none;
+  color: var(--m-muted); font: 500 12px/1.3 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.03em; text-decoration: none;
 }
 .ka-method-toc a:hover { border-color: var(--m-accent); color: var(--m-accent); }
 
@@ -60,22 +64,24 @@
 .ka-method-section { padding: clamp(44px, 6vw, 72px) 0 0; scroll-margin-top: 72px; }
 .ka-method h2 { max-width: 20em; margin: 0 0 20px; color: var(--m-text); font: 600 clamp(28px, 4vw, 46px)/1.08 var(--font-display); letter-spacing: -0.025em; text-wrap: balance; }
 .ka-method h3 { margin: 30px 0 10px; color: var(--m-text); font: 600 clamp(20px, 2.2vw, 24px)/1.2 var(--font-display); letter-spacing: -0.01em; }
-.ka-method-section > p, .ka-method-rule > p { max-width: 74ch; margin: 0 0 14px; }
-.ka-method b { color: #f4ecdc; font-weight: 650; }
+.ka-method-section > p, .ka-method-rule > p { max-width: var(--m-measure); margin: 0 0 14px; }
+.ka-method-section > p.ka-method-small, .ka-method-rule > p.ka-method-small { max-width: 78ch; }
+.ka-method-section > :last-child { margin-bottom: 0; }
+.ka-method b { color: var(--m-text); font-weight: 650; }
 .ka-method-small { color: var(--m-muted); font-size: 13.5px; line-height: 1.6; }
 .ka-method-wait { padding: 18px 0; color: var(--m-muted); }
 
 /* who it is for */
 .ka-method-users { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 12px; padding: 0; list-style: none; }
 .ka-method-users li { padding: 16px 18px; border-left: 2px solid var(--m-accent); background: var(--m-card); font-size: 15px; line-height: 1.5; }
-.ka-method-users b { display: block; color: var(--m-text); font: 600 19px/1.25 var(--font-display); }
+.ka-method-users b { display: block; margin-bottom: 2px; color: var(--m-text); font: 600 19px/1.25 var(--font-display); }
 .ka-method-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 22px 0 0; }
 .ka-method-card { display: flex; flex-direction: column; align-items: flex-start; padding: 22px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-card); }
 .ka-method-n { color: var(--m-accent); font: 500 12px/1 var(--font-mono, ui-monospace, monospace); }
-.ka-method-card h3 { margin: 10px 0 8px; font-size: 22px; }
+.ka-method-card h3 { margin: 10px 0 8px; font-size: 22px; text-wrap: balance; }
 .ka-method-card p { margin: 0 0 16px; font-size: 14.5px; line-height: 1.6; }
 .ka-method-card a { margin-top: auto; min-height: 32px; display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; }
-.ka-method-rule { margin-top: 22px; padding: clamp(22px, 3.4vw, 36px); border: 1px solid rgba(240, 90, 40, 0.35); border-radius: 14px; background: rgba(240, 90, 40, 0.06); }
+.ka-method-rule { margin-top: 22px; padding: clamp(22px, 3.4vw, 36px); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .ka-method-rule .ka-method-rule-text { max-width: 30em; margin-bottom: 18px; color: var(--m-text); font: 600 clamp(21px, 2.6vw, 31px)/1.24 var(--font-display); letter-spacing: -0.015em; text-wrap: pretty; }
 .ka-method-rule > p:last-child { margin-bottom: 0; }
 
@@ -83,26 +89,36 @@
 .ka-method-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
 .ka-method-fact { padding: 22px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-card); }
 .ka-method-fact p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; }
-.ka-method-fact .ka-method-fact-label { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--m-accent); font: 500 11.5px/1.4 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.06em; text-transform: uppercase; }
-.ka-method-flag { padding: 1px 7px; border: 1px solid rgba(255, 157, 122, 0.6); border-radius: 999px; color: var(--m-fail); letter-spacing: 0.04em; }
-.ka-method-fact .ka-method-fact-value { color: var(--m-text); font: 600 clamp(23px, 2.5vw, 30px)/1.16 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ka-method-fact .ka-method-fact-label { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 6px 10px; color: var(--m-accent); font: 500 11.5px/1.4 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.06em; text-transform: uppercase; }
+.ka-method-flag { padding: 1px 7px; border: 1px solid color-mix(in srgb, var(--m-fail) 60%, transparent); border-radius: 999px; color: var(--m-fail); letter-spacing: 0.04em; }
+.ka-method-fact .ka-method-fact-value { color: var(--m-text); font: 600 clamp(23px, 2.5vw, 30px)/1.16 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-wrap: balance; }
+.ka-method-fact-value span { display: inline-block; }   /* a two-part value breaks between its parts, not inside one */
 .ka-method-fact .ka-method-source { margin-bottom: 0; color: var(--m-muted); font-size: 12.5px; }
 
+/* The three cards of a row share their rows, so the labels, headings, text and last lines sit on the same lines
+   whatever wraps. Without subgrid the cards are plain equal-height boxes. */
+@supports (grid-template-rows: subgrid) {
+  .ka-method-cards, .ka-method-facts { row-gap: 0; }
+  .ka-method-card, .ka-method-fact { display: grid; grid-template-rows: subgrid; grid-row: span 4; justify-items: start; align-content: start; }
+  .ka-method-fact .ka-method-source { align-self: end; }
+  .ka-method-card a { margin-top: 0; align-self: end; }
+}
+
 /* method text */
-.ka-method-steps { max-width: 78ch; display: grid; gap: 10px; margin: 0 0 16px; padding: 0; list-style: none; counter-reset: step; }
+.ka-method-steps { max-width: var(--m-measure); display: grid; gap: 10px; margin: 0 0 16px; padding: 0; list-style: none; counter-reset: step; }
 .ka-method-steps li { position: relative; padding: 14px 16px 14px 52px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-card); counter-increment: step; }
 .ka-method-steps li::before { content: counter(step); position: absolute; top: 14px; left: 18px; color: var(--m-accent); font: 500 13px/1.7 var(--font-mono, ui-monospace, monospace); }
-.ka-method-warn { padding: 14px 16px; border-left: 3px solid var(--m-fail); background: rgba(255, 157, 122, 0.08); }
+.ka-method-section > p.ka-method-warn { padding: 14px 16px; border-left: 3px solid var(--m-fail); background: color-mix(in srgb, var(--m-fail) 8%, transparent); }
 .ka-method-warn b { color: var(--m-fail); }
-.ka-method-list { max-width: 78ch; display: grid; gap: 9px; margin: 0 0 16px; padding: 0; list-style: none; }
+.ka-method-list { max-width: var(--m-measure); display: grid; gap: 9px; margin: 0 0 16px; padding: 0; list-style: none; }
 .ka-method-list li { position: relative; padding-left: 20px; }
-.ka-method-list li::before { content: ""; position: absolute; top: 0.72em; left: 2px; width: 7px; height: 1.5px; background: var(--m-accent); }
-.ka-method-list--fail li { padding: 13px 16px 13px 18px; border-left: 3px solid var(--m-fail); background: rgba(255, 157, 122, 0.07); }
+.ka-method-list li::before { content: ""; position: absolute; top: calc(0.81em - 1px); left: 1px; width: 8px; height: 2px; border-radius: 1px; background: var(--m-accent); }
+.ka-method-list--fail li { padding: 13px 16px 13px 18px; border-left: 3px solid var(--m-fail); background: color-mix(in srgb, var(--m-fail) 7%, transparent); }
 .ka-method-list--fail li::before, .ka-method-list--pass li::before { display: none; }
 .ka-method-list--fail li > b:first-child { color: var(--m-fail); }
-.ka-method-list--pass li { padding: 13px 16px 13px 18px; border-left: 3px solid var(--m-accent); background: rgba(240, 90, 40, 0.06); }
+.ka-method-list--pass li { padding: 13px 16px 13px 18px; border-left: 3px solid var(--m-accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .ka-method-list--pass li > b:first-child { color: var(--m-accent); }
-.ka-method-sources { max-width: 82ch; display: grid; gap: 0; margin: 0 0 8px; padding: 0; list-style: none; border-top: 1px solid var(--m-line); }
+.ka-method-sources { max-width: var(--m-measure); display: grid; gap: 0; margin: 0 0 8px; padding: 0; list-style: none; border-top: 1px solid var(--m-line); }
 .ka-method-sources li { padding: 13px 0; border-bottom: 1px solid var(--m-line); font-size: 15px; }
 
 /* the table of methods */
@@ -110,19 +126,33 @@
 .ka-method-tablewrap:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 .ka-method-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
 .ka-method-table caption { padding: 14px 16px 10px; color: var(--m-muted); font-size: 13px; line-height: 1.5; text-align: left; caption-side: top; }
-.ka-method-table th, .ka-method-table td { padding: 11px 16px; border-top: 1px solid var(--m-line); text-align: right; white-space: nowrap; }
+.ka-method-table th, .ka-method-table td { padding: 11px 16px; border-top: 1px solid var(--m-line); text-align: right; white-space: nowrap; overflow-wrap: break-word; }
 .ka-method-table th:first-child { text-align: left; white-space: normal; }
 .ka-method-table thead th { color: var(--m-muted); font: 500 11px/1.4 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.05em; text-transform: uppercase; white-space: normal; }
-.ka-method-table tbody th { color: #f4ecdc; font-weight: 500; }
-.ka-method-table tr[data-ours] th, .ka-method-table tr[data-ours] td { background: rgba(240, 90, 40, 0.08); color: var(--m-text); font-weight: 650; }
+.ka-method-table tbody th { color: var(--m-text); font-weight: 500; }
+.ka-method-table tr[data-ours] th, .ka-method-table tr[data-ours] td { background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--m-text); font-weight: 650; }
 
 @media (max-width: 860px) {
   .ka-method-users, .ka-method-cards, .ka-method-facts { grid-template-columns: 1fr; }
+  .ka-method-card + .ka-method-card, .ka-method-fact + .ka-method-fact { margin-top: 0; }
+  @supports (grid-template-rows: subgrid) {
+    .ka-method-card + .ka-method-card, .ka-method-fact + .ka-method-fact { margin-top: 14px; }
+  }
+}
+/* On a phone the table is set tighter so that all five columns, and its caption, fit the box without scrolling. */
+@media (max-width: 640px) {
+  .ka-method-table { min-width: 0; font-size: 13px; }
+  .ka-method-table caption { padding: 12px 12px 10px; }
+  .ka-method-table th, .ka-method-table td { padding: 10px 6px; }
+  .ka-method-table th:first-child { padding-left: 12px; }
+  .ka-method-table th:last-child, .ka-method-table td:last-child { padding-right: 12px; }
+  .ka-method-table thead th { font-size: 10px; letter-spacing: 0.02em; }
 }
 @media (max-width: 560px) {
   .ka-method { font-size: 15.5px; }
   .ka-method-inner { padding: 0 16px; }
   .ka-method-cta .ka-method-btn { flex: 1 1 100%; justify-content: space-between; }
+  .ka-method-cta .ka-method-btn--quiet { flex: 0 1 auto; }
   .ka-method-steps li { padding-left: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {

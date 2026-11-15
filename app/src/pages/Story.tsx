@@ -27,6 +27,9 @@ import { LangToggle } from '../components/LangToggle';
 // The product panel of the final frame (search, quick regions, a stat card, a trend chart): its own component with its
 // own CSS, loaded only when the final frame shows, and held in a boundary so a failure there never breaks the Story.
 const HubPanel = lazy(() => import('../components/HubPanel').then((m) => ({ default: m.HubPanel })));
+// The sections under the final frame (the 2001 to 2026 calendar, MODIS and VIIRS by year, the challenge table, the
+// globe): pages/Home.tsx, loaded when the final frame shows. The final frame is the first screen; the page scrolls on.
+const HomeSections = lazy(() => import('./Home').then((m) => ({ default: m.Home })));
 class Quiet extends Component<{ children: ReactNode }, { broken: boolean }> {
   state = { broken: false };
   static getDerivedStateFromError() { return { broken: true }; }
@@ -319,7 +322,7 @@ function startSecond(): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 /** '#/story?hub=1': open on the final frame (the app's home) without playing. */
-const isHub = () => hashParams().get('hub') === '1';
+const isHub = () => hashParams().get('hub') === '1' || /^#\/home(\?|$)/.test(window.location.hash); // '#/home' is the same frame
 
 export function Story() {
   const tr = useTr();
@@ -706,6 +709,7 @@ export function Story() {
     : loadingText ?? beat.body;
 
   return (
+    <>
     <div className={'ka-story' + (done ? ' is-home' : '')}>
       <div ref={box} className="ka-story-canvas" aria-hidden="true" />
       <div className="ka-story-vignette" />
@@ -720,7 +724,6 @@ export function Story() {
             <button type="button" className="ka-story-skip" onClick={() => jumpTo(end, false)}>{tr('Skip story', 'Lewati cerita')}</button>
           ) : null}
           <LangToggle className="ka-story-lang" />
-          <a className="ka-story-method" href="#/home">{tr('Overview', 'Ringkasan')}</a>
           <a className="ka-story-method" href="#/method">{tr('Method', 'Metode')}</a>
         </nav>
       </header>
@@ -795,8 +798,17 @@ export function Story() {
           </>
         )}
       </footer>
+      {done ? (
+        <button type="button" className="ka-story-more"
+          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: reduced ? 'auto' : 'smooth' })}>
+          <span>{tr('Scroll for the MODIS and VIIRS calendar and the globe', 'Gulir untuk kalender MODIS dan VIIRS serta bola dunia')}</span>
+          <i aria-hidden="true">↓</i>
+        </button>
+      ) : null}
       <div ref={bar} className="ka-story-progress" />
     </div>
+    {done ? <Quiet><Suspense fallback={null}><HomeSections embedded /></Suspense></Quiet> : null}
+    </>
   );
 }
 

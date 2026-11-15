@@ -312,3 +312,7 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 @media (prefers-reduced-motion: reduce) {
   .ka-home *, .ka-home *::before, .ka-home *::after { transition: none !important; }
 }
+
+/* Under the Story's final frame (pages/Story.tsx renders this page there): the sections follow the first screen and
+   scroll over the Story's map, which stays fixed on a phone. */
+.ka-home.is-embedded { position: relative; z-index: 2; min-height: 0; border-top: 1px solid var(--border); }

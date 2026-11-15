@@ -326,7 +326,7 @@ h1, h2, h3, .fh-brand-name, .ka-display, .ui-page-title, .ui-section-title, .ui-
 .ka-story-hub-in { margin: auto 0; }
 @media (min-width: 900px) { .ka-story.is-home .ka-story-foot { max-width: min(760px, calc(100vw - 64px - min(420px, 32vw) - 32px)); } }
 @media (max-width: 899px) {
-  .ka-story.is-home { overflow-y: auto; overflow-x: hidden; }
+  .ka-story.is-home { position: relative; inset: auto; height: auto; min-height: 100vh; min-height: 100svh; overflow-x: clip; overflow-y: visible; }
   .ka-story.is-home .ka-story-canvas, .ka-story.is-home .ka-story-vignette { position: fixed; }
   .ka-story.is-home .ka-story-copy { position: relative; left: auto; right: auto; bottom: auto; max-width: none;
     margin: 0 20px; padding-top: max(88px, 50vh); }
@@ -335,3 +335,21 @@ h1, h2, h3, .fh-brand-name, .ka-display, .ui-page-title, .ui-section-title, .ui-
   .ka-story.is-home .ka-story-foot { position: relative; left: auto; right: auto; bottom: auto; margin: 24px 20px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .ka-story-hub { animation: none; } }
+
+/* Story, final frame = the first screen of the home. On a wide screen it takes one window height and the page scrolls
+   on to the sections under it (pages/Home.tsx: the calendar, MODIS and VIIRS by year, the challenge table, the globe).
+   On a phone (the rule above, under 900 px) it is as tall as its own content. */
+@media (min-width: 900px) {
+  .ka-story.is-home { position: relative; inset: auto; height: 100vh; height: 100svh; min-height: 640px; }
+}
+/* the cue under the product panel: what is below, and a way down for a keyboard */
+.ka-story-more { position: absolute; z-index: 2; right: 32px; bottom: 14px; width: min(420px, 32vw); min-height: 38px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 14px;
+  border: 1px solid var(--border-strong); border-radius: 10px; background: rgba(22, 18, 13, 0.72); color: var(--text-2);
+  font: 500 12.5px/1.25 var(--font-sans); text-align: left; cursor: pointer; backdrop-filter: blur(6px);
+  animation: kaIn 700ms 400ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ka-story-more:hover, .ka-story-more:focus-visible { color: var(--text); border-color: var(--accent); }
+.ka-story-more i { font-style: normal; font-size: 16px; color: var(--accent-strong); animation: kaNudge 1.6s ease-in-out infinite; }
+@keyframes kaNudge { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+@media (max-width: 899px) { .ka-story-more { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ka-story-more, .ka-story-more i { animation: none; } }
