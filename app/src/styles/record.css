@@ -349,3 +349,9 @@ a.ka-rec-season:focus-visible { outline: 2px solid var(--focus); outline-offset:
 .ka-rec-strip b { font-family: var(--font-display); font-weight: 500; font-size: clamp(26px, 2.6vw, 38px); line-height: 1.1; color: var(--text); }
 .ka-rec-strip b.is-one { color: var(--ka-harm); }
 .ka-rec-strip li.is-link { align-content: center; border-left-color: var(--border-strong); font-weight: 600; }
+
+/* The top of the page: the words on the left; on the right the two satellites and their pixel sizes (the drawing of
+   the home sections, components/home/Drawings.tsx). Under 1080 px the drawing goes below the words. */
+.ka-rec-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 18px 44px; align-items: center; }
+.ka-rec-hero-text, .ka-rec-hero-art { min-width: 0; }
+@media (max-width: 1080px) { .ka-rec-hero { grid-template-columns: minmax(0, 1fr); } }

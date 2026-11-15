@@ -15,7 +15,8 @@ import { HowSure } from '../components/record/HowSure';
 import { RangePanel } from '../components/record/RangePanel';
 import { DownloadPanel } from '../components/record/DownloadPanel';
 import { AreaSearch } from '../components/record/AreaSearch';
-import { RecordFlow } from '../components/home/Drawings';
+import { RecordFlow, SatellitePixels } from '../components/home/Drawings';
+import { NATIONAL as RECORD_NATIONAL, SEAM_YEAR as RECORD_SEAM } from '../lib/record';
 import { summarizeValidation } from './landing-data';
 import { BlindDistrictsCard } from '../components/BlindDistrictsCard';
 import { fmtNumber, locale, useLang, useTr } from '../lib/lang';
@@ -275,6 +276,9 @@ export function Record() {
     <Page>
       <div className="ka-rec-page">
       <header className="ka-rec-head">
+        {/* the top: the words on the left; on the right the two satellites and their pixel sizes, the reason the raw record jumps */}
+        <div className="ka-rec-hero">
+        <div className="ka-rec-hero-text">
         <p className="ka-rec-eyebrow">{tr('Harmonize · MODIS × VIIRS', 'Harmonisasi · MODIS × VIIRS')}</p>
         <h1 className="ka-rec-title">{tr('Indonesia\'s fire record, on one scale', 'Rekaman api Indonesia, pada satu skala')}</h1>
         <p className="ka-rec-lead">
@@ -292,6 +296,11 @@ export function Record() {
           <a className="ka-head-story ui-press" href="#/story"><IconPlay size={13} /><span>{tr('Watch the story', 'Tonton cerita')}</span></a>
         </div>
         <RecordFlow onGo={(id) => document.getElementById(id)?.scrollIntoView({ block: 'start' })} />
+        </div>
+        <div className="ka-rec-hero-art">
+          <SatellitePixels modisSince={Number(idx?.aois.find((a) => a.aoi_id === RECORD_NATIONAL)?.first?.slice(0, 4)) || null} viirsSince={RECORD_SEAM} />
+        </div>
+        </div>
         <details className="ka-rec-more">
           <summary>{tr('How to read this page', 'Cara membaca halaman ini')}</summary>
           <p>
