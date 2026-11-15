@@ -23,6 +23,7 @@ import {
 } from '../lib/record.ts';
 import { MIN_EARLIER_YEARS, STATUS_CUTS, monthStatus } from '../lib/robust.ts';
 import { SiteHeader } from '../components/SiteHeader.tsx';
+import { AlertLoop } from '../components/now/AlertLoop.tsx';
 import '../styles/now.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -314,6 +315,81 @@ function useLoad<T>(make: (() => Promise<T>) | null, key: string): Load<T> {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   return got.key === key ? got.load : { state: 'loading' };
+}
+
+/** A phone number as wa.me wants it: digits only, an Indonesian leading 0 written as 62. Empty when too short. */
+function waNumber(raw: string): string {
+  let d = raw.replace(/\D/g, '');
+  if (d.startsWith('0')) d = `62${d.slice(1)}`;
+  return d.length >= 9 && d.length <= 15 ? d : '';
+}
+
+type LocState = { s: 'idle' | 'asking' | 'denied' | 'unavailable' } | { s: 'ok'; lat: number; lon: number };
+
+/** The way back from a resident to the disaster office: a report written for WhatsApp. No backend: this composes a
+ *  text and a wa.me link, nothing more. The location is asked for only on the button, lives only in this component's
+ *  state, and goes nowhere but into the text the resident sees before sending. */
+function ReportBack({ place, msgLang, phone }: { place: string; msgLang: Lang; phone: string }) {
+  const tr = useTr();
+  const [kind, setKind] = useState<'fire' | 'smoke'>('fire');
+  const [loc, setLoc] = useState<LocState>({ s: 'idle' });
+  const [at, setAt] = useState(() => Date.now());
+  const [copied, setCopied] = useState<boolean | null>(null);
+  useEffect(() => {
+    const id = window.setInterval(() => setAt(Date.now()), 60_000);   // the time in the text is the time of the report
+    return () => window.clearInterval(id);
+  }, []);
+  const addLocation = () => {
+    setAt(Date.now());
+    if (!('geolocation' in navigator)) { setLoc({ s: 'unavailable' }); return; }
+    setLoc({ s: 'asking' });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setLoc({ s: 'ok', lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (err) => setLoc({ s: err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable' }),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+    );
+  };
+  const where = loc.s === 'ok' ? `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}` : null;
+  const text = msgLang === 'id'
+    ? ['Laporan warga lewat KalenderApi', `Saya melihat ${kind === 'fire' ? 'api' : 'asap'} di ${place}.`, `Waktu: ${wib(at, 'id')}`,
+      `Lokasi: ${where ?? '(tulis nama desa atau patokan)'}`, 'Mohon dicek.'].join('\n')
+    : ['Resident report through KalenderApi', `I see ${kind === 'fire' ? 'fire' : 'smoke'} in ${place}.`, `Time: ${wib(at, 'en')}`,
+      `Location: ${where ?? '(write the village name or a landmark)'}`, 'Please check.'].join('\n');
+  const number = waNumber(phone);
+  const href = number ? `https://wa.me/${number}?text=${encodeURIComponent(text)}` : waLink(text);
+  return (
+    <section className="now-card now-report" aria-labelledby="now-h-report">
+      <p className="now-kicker">{tr('For residents', 'Untuk warga')}</p>
+      <h2 id="now-h-report">{tr('Seen fire or smoke? Report it', 'Melihat api atau asap? Laporkan')}</h2>
+      <p>{tr('This opens WhatsApp with a report already written. Nothing is sent until you press send in WhatsApp.',
+        'Ini membuka WhatsApp dengan laporan yang sudah ditulis. Tidak ada yang terkirim sampai Anda menekan kirim di WhatsApp.')}</p>
+      <div className="now-report-row">
+        <div className="now-seg" role="group" aria-label={tr('What you see', 'Apa yang Anda lihat')}>
+          <button type="button" aria-pressed={kind === 'fire'} onClick={() => { setKind('fire'); setAt(Date.now()); }}>{tr('Fire', 'Api')}</button>
+          <button type="button" aria-pressed={kind === 'smoke'} onClick={() => { setKind('smoke'); setAt(Date.now()); }}>{tr('Smoke', 'Asap')}</button>
+        </div>
+        {loc.s === 'ok'
+          ? <button type="button" className="now-btn now-btn-quiet" onClick={() => setLoc({ s: 'idle' })}>{tr('Remove my location', 'Hapus lokasi saya')}</button>
+          : <button type="button" className="now-btn now-btn-quiet" onClick={addLocation} disabled={loc.s === 'asking'}>{loc.s === 'asking' ? tr('Asking your phone…', 'Meminta ke ponsel Anda…') : tr('Add my location', 'Tambahkan lokasi saya')}</button>}
+        <span className="now-small" role="status">
+          {loc.s === 'ok' ? tr(`Location added: ${where}. It goes only into this text; this page does not store or send it.`, `Lokasi ditambahkan: ${where}. Lokasi hanya masuk ke teks ini; halaman ini tidak menyimpan atau mengirimnya.`)
+            : loc.s === 'denied' ? tr('Location was not allowed. Write the village name or a landmark in the message instead.', 'Lokasi tidak diizinkan. Tulis nama desa atau patokan di pesan sebagai gantinya.')
+              : loc.s === 'unavailable' ? tr('Location is not available on this device. Write the village name or a landmark in the message instead.', 'Lokasi tidak tersedia di perangkat ini. Tulis nama desa atau patokan di pesan sebagai gantinya.') : ''}
+        </span>
+      </div>
+      <p className="now-msg-text now-report-text" lang={msgLang}>{text}</p>
+      <div className="now-report-row">
+        <a className="now-btn now-btn-primary now-btn-wa" href={href} target="_blank" rel="noopener noreferrer">{tr('Report on WhatsApp', 'Laporkan lewat WhatsApp')}</a>
+        <button type="button" className="now-btn now-btn-quiet" onClick={() => { void copyText(text).then(setCopied); }}>{tr('Copy', 'Salin')}</button>
+        <span className="now-small" role="status">{copied === true ? tr('Copied.', 'Tersalin.') : copied === false ? tr('Could not copy; select the text instead.', 'Tidak dapat menyalin; pilih teksnya secara manual.') : ''}</span>
+      </div>
+      <p className="now-small">
+        {number ? tr('It opens a chat with the local post number typed in the message cards above.', 'Ini membuka percakapan dengan nomor posko setempat yang diketik pada kartu pesan di atas.')
+          : tr('No local post number is typed above, so WhatsApp asks you to pick the contact.', 'Belum ada nomor posko setempat yang diketik di atas, sehingga WhatsApp meminta Anda memilih kontak.')}
+        {' '}{tr('This is not an emergency line. In danger, call your local emergency number.', 'Ini bukan saluran darurat. Dalam bahaya, hubungi nomor darurat setempat.')}
+      </p>
+    </section>
+  );
 }
 
 /** Small drawn icons for the three people this page serves: the office, the village, the fire crew. */
@@ -859,6 +935,14 @@ export function Now() {
                 <a className="now-btn" href="#/season?y=2026">{tr('Play the season', 'Putar musim')}</a>
               </div>
             </section>
+
+            {/* ---- the alert loop we build next, as a demo: the office approves, a phone receives, the resident answers
+                 (components/now/AlertLoop.tsx; it sends nothing) */}
+            <AlertLoop district={districtTitle(aoiName(aoi, msgLang), msgLang)} levelLabel={result.level ? levelName(result.level) : null}
+              message={message('residents')} />
+
+            {/* ---- the way back: a resident's report to the office, written for WhatsApp */}
+            <ReportBack place={districtTitle(aoiName(aoi, msgLang), msgLang)} msgLang={msgLang} phone={phones.residents || phones.bpbd || phones.crew} />
 
             {/* ---- fine print */}
             <section className="now-fine" aria-labelledby="now-h-fine">

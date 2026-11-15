@@ -187,6 +187,12 @@
   .now-page { background: none; }
 }
 
+/* ---- the way back: a resident's report, written for WhatsApp */
+.now-report .now-kicker { margin: 0 0 2px; color: var(--accent); }
+.now-report-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0; }
+.now-card p.now-report-text { max-width: 62ch; margin: 0; }
+.now-report .now-btn-wa { min-height: 46px; padding: 8px 22px; font-size: 15px; }
+
 /* ---- map first: the title row with the level badge and a compact search, then the map with the three numbers */
 .now-titlebar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin-top: 14px; }
 .now-titles { min-width: 0; flex: 1 1 420px; }
