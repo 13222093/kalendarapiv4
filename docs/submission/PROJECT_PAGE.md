@@ -9,24 +9,24 @@ KalenderApi: zero hotspots is not always zero fire
 
 ## Summary (high-level)
 
-(191 words; the form suggests 50 to 200.)
+(199 words; the form suggests 50 to 200.)
 
 KalenderApi ("fire calendar" in Indonesian) answers a question a district fire officer in Central Kalimantan faces
 every morning: can I trust a report of zero hotspots?
 
-First we harmonize NASA's MODIS and VIIRS hotspots since 2000 onto one scale, as a burning calendar for Indonesia's 34
-provinces and 514 districts. Joined as recorded, Indonesia's fires seem to rise 95% between 2003-2007 and 2017-2021.
-On one scale they fall 64%. The rise was the sharper sensor.
+First we harmonize NASA's MODIS and VIIRS hotspots since 2000 onto one scale, as a burning calendar for 34 provinces
+and 514 districts. Joined as recorded, fires seem to rise 95% between 2003-2007 and 2017-2021; on one scale they fall
+64%. The rise was the sharper sensor.
 
-Then we go where harmonization stops. Under cloud a satellite cannot see the ground, so a zero can mean "not seen".
-From NASA's daily MODIS fire masks we map this for every district and every day of eleven fire seasons: on 1,482 of
-13,510 district-days, most of the district had no cloud-free look.
+Then we go where harmonization stops. Under cloud a satellite cannot see, so a zero can mean "not seen". From NASA's MODIS fire masks we map this by district and day over eleven fire seasons: on 1,482 of 13,510 district-days,
+most of the district had no cloud-free look.
 
-"Today in my district" turns this into action: live NASA hotspots, whether this month is unusual, a level set by a
-published rule, peat sites where fire keeps coming back, and messages ready to send to the village, the disaster
-office and the fire crew, in Bahasa Indonesia.
+"Today in my district" gives the disaster office (BPBD) live NASA hotspots, whether the month is
+unusual, and a level set by a published rule. One tap puts a ready-made message, in Bahasa Indonesia, into WhatsApp
+for the village head. The Manggala Agni fire crew gets coordinates of the newest hotspots and of peat sites where fire
+keeps coming back: 18,113 on Central Kalimantan's peat.
 
-We wrote our validation tests before running them, and we show the ones that failed.
+We wrote our validation tests first, and we show the ones that failed.
 
 ## Project demonstration
 
