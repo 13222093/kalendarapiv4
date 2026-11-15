@@ -15,7 +15,7 @@ A first visit plays a 29-second Story and rests on the home page; scroll for the
 | `#/brief` District brief | One printable page per area, in English or Bahasa Indonesia |
 | `#/method` About and method | What we count, how the one scale is made, what we checked and what failed |
 
-Credits and licences: [app/NOTICE.md](app/NOTICE.md). AI use, including the one AI feature in the app: [AI_USE.md](AI_USE.md). Data provenance: [docs/DATA.md](docs/DATA.md). Project page text: [docs/submission/PROJECT_PAGE.md](docs/submission/PROJECT_PAGE.md).
+Credits and licences: [app/NOTICE.md](app/NOTICE.md). AI use, including the two AI features in the app: [AI_USE.md](AI_USE.md). Data provenance: [docs/DATA.md](docs/DATA.md). Project page text: [docs/submission/PROJECT_PAGE.md](docs/submission/PROJECT_PAGE.md).
 
 ## Research question
 

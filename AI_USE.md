@@ -42,23 +42,30 @@ should check that rule against the official guide before submitting; this file s
 
 ## AI inside the app
 
-One feature calls an AI model while the app runs. On "Today in my district", the button "Draft advice with AI" sends
+Two features call an AI model while the app runs, both on "Today in my district". The button "Draft advice with AI" sends
 the numbers already on the page (district, hotspot counts, the level, the cloud history, the peat count) to an OpenAI
 model (`gpt-6-luna`) through `app/public/api/advise.js`. Nothing about the visitor is sent. The model is told to use
 only those numbers, to add none of its own, to give no forecast and no cause, and never to say there is no fire. The
 draft is labelled "Drafted by AI" with the model's name and a line saying it must be checked before it is sent. The
 three standard messages on that page are fixed templates filled with the page's numbers; they are not AI.
 
+The panel "Ask about this district" (added on 16 November 2026, after the submission deadline) sends a question typed
+by a resident or an officer, the last few turns of that conversation and the same numbers, plus the coordinates of the
+newest hotspot and of the peat sites the page lists, to the same model through `app/public/api/ask.js`. The model is
+told to answer from those numbers only, to give no forecast and no cause, never to say that a fire is out or that it
+is safe, and to send anyone in danger to the village head or the district disaster office. Answers are labelled "AI
+assistant". Nothing is stored; the panel asks visitors not to type names, phone numbers or addresses.
+
 ## AI in the demo video
 
-The picture is a recording of the app, rendered frame by frame. If the video has a narration, the voice is an AI
-voice made with ElevenLabs from the team's script, and the video description says so.
+The picture is a recording of the app, rendered frame by frame. The narration of the submitted video is a
+text-to-speech voice (Microsoft Edge's read-aloud voice "Andrew", made with the `edge-tts` tool) reading the team's script.
 
 ## What AI did not do
 
 - **No AI-generated numbers.** Every number on screen comes from NASA data (FIRMS, MODIS FireMask, GIBS imagery),
   Second Sight's deterministic pipeline, or the official SiPongi table, through code that can be rerun.
 - **No AI-generated images.** The photos are NASA GIBS true-colour imagery.
-- **No numbers from the AI draft.** The draft on "Today in my district" may only repeat numbers the page computed,
+- **No numbers from the AI draft or the AI assistant.** Both may only repeat numbers the page computed,
   and it is shown apart from them, marked as AI.
 - **No NASA logo or flag** appears in anything AI made.

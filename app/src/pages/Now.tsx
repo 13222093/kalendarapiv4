@@ -539,6 +539,7 @@ export function Now() {
       ? { lat: counts.newest[1], lon: counts.newest[0], time: new Date(newestMs).toISOString(), sensor: counts.newest[4] } : null,
     peat_list: sites.slice(0, 5).map((s) => ({ lat: s.lat, lon: s.lon, days: s.days, come_backs: s.comeBacks })),
     peat_season: peat?.season ?? null,
+    level_why: result.why,
   } : null;
 
   // ---- the picker

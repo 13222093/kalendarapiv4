@@ -91,7 +91,9 @@ Live at https://kalenderapi.vercel.app (Vercel, static files plus two serverless
   and the resident's report follow its use case (an alert to the village, a reply to the office).
 - **OpenAI API**: `public/api/advise.js` sends the numbers shown on "Today in my district" to an OpenAI model
   (`gpt-6-luna`, with smaller models as a fallback) and returns a draft of advice. The key is read from the host's
-  environment (`OPENAI_API_KEY`); it is not in the repository.
+  environment (`OPENAI_API_KEY`); it is not in the repository. `public/api/ask.js` (added 16 November 2026) sends a
+  visitor's question and the same numbers to the same model and returns a short answer for the panel "Ask about this
+  district".
 - **Fonts**: Fraunces, Public Sans and Geist Mono (SIL Open Font License 1.1), bundled through the `@fontsource-variable`
   packages.
 
@@ -143,5 +145,5 @@ Live at https://kalenderapi.vercel.app (Vercel, static files plus two serverless
 ### The demo video
 
 The picture is a frame-by-frame render of the Story on the live site (headless Chrome, 1920 x 1080, 30 frames a
-second); nothing in it is generated imagery. If the video carries a narration, the voice is an AI voice made with
-ElevenLabs from a script the team wrote.
+second); nothing in it is generated imagery. The narration of the submitted cut is a text-to-speech voice
+(Microsoft Edge's read-aloud voice "Andrew", made with the `edge-tts` tool) reading a script the team wrote.
