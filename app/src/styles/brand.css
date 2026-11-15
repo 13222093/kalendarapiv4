@@ -353,3 +353,15 @@ h1, h2, h3, .fh-brand-name, .ka-display, .ui-page-title, .ui-section-title, .ui-
 @keyframes kaNudge { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 @media (max-width: 899px) { .ka-story-more { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ka-story-more, .ka-story-more i { animation: none; } }
+
+/* Story, top bar: the controls a visitor must be able to find over any photo (skip, sound, play again) */
+.ka-story-pill { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid rgba(244, 236, 220, 0.36); background: rgba(14, 11, 8, 0.58); color: #f4ecdc;
+  font: 600 13.5px/1 var(--font-sans); white-space: nowrap; cursor: pointer; backdrop-filter: blur(6px); }
+.ka-story-pill:hover, .ka-story-pill:focus-visible { border-color: var(--accent); }
+.ka-story-pill[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-strong); }
+.ka-story-pill span { font-size: 10px; }
+@media (max-width: 760px) {
+  .ka-story-pill { min-height: 32px; padding: 0 10px; font-size: 12.5px; }
+  .ka-story.is-home .ka-story-pill, .ka-story .ka-story-method { display: none; } /* the buttons below say the same */
+}

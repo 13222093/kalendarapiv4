@@ -41,6 +41,10 @@ const BASE = import.meta.env.BASE_URL;
 const SEASON_URL = `${BASE}ka-data/kalteng_2019_season.json`;
 const VIS_URL = `${BASE}ka-data/visibility_kalteng_2019.json`;
 const DISTRICTS_URL = `${BASE}ka-data/kalteng_districts.json`;
+// The narration (English): one track with each line at the start of its scene, the same track as the demo video's
+// first part. It is an extra: the Sound button shows only when the file is there, and sound starts only when the
+// visitor asks for it (a browser plays no sound before a click).
+const VOICE_URL = `${BASE}ka-data/story/narration_en.mp3`;
 const PHOTOS_URL = `${BASE}ka-data/story/story_photos.json`;
 const visImgUrl = (date: string) => `${BASE}ka-data/vis2019/${date}.png`;
 const KALTENG_AOI = 'prov-kalimantan-tengah';
@@ -345,6 +349,24 @@ export function Story() {
   const reduced = useMemo(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false, []);
   // straight to the final frame: asked for by the address, or reduced motion
   const toEnd = useMemo(() => startAt == null && (isHub() || reduced), [startAt, reduced]);
+  // the narration: there when its file is, and off until the visitor presses Sound
+  const voice = useRef<HTMLAudioElement | null>(null);
+  const [hasVoice, setHasVoice] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch(VOICE_URL, { method: 'HEAD' })
+      .then((r) => {
+        // a host that answers a missing file with its own page says 200, so the type is checked too
+        if (!live || !r.ok || !(r.headers.get('content-type') ?? '').startsWith('audio')) return;
+        const a = new Audio(VOICE_URL);
+        a.preload = 'auto';
+        voice.current = a;
+        setHasVoice(true);
+      })
+      .catch(() => { /* no narration: the Story is complete without it */ });
+    return () => { live = false; voice.current?.pause(); voice.current = null; };
+  }, []);
   // the clock lives in a ref and is read by the animation frame; `mark` is the last cue passed (or the second jumped
   // to) and the only thing about time that React sees
   const now = useRef(toEnd ? Infinity : startAt ?? 0);
@@ -587,6 +609,34 @@ export function Story() {
     return () => cancelAnimationFrame(raf);
   }, [segs, ready, atEnd, playing, hidden, reduced]);
 
+  // The narration follows the clock: it runs while the story runs, and is set to the clock at every cue and jump.
+  // When the story runs to its end the last line finishes over the final frame; a skip or a jump stops it.
+  const voiceSeek = useRef(-1);
+  useEffect(() => {
+    const a = voice.current;
+    if (!a) return;
+    const on = hasVoice && voiceOn && ready && warm && !hidden;
+    if (on && atEnd && voiceSeek.current === mark.seek) return;
+    if (!(on && playing && !atEnd)) { a.pause(); return; }
+    voiceSeek.current = mark.seek;
+    const t = Math.max(0, now.current);
+    if (Math.abs(a.currentTime - t) > 0.3) a.currentTime = t;
+    a.play().catch(() => setVoiceOn(false)); // the browser refused (no click yet): the button reads "off" again
+  }, [hasVoice, voiceOn, playing, ready, warm, hidden, atEnd, mark]);
+  /** Sound on or off, from a click, so a browser that needs the click itself to start sound gets it. */
+  const toggleVoice = () => {
+    const a = voice.current;
+    if (a && !voiceOn) { a.currentTime = Math.max(0, Math.min(now.current, end)); a.play().catch(() => { /* the effect above reports it */ }); }
+    setVoiceOn((v) => !v);
+  };
+  /** From the final frame: the story again from its start, with its narration when there is one. */
+  const playAgain = (withVoice: boolean) => {
+    window.scrollTo(0, 0);
+    const a = voice.current;
+    if (a && withVoice) { a.currentTime = 0; a.play().catch(() => { /* the effect above reports it */ }); setVoiceOn(true); }
+    jumpTo(0, !reduced);
+  };
+
   // the clock (it starts once the data is in, so the beats never shift; a hidden tab stops it). Each frame it moves
   // the progress bar; it tells React only when a cue is passed, and redraws August's dots only when the day changes.
   useEffect(() => {
@@ -743,9 +793,19 @@ export function Story() {
         <a className="ka-story-brand" href="#/story?hub=1">KalenderApi</a>
         <span className="ka-story-tag">{tr('Indonesian for "fire calendar" . NASA Space Apps 2026', 'Kalender api . NASA Space Apps 2026')}</span>
         <nav className="ka-story-tools" aria-label={tr('Story controls', 'Kontrol cerita')}>
-          {!done ? (
-            <button type="button" className="ka-story-skip" onClick={() => jumpTo(end, false)}>{tr('Skip story', 'Lewati cerita')}</button>
+          {!done && hasVoice && lang === 'en' ? (
+            <button type="button" className="ka-story-pill" aria-pressed={voiceOn} onClick={toggleVoice}>
+              {voiceOn ? tr('Sound: on', 'Suara: nyala') : tr('Sound: off', 'Suara: mati')}
+            </button>
           ) : null}
+          {!done ? (
+            <button type="button" className="ka-story-pill" onClick={() => jumpTo(end, false)}>{tr('Skip story', 'Lewati cerita')}</button>
+          ) : (
+            <button type="button" className="ka-story-pill" onClick={() => playAgain(hasVoice && lang === 'en')}>
+              <span aria-hidden="true">▶</span>
+              {hasVoice && lang === 'en' ? tr('Play the story with sound', 'Putar cerita dengan suara') : tr('Play the story', 'Putar cerita')}
+            </button>
+          )}
           <LangToggle className="ka-story-lang" />
           <a className="ka-story-method" href="#/method">{tr('Method', 'Metode')}</a>
         </nav>
