@@ -24,6 +24,7 @@ import {
 import { MIN_EARLIER_YEARS, STATUS_CUTS, monthStatus } from '../lib/robust.ts';
 import { SiteHeader } from '../components/SiteHeader.tsx';
 import { AlertLoop } from '../components/now/AlertLoop.tsx';
+import { AskAssistant, type AskFacts } from '../components/now/AskAssistant.tsx';
 import '../styles/now.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -529,6 +530,16 @@ export function Now() {
     cloud_days_above: blindRow?.district_days_above ?? null, cloud_days_total: blindRow?.district_days ?? null,
     peat_sites: peat?.persistentSites ?? null,
   } : null;
+  // the same facts for the AI assistant, plus the only places it may name: the newest hotspot and the peat sites this
+  // page lists (public/api/ask.js checks every field again)
+  const newestMs = counts?.newest ? pointMs(counts.newest) : NaN;
+  const askFacts: AskFacts | null = aiFacts ? {
+    ...aiFacts,
+    newest: counts?.newest && Number.isFinite(newestMs)
+      ? { lat: counts.newest[1], lon: counts.newest[0], time: new Date(newestMs).toISOString(), sensor: counts.newest[4] } : null,
+    peat_list: sites.slice(0, 5).map((s) => ({ lat: s.lat, lon: s.lon, days: s.days, come_backs: s.comeBacks })),
+    peat_season: peat?.season ?? null,
+  } : null;
 
   // ---- the picker
   const [q, setQ] = useState('');
@@ -1020,6 +1031,12 @@ export function Now() {
               <AlertLoop district={districtTitle(aoiName(aoi, msgLang), msgLang)} levelLabel={result.level ? levelName(result.level) : null}
                 message={message('residents')} />
             </div>
+
+            {/* ---- the AI assistant: a resident or an officer asks, it answers from this page's numbers only
+                 (components/now/AskAssistant.tsx, public/api/ask.js) */}
+            {askFacts ? (
+              <AskAssistant key={`ask:${aoiId}`} facts={askFacts} lang={lang} place={districtTitle(aoiName(aoi, lang), lang)} hasPeat={sites.length > 0} />
+            ) : null}
 
             {/* ---- the way back: a resident's report to the office, written for WhatsApp */}
             <ReportBack place={districtTitle(aoiName(aoi, msgLang), msgLang)} msgLang={msgLang} phone={phones.residents || phones.bpbd || phones.crew} />

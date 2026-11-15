@@ -1,0 +1,48 @@
+/* KalenderApi (new file): the AI assistant panel of the Today page (components/now/AskAssistant.tsx).
+   Tokens of brand.css only. The panel is a .now-card, so it takes that card's frame and headings. */
+.ka-ask { margin-top: 18px; scroll-margin-top: 72px; }
+/* The Today page orders its sections (styles/now.css): the assistant sits with the alert loop, right after it. */
+.now-main > .ka-ask { order: 2; }
+.ka-ask .now-kicker { margin: 0 0 2px; }
+
+.ka-ask-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.ka-ask-chip {
+  min-height: 38px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-strong);
+  background: transparent; color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.3; text-align: left; cursor: pointer;
+}
+.ka-ask-chip:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.ka-ask-chip:focus-visible, .ka-ask-input:focus-visible, .ka-ask-log:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ka-ask-chip:disabled { opacity: 0.6; cursor: default; }
+
+.ka-ask-log {
+  display: flex; flex-direction: column; gap: 8px; min-height: 96px; max-height: 420px; overflow-y: auto;
+  padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2);
+}
+.ka-ask-empty { margin: auto; color: var(--text-3); font-size: 13.5px; text-align: center; }
+.ka-ask-bubble {
+  align-self: flex-start; max-width: min(78ch, 88%); padding: 9px 12px; border: 1px solid var(--border); border-radius: 4px 14px 14px 14px;
+  background: var(--bg); color: var(--text); font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ka-ask-bubble.is-mine { align-self: flex-end; border-color: transparent; border-radius: 14px 4px 14px 14px; background: color-mix(in srgb, var(--accent) 30%, var(--surface-2)); }
+.ka-ask-who { display: block; margin-bottom: 3px; font: 600 10.5px/1.3 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.ka-ask-bubble.is-mine .ka-ask-who { color: var(--text-2); }
+.ka-ask-wait { color: var(--text-3); font-size: 13.5px; }
+
+.ka-ask-form { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.ka-ask-label { flex-basis: 100%; font: 600 11px/1.3 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.ka-ask-input {
+  flex: 1 1 220px; min-width: 0; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-strong);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 15px;
+}
+.ka-ask-input::placeholder { color: var(--text-3); }
+.ka-ask-input:disabled { opacity: 0.6; }
+.ka-ask-form .now-btn { min-height: 44px; padding-inline: 22px; }
+
+@media (max-width: 520px) {
+  .ka-ask-bubble { max-width: 94%; }
+  .ka-ask-form .now-btn { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ka-ask-wait { animation: ka-ask-wait 1.4s ease-in-out infinite; }
+  @keyframes ka-ask-wait { 50% { opacity: 0.55; } }
+}
