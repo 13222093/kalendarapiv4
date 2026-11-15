@@ -214,8 +214,25 @@ Narration, one line per scene, so each line can be placed at its scene's start:
 | 7. Closing, then home | 24.4 s | "But zero under cloud does not mean no fire. It means the satellite could not see." |
 
 64 words. Checked against the app: raw joined +95% ("nearly double"), one scale -64%, 15 October 2019 the day with the
-largest share under cloud (62.3%).
+largest share under cloud (62.3%). These seven lines are also the narration of the Story inside the app (the Sound
+button), as `app/public/ka-data/story/narration_en.mp3`.
 
-For ElevenLabs: paste the seven lines with a blank line between them, so the pauses can be found and each line placed
-at its scene. Voice and settings are in `nasa/docs/research-v3/E1-elevenlabs-recipe.md`. Say in the video description,
+### The submitted cut: the story, then the app (22:15)
+
+The Story alone does not show the app in use, so the demo video is a cut: about 15 seconds of the Story, then about
+14 seconds of the app, each app clip with a caption on screen. File: `docs/submission/video/demo_cut_silent.mp4`
+(1920 x 1080, 30 frames a second, 29.6 seconds), and with the voice `demo_cut.mp4`.
+
+| In the video | From | Narration |
+|---|---|---|
+| 0.0 to 9.2 s | Story 0.0 to 9.2 s: the 2012 jump, then one scale | lines 1 and 2 above |
+| 9.2 to 15.4 s | Story 20.2 to 26.4 s: 15 October under cloud, the closing caption | line 7 above |
+| 15.4 to 19.0 s | The home calendar: as recorded, then on one scale | "KalenderApi puts MODIS and VIIRS on one fire calendar." |
+| 19.0 to 22.4 s | Today in my district: counts and the map | "It shows today's hotspots in your district," |
+| 22.4 to 25.8 s | The level and the three messages | "and writes the message for the village, the disaster office and the fire crew." |
+| 25.8 to 28.0 s | The AI draft | (the line above runs on) |
+| 28.0 to 29.6 s | The final frame with the address | (silence) |
+
+For ElevenLabs: ten lines, each as its own file, `01.mp3` to `10.mp3` (lines 1 to 7 above, then the three app lines).
+Voice and settings are in `nasa/docs/research-v3/E1-elevenlabs-recipe.md`; speed 1.1. Say in the video description,
 and in the file's metadata, that the voice is AI-generated.
