@@ -24,7 +24,7 @@ import { EARLY, LATE, headline, yearTotals } from '../lib/robust';
 import {
   EXTRA_WINDOWS, FIRST_SEASON_YEAR, KALTENG, SEASON_YEARS, aoiGroups, aoiName, beforeAfter, blindShare, clampRange, dateOnly, fmt1, fmtInt,
   heldRange, isYm, loadBlindRule, loadDistricts, loadFinding, loadIndex, loadMonthly, loadValidation, lockedMonths, lowDataNote, monthName,
-  monthsIn, obsState, pct1, pooledRatio, rangeTotals, sameMonths, seasonFileBuilt, seasonWindow, sensorRatio, settle, shortVersion, ym,
+  monthsIn, monthVerdict, obsState, pct1, pooledRatio, rangeTotals, sameMonths, seasonFileBuilt, seasonWindow, sensorRatio, settle, shortVersion, ym,
   type AoiEntry, type BlindRule, type DistrictIndex, type Finding, type Load, type MonthRange, type MonthRow, type RecordIndex,
   type SeasonWindow, type Series, type Validation,
 } from '../lib/record';
@@ -388,7 +388,13 @@ export function Record() {
       <div className="ka-rec-top" id="month">
         <div className="ui-section-head"><h2 className="ui-section-title">{tr('This month against the median', 'Bulan ini dibanding median')}</h2></div>
         {rows && selected && aoi ? (
-          <ThisMonth rows={rows} selected={selected} aoiId={aoi.aoi_id} computed={computed} seasons={seasons ?? []} />
+          <>
+            <MonthBar rows={rows} selected={selected} />
+            <details className="ka-rec-more">
+              <summary>{tr('The month in full', 'Bulan ini selengkapnya')}</summary>
+              <ThisMonth rows={rows} selected={selected} aoiId={aoi.aoi_id} computed={computed} seasons={seasons ?? []} />
+            </details>
+          </>
         ) : (
           <Card title={tr('This month', 'Bulan ini')} subtitle={tr('One sentence for the latest month of the record', 'Satu kalimat untuk bulan terbaru dalam rekaman')}>
             <State load={rowsLoad} what={tr('the month\'s sentence', 'kalimat bulan ini')} height={64} retry={retryRows} />
@@ -436,7 +442,7 @@ export function Record() {
 
       <Section id="sure" title={tr('How sure', 'Seberapa yakin')}
         subtitle={tr('Every test written in advance, failures included.', 'Setiap uji yang ditulis lebih dulu, termasuk yang gagal.')}>
-        {validation.state === 'ok' ? <><SureStrip v={validation.data} /><HowSure v={validation.data} /></> : (
+        {validation.state === 'ok' ? <><SureStrip v={validation.data} /><details className="ka-rec-more"><summary>{tr('All the checks', 'Semua pengujian')}</summary><HowSure v={validation.data} /></details></> : (
           <ChartFrame title={tr('Error on years the fit never saw', 'Galat pada tahun-tahun yang tidak dipakai saat penyesuaian')}
             unit={tr('Absolute percentage error of the yearly total, raw against harmonized.', 'Galat persentase mutlak dari total tahunan, mentah dibandingkan terharmonisasi.')}
             source={tr('Source: our validation run (validation_results.json).', 'Sumber: proses validasi kami (validation_results.json).')}>
@@ -501,6 +507,44 @@ export function Record() {
 
       </div>
     </Page>
+  );
+}
+
+/** The picked month against its usual month: two bars drawn from the month's own numbers (lib/record.ts monthVerdict:
+ *  the value on one scale, and the median of the same month), and one sentence. */
+function MonthBar({ rows, selected }: { rows: MonthRow[]; selected: string }) {
+  const tr = useTr();
+  const lang = useLang();
+  const v = useMemo(() => monthVerdict(rows, selected), [rows, selected]);
+  if (!v) return null;
+  // a month that is still filling in is shown, but not compared with its usual month
+  const partial = !!rows.find((r) => ym(r.year, r.month) === selected)?.flag_partial;
+  const ratio = partial ? null : v.ratio;
+  const usual = ratio != null && ratio > 0 ? v.H / ratio : null;
+  const top = Math.max(v.H, usual ?? 0, 1);
+  const month = monthName(selected, lang);
+  const word = monthsIn(lang, 'long')[Number(selected.slice(5, 7)) - 1] ?? '';
+  return (
+    <div className="ka-rec-mbar">
+      <p className="ka-rec-mbar-say">
+        <b>{month}</b>: {fmtNumber(v.H, lang)} {tr('fire cell-days on one scale', 'sel-hari api pada satu skala')}
+        {ratio != null ? <>, <b className={ratio > 1 ? 'is-up' : 'is-down'}>{fmtNumber(ratio, lang, ratio < 10 ? 1 : 0)} {tr('times', 'kali')}</b> {tr(`the usual ${word}`, `${word} biasanya`)}</> : null}
+        {partial ? tr(' so far: the month is still filling in, so it is not compared yet.', ' sejauh ini: bulan ini masih terisi, sehingga belum dibandingkan.') : v.provisional ? tr(' (provisional).', ' (sementara).') : '.'}
+      </p>
+      <div className="ka-rec-mbar-rows" role="img" aria-label={tr(`${month}: ${fmtNumber(v.H, lang)} fire cell-days${usual != null ? `; the usual ${word}: ${fmtNumber(usual, lang)}` : ''}`,
+        `${month}: ${fmtNumber(v.H, lang)} sel-hari api${usual != null ? `; ${word} biasanya: ${fmtNumber(usual, lang)}` : ''}`)}>
+        <span>{tr('This month', 'Bulan ini')}</span>
+        <i className="is-now" style={{ width: `${Math.max(1, (v.H / top) * 100)}%` }} />
+        <em>{fmtNumber(v.H, lang)}</em>
+        {usual != null ? (
+          <>
+            <span>{tr(`Usual ${word}`, `${word} biasanya`)}</span>
+            <i style={{ width: `${Math.max(1, (usual / top) * 100)}%` }} />
+            <em>{fmtNumber(usual, lang)}</em>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

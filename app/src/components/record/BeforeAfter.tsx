@@ -235,22 +235,11 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
 
   return (
     <div className="ka-rec-ba">
-      <StatGrid>
-        <StatTile label={tr('Raw, stitched as recorded', 'Mentah, disambung apa adanya')} value={head.raw == null ? tr('n/a', 't/a') : pctText(head.raw, lang)}
-          context={tr(`Mean of ${windowText} against ${earlyText}: MODIS before ${SEAM_YEAR}, VIIRS after`,
-            `Rata-rata ${windowText} dibanding ${earlyText}: MODIS sebelum ${SEAM_YEAR}, VIIRS sesudahnya`)} />
-        <StatTile label={tr('Harmonized (Aqua MODIS scale)', 'Terharmonisasi (skala Aqua MODIS)')} value={head.harm == null ? tr('n/a', 't/a') : pctText(head.harm, lang)}
-          context={makeup.ownCount && lateOwn === lateYears.length
-            ? tr(`The same years. Every one of them is Aqua MODIS's own count: this change involves no conversion. VIIRS is converted to the Aqua scale only from ${makeup.convertedFrom}`,
-              `Tahun yang sama. Semuanya hitungan Aqua MODIS sendiri: perubahan ini tidak melibatkan konversi. VIIRS dikonversi ke skala Aqua baru sejak ${makeup.convertedFrom}`)
-            : tr(`The same years. The line is ${words}`, `Tahun yang sama. Garis ini adalah ${words}`)} />
-        <StatTile label={tr(`The jump in ${SEAM_YEAR}`, `Lonjakan pada ${SEAM_YEAR}`)} value={ratio ? `${fmtNumber(ratio.ratio, lang, 1)}×` : tr('n/a', 't/a')}
-          context={ratio
-            ? tr(`VIIRS fire cell-days per MODIS Aqua fire cell-day, same months ${ratio.from} to ${ratio.to}`,
-              `Sel-hari api VIIRS per satu sel-hari api MODIS Aqua, bulan yang sama ${ratio.from} sampai ${ratio.to}`)
-            : tr('Needs months where both satellites report', 'Perlu bulan saat kedua satelit sama-sama melapor')} />
-      </StatGrid>
-      <RobustStrip area={area} results={results} makeup={makeup} enso={enso} failed={failed} />
+      <ul className="ka-rec-big3">
+        <li><b>{head.raw == null ? tr('n/a', 't/a') : pctText(head.raw, lang)}</b><span>{tr('Raw, stitched as recorded', 'Mentah, disambung apa adanya')}</span></li>
+        <li><b className="is-one">{head.harm == null ? tr('n/a', 't/a') : pctText(head.harm, lang)}</b><span>{tr('On one scale (Aqua MODIS)', 'Pada satu skala (Aqua MODIS)')}</span></li>
+        <li><b className="is-viirs">{ratio ? `${fmtNumber(ratio.ratio, lang, 1)}×` : tr('n/a', 't/a')}</b><span>{tr(`The jump in ${SEAM_YEAR}: VIIRS per MODIS`, `Lonjakan pada ${SEAM_YEAR}: VIIRS per MODIS`)}</span></li>
+      </ul>
       <PlotFigure
         title={title}
         subtitle={tr(
@@ -333,6 +322,24 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
         <li><i className="ka-rec-sw ka-rec-sw-viirs" aria-hidden="true" /><b>VIIRS</b></li>
         <li><i className="ka-rec-sw ka-rec-sw-summed" aria-hidden="true" />{label.summed}</li>
       </ul>
+      <details className="ka-rec-more">
+        <summary>{tr('Does it depend on the years compared?', 'Apakah bergantung pada tahun yang dibandingkan?')}</summary>
+      <StatGrid>
+        <StatTile label={tr('Raw, stitched as recorded', 'Mentah, disambung apa adanya')} value={head.raw == null ? tr('n/a', 't/a') : pctText(head.raw, lang)}
+          context={tr(`Mean of ${windowText} against ${earlyText}: MODIS before ${SEAM_YEAR}, VIIRS after`,
+            `Rata-rata ${windowText} dibanding ${earlyText}: MODIS sebelum ${SEAM_YEAR}, VIIRS sesudahnya`)} />
+        <StatTile label={tr('Harmonized (Aqua MODIS scale)', 'Terharmonisasi (skala Aqua MODIS)')} value={head.harm == null ? tr('n/a', 't/a') : pctText(head.harm, lang)}
+          context={makeup.ownCount && lateOwn === lateYears.length
+            ? tr(`The same years. Every one of them is Aqua MODIS's own count: this change involves no conversion. VIIRS is converted to the Aqua scale only from ${makeup.convertedFrom}`,
+              `Tahun yang sama. Semuanya hitungan Aqua MODIS sendiri: perubahan ini tidak melibatkan konversi. VIIRS dikonversi ke skala Aqua baru sejak ${makeup.convertedFrom}`)
+            : tr(`The same years. The line is ${words}`, `Tahun yang sama. Garis ini adalah ${words}`)} />
+        <StatTile label={tr(`The jump in ${SEAM_YEAR}`, `Lonjakan pada ${SEAM_YEAR}`)} value={ratio ? `${fmtNumber(ratio.ratio, lang, 1)}×` : tr('n/a', 't/a')}
+          context={ratio
+            ? tr(`VIIRS fire cell-days per MODIS Aqua fire cell-day, same months ${ratio.from} to ${ratio.to}`,
+              `Sel-hari api VIIRS per satu sel-hari api MODIS Aqua, bulan yang sama ${ratio.from} sampai ${ratio.to}`)
+            : tr('Needs months where both satellites report', 'Perlu bulan saat kedua satelit sama-sama melapor')} />
+      </StatGrid>
+      <RobustStrip area={area} results={results} makeup={makeup} enso={enso} failed={failed} />
       <p className="ka-rec-note">
         {makeup.ownCount
           ? tr(
@@ -349,6 +356,7 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
             `Tidak ada rentang 90% untuk ${area} sejak ${pooled.from}: bulan-bulan VIIRS ini dikonversi dengan satu rasio nasional (${fmtNumber(pooled.ratio, lang, 3)} sel-hari api Aqua MODIS per satu sel-hari api VIIRS) tanpa interval. Indonesia dan wilayah pulau tetap punya rentang.`)}
         </p>
       ) : null}
+      </details>
     </div>
   );
 }

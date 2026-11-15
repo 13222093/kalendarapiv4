@@ -66,6 +66,15 @@ hotspots is read as a quiet day. Under cloud, it is a day the satellite could no
   page. It is our own rule, not an official status. The page writes three messages ready to send, for residents and
   the village, for the district disaster office (BPBD) and for the Manggala Agni fire crew, each with a WhatsApp
   button. If today's data cannot be read, no level is set: the page never calls a district calm without data.
+- **What to do now, for the disaster office**: beside the map, the level and the actions it calls for (check the newest
+  hotspot on the ground, re-check the peat sites where fire came back, tell the village, report "not observed" on a
+  clouded day), each with the fact from the page that triggers it. They are suggestions from the page's own rules, not
+  an official procedure.
+- **A resident's report**: "Seen fire or smoke? Report it" writes a report (district, time, the phone's location if
+  the resident adds it) and opens it in WhatsApp for the local post.
+- **The alert loop, as a demo of the next step**: the office approves an alert, a phone in the village receives it,
+  the resident confirms or reports fire, and the office sees the reply. Tonight it runs inside the page and sends
+  nothing; the real way to send is the WhatsApp button.
 - **Peat sites where fire comes back**, for Central Kalimantan: a peat cell of about 1 km is a persistent site when
   VIIRS detects fire there on three or more days of a season, or again after a gap of two days or more. Over eleven
   fire seasons that is 18,113 persistent sites and 31,476 come-backs. For each gap we read the MODIS fire mask: in

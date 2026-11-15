@@ -5,6 +5,7 @@
 // (ka-data/kalteng_<Y>_season.json, the points Play the season draws) for the days inside the range. For any other area
 // or date the page says plainly that the point file is not bundled and links to the NASA FIRMS archive download.
 // The page texts are in English and Bahasa Indonesia (lib/lang.ts); the CSV files stay in English.
+import { AskGlyph } from '../home/Drawings';
 import { useState } from 'react';
 import { cssVar } from '../ui';
 import { currentTheme } from '../../lib/theme';
@@ -133,7 +134,7 @@ export function DownloadPanel({ rows, area, fileArea, aoiId, range, picked, seri
   return (
     <div className="ka-rec-dl">
       <div className="ka-rec-dl-group">
-        <p className="ka-rec-dl-title">{tr('Numbers (CSV)', 'Angka (CSV)')}</p>
+        <p className="ka-rec-dl-title"><AskGlyph icon="csv" />{tr('Numbers (CSV)', 'Angka (CSV)')}</p>
         <div className="ka-rec-dl-btns">
           <button type="button" className="ui-btn" disabled={busy} onClick={saveMonthly}>{tr('Monthly series (CSV)', 'Seri bulanan (CSV)')}</button>
           <button type="button" className="ui-btn" disabled={busy || !same} onClick={saveSame}
@@ -146,7 +147,7 @@ export function DownloadPanel({ rows, area, fileArea, aoiId, range, picked, seri
         </p>
       </div>
       <div className="ka-rec-dl-group">
-        <p className="ka-rec-dl-title">{tr('Pictures (PNG)', 'Gambar (PNG)')}</p>
+        <p className="ka-rec-dl-title"><AskGlyph icon="calendar" />{tr('Pictures (PNG)', 'Gambar (PNG)')}</p>
         <div className="ka-rec-dl-btns">
           <button type="button" className="ui-btn" disabled={busy} onClick={saveCalendar}>{tr('Calendar (PNG)', 'Kalender (PNG)')}</button>
           <button type="button" className="ui-btn" disabled={busy} onClick={saveChart}>{tr('Before and after chart (PNG)', 'Grafik sebelum dan sesudah (PNG)')}</button>
@@ -157,7 +158,7 @@ export function DownloadPanel({ rows, area, fileArea, aoiId, range, picked, seri
         </p>
       </div>
       <div className="ka-rec-dl-group">
-        <p className="ka-rec-dl-title">{tr('Hotspots of the search (CSV)', 'Titik panas hasil pencarian (CSV)')}</p>
+        <p className="ka-rec-dl-title"><AskGlyph icon="download" />{tr('Hotspots of the search (CSV)', 'Titik panas hasil pencarian (CSV)')}</p>
         {aoiId !== KALTENG ? (
           <p className="ka-rec-note">
             {tr(`The hotspot point file is not bundled for ${area}: this app holds points only for Central Kalimantan's built seasons. Download the detections of any area and dates from the `,
