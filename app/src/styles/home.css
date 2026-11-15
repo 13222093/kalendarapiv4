@@ -505,3 +505,11 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 /* Under the Story's final frame (pages/Story.tsx renders this page there): the sections follow the first screen and
    scroll over the Story's map, which stays fixed on a phone. */
 .ka-home.is-embedded { position: relative; z-index: 2; min-height: 0; border-top: 1px solid var(--border); }
+
+/* the three steps at the top of the record page (components/home/Drawings.tsx RecordFlow) */
+.ka-d-flow.is-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 980px; }
+.ka-d-flow.is-steps .ka-d-icon { width: 56px; height: 56px; padding: 11px; border-radius: 12px; background: var(--surface-2); margin-bottom: 4px; }
+.ka-d-flow.is-steps li + li::before { top: 22px; }
+.ka-d-flow-go { padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font: 700 14.5px var(--font-sans); color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
+.ka-d-flow-go:hover { color: var(--accent-strong); }
+@media (max-width: 900px) { .ka-d-flow.is-steps { grid-template-columns: minmax(0, 1fr); } .ka-d-flow.is-steps li + li::before { display: none; } }

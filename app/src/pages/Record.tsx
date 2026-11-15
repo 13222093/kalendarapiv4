@@ -6,7 +6,7 @@
 // bundle (lib/record.ts); until public/ss-data/index.json exists every section says "not built yet".
 // The page is in English, with Bahasa Indonesia as a switch (lib/lang.ts): every text is written in both, side by side.
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Callout, Card, Page, PageHeader, Section, Skeleton } from '../components/ui';
+import { Callout, Card, Page, Section, Skeleton } from '../components/ui';
 import { IconPlay } from '../components/icons';
 import { BeforeAfterFigure } from '../components/record/BeforeAfter';
 import { RecordCalendar } from '../components/record/RecordCalendar';
@@ -15,8 +15,10 @@ import { HowSure } from '../components/record/HowSure';
 import { RangePanel } from '../components/record/RangePanel';
 import { DownloadPanel } from '../components/record/DownloadPanel';
 import { AreaSearch } from '../components/record/AreaSearch';
+import { RecordFlow } from '../components/home/Drawings';
+import { summarizeValidation } from './landing-data';
 import { BlindDistrictsCard } from '../components/BlindDistrictsCard';
-import { locale, useLang, useTr } from '../lib/lang';
+import { fmtNumber, locale, useLang, useTr } from '../lib/lang';
 import { EARLY, LATE, headline, yearTotals } from '../lib/robust';
 import {
   EXTRA_WINDOWS, FIRST_SEASON_YEAR, KALTENG, SEASON_YEARS, aoiGroups, aoiName, beforeAfter, blindShare, clampRange, dateOnly, fmt1, fmtInt,
@@ -271,13 +273,15 @@ export function Record() {
 
   return (
     <Page>
-      <PageHeader
-        eyebrow={tr('Indonesia record', 'Rekaman Indonesia')}
-        title={tr('Indonesia\'s fire record, on one scale', 'Rekaman api Indonesia, pada satu skala')}
-        lead={tr(
-          'When VIIRS joined MODIS in 2012, the raw fire record jumped: the sharper satellite counts more of the same fires. We put every year on the Aqua MODIS scale, with a 90% range. Where cloud left no cloud-free look, the calendar marks the gap: a zero under cloud is not a measurement.',
-          'Ketika VIIRS menyusul MODIS pada 2012, rekaman api mentah melonjak: satelit yang lebih tajam menghitung lebih banyak dari api yang sama. Kami menempatkan setiap tahun pada skala Aqua MODIS, dengan rentang 90%. Bila awan tidak menyisakan pandangan bebas awan, kalender menandai celahnya: angka nol di bawah awan bukanlah pengukuran.')}
-        actions={<>
+      <div className="ka-rec-page">
+      <header className="ka-rec-head">
+        <p className="ka-rec-eyebrow">{tr('Harmonize · MODIS × VIIRS', 'Harmonisasi · MODIS × VIIRS')}</p>
+        <h1 className="ka-rec-title">{tr('Indonesia\'s fire record, on one scale', 'Rekaman api Indonesia, pada satu skala')}</h1>
+        <p className="ka-rec-lead">
+          {tr('VIIRS joined MODIS in 2012 and counts more of the same fires, so the raw record jumps. Here every year is on one scale, for any area.',
+            'VIIRS menyusul MODIS pada 2012 dan menghitung lebih banyak dari api yang sama, sehingga rekaman mentah melonjak. Di sini setiap tahun berada pada satu skala, untuk wilayah mana pun.')}
+        </p>
+        <div className="ka-rec-head-acts">
           {picker}
           <button type="button" className="ui-btn" onClick={toRange}>{tr('Dates and downloads', 'Tanggal dan unduhan')}</button>
           {aoi ? (
@@ -286,8 +290,17 @@ export function Record() {
             </a>
           ) : null}
           <a className="ka-head-story ui-press" href="#/story"><IconPlay size={13} /><span>{tr('Watch the story', 'Tonton cerita')}</span></a>
-        </>}
-      />
+        </div>
+        <RecordFlow onGo={(id) => document.getElementById(id)?.scrollIntoView({ block: 'start' })} />
+        <details className="ka-rec-more">
+          <summary>{tr('How to read this page', 'Cara membaca halaman ini')}</summary>
+          <p>
+            {tr(
+              'When VIIRS joined MODIS in 2012, the raw fire record jumped: the sharper satellite counts more of the same fires. We put every year on the Aqua MODIS scale, with a 90% range. Where cloud left no cloud-free look, the calendar marks the gap: a zero under cloud is not a measurement.',
+              'Ketika VIIRS menyusul MODIS pada 2012, rekaman api mentah melonjak: satelit yang lebih tajam menghitung lebih banyak dari api yang sama. Kami menempatkan setiap tahun pada skala Aqua MODIS, dengan rentang 90%. Bila awan tidak menyisakan pandangan bebas awan, kalender menandai celahnya: angka nol di bawah awan bukanlah pengukuran.')}
+          </p>
+        </details>
+      </header>
 
       {dist && offered.length ? <AreaSearch districts={offered} onPick={(id) => set({ aoi: id, m: null })} /> : null}
       {districts.state === 'error' && idx ? (
@@ -327,34 +340,8 @@ export function Record() {
         </p>
       ) : null}
 
-      {/* the latest month first: one sentence, right under the area picker */}
-      <div className="ka-rec-top" id="month">
-        {rows && selected && aoi ? (
-          <ThisMonth rows={rows} selected={selected} aoiId={aoi.aoi_id} computed={computed} seasons={seasons ?? []} />
-        ) : (
-          <Card title={tr('This month', 'Bulan ini')} subtitle={tr('One sentence for the latest month of the record', 'Satu kalimat untuk bulan terbaru dalam rekaman')}>
-            <State load={rowsLoad} what={tr('the month\'s sentence', 'kalimat bulan ini')} height={64} retry={retryRows} />
-          </Card>
-        )}
-        {selected && selectedLocked ? (
-          <p className="ka-rec-note" role="status">
-            {tr(`${monthName(selected, lang)} is held for a registered test: it was not computed for this district. It is not a zero, and the satellites did not miss it.`,
-              `${monthName(selected, lang)} ditahan untuk sebuah uji terdaftar: bulan ini tidak dihitung untuk kabupaten/kota ini. Ini bukan nol, dan bukan tidak terekam satelit.`)}
-          </p>
-        ) : null}
-        {rows && selected && last ? (
-          <p className="ka-rec-note">
-            {selected === last
-              ? tr('This is the latest month of the record. Pick any other month in the calendar below.', 'Ini bulan terbaru dalam rekaman. Pilih bulan lain pada kalender di bawah.')
-              : tr('Picked in the calendar below. ', 'Dipilih pada kalender di bawah. ')}
-            {selected !== last ? <button type="button" className="ka-rec-link" onClick={() => set({ m: null })}>{tr('Back to the latest month', 'Kembali ke bulan terbaru')}</button> : null}
-          </p>
-        ) : null}
-      </div>
-
       <Section id="jump" title={tr('Before and after', 'Sebelum dan sesudah')}
-        subtitle={tr('The jump in 2012, and the fix: the same record stitched as recorded, added together, and harmonized',
-          'Lonjakan pada 2012, dan perbaikannya: rekaman yang sama disambung sebagaimana tercatat, dijumlahkan, dan diharmonisasi')}>
+        subtitle={tr('The 2012 jump, and the same record on one scale.', 'Lonjakan 2012, dan rekaman yang sama pada satu skala.')}>
         {rows && ba ? (
           <BeforeAfterFigure area={area} ba={ba} source={source} ratio={ratio} pooled={pooled}
             finding={aoi?.level === 'national' && finding.state === 'ok' ? finding.data : null} />
@@ -375,22 +362,47 @@ export function Record() {
         ) : null}
       </Section>
 
-      <Section id="sure" title={tr('How sure', 'Seberapa yakin')}
-        subtitle={tr('Our validation: errors on years the fit never saw, and every pre-written test, failures included',
-          'Validasi kami: galat pada tahun-tahun yang tidak dipakai saat penyesuaian, dan setiap uji yang ditulis lebih dulu, termasuk yang gagal')}>
-        {validation.state === 'ok' ? <HowSure v={validation.data} /> : (
-          <ChartFrame title={tr('Error on years the fit never saw', 'Galat pada tahun-tahun yang tidak dipakai saat penyesuaian')}
-            unit={tr('Absolute percentage error of the yearly total, raw against harmonized.', 'Galat persentase mutlak dari total tahunan, mentah dibandingkan terharmonisasi.')}
-            source={tr('Source: our validation run (validation_results.json).', 'Sumber: proses validasi kami (validation_results.json).')}>
-            <State load={index.state !== 'ok' ? pending : validation} what={tr('the validation results', 'hasil validasi')} height={230}
-              retry={index.state === 'error' ? retryIndex : retryValidation} />
+      <Section id="calendar" title={tr('Every month', 'Setiap bulan')}
+        subtitle={tr('Colour is fire. Hatching marks months with few cloud-free looks.', 'Warna adalah api. Arsiran menandai bulan dengan sedikit pandangan bebas awan.')}>
+        {rows ? (
+          <RecordCalendar rows={rows} area={area} series={series} onSeries={(s) => set({ s })}
+            selected={selected} onSelect={(m) => set({ m })} computed={computed} obsElsewhere={obsElsewhere}
+            ratio={ratio?.ratio ?? null} unit={unit} source={calSource} seasonHref={seasonHref} range={range} locked={locked} />
+        ) : (
+          <ChartFrame title={tr(`${area}: every month`, `${area}: setiap bulan`)} unit={unit} source={calSource}>
+            <State load={rowsLoad} what={tr('the calendar', 'kalender')} height={420} retry={retryRows} />
           </ChartFrame>
         )}
       </Section>
 
+      {/* the picked month against the median of the same month (the latest month until one is picked in the calendar) */}
+      <div className="ka-rec-top" id="month">
+        <div className="ui-section-head"><h2 className="ui-section-title">{tr('This month against the median', 'Bulan ini dibanding median')}</h2></div>
+        {rows && selected && aoi ? (
+          <ThisMonth rows={rows} selected={selected} aoiId={aoi.aoi_id} computed={computed} seasons={seasons ?? []} />
+        ) : (
+          <Card title={tr('This month', 'Bulan ini')} subtitle={tr('One sentence for the latest month of the record', 'Satu kalimat untuk bulan terbaru dalam rekaman')}>
+            <State load={rowsLoad} what={tr('the month\'s sentence', 'kalimat bulan ini')} height={64} retry={retryRows} />
+          </Card>
+        )}
+        {selected && selectedLocked ? (
+          <p className="ka-rec-note" role="status">
+            {tr(`${monthName(selected, lang)} is held for a registered test: it was not computed for this district. It is not a zero, and the satellites did not miss it.`,
+              `${monthName(selected, lang)} ditahan untuk sebuah uji terdaftar: bulan ini tidak dihitung untuk kabupaten/kota ini. Ini bukan nol, dan bukan tidak terekam satelit.`)}
+          </p>
+        ) : null}
+        {rows && selected && last ? (
+          <p className="ka-rec-note">
+            {selected === last
+              ? tr('This is the latest month of the record. Pick any other month in the calendar above.', 'Ini bulan terbaru dalam rekaman. Pilih bulan lain pada kalender di atas.')
+              : tr('Picked in the calendar above. ', 'Dipilih pada kalender di atas. ')}
+            {selected !== last ? <button type="button" className="ka-rec-link" onClick={() => set({ m: null })}>{tr('Back to the latest month', 'Kembali ke bulan terbaru')}</button> : null}
+          </p>
+        ) : null}
+      </div>
+
       <Section id="range" title={tr('Pick a period', 'Pilih periode')}
-        subtitle={tr('Choose a From and a To month for this area, read its totals against the same months of every year, and download the numbers and the pictures',
-          'Pilih bulan Dari dan Sampai untuk wilayah ini, baca totalnya dibandingkan bulan yang sama setiap tahun, lalu unduh angka dan gambarnya')}>
+        subtitle={tr('Pick the months, read the totals, download the numbers and the pictures.', 'Pilih bulannya, baca totalnya, unduh angka dan gambarnya.')}>
         {rows && aoi && shown && totals && first && last ? (
           <>
             <RangePanel area={area} first={first} last={last} range={range} onRange={setRange} totals={totals} same={same}
@@ -413,23 +425,22 @@ export function Record() {
         )}
       </Section>
 
-      <Section id="calendar" title={tr('Every month', 'Setiap bulan')}
-        subtitle={tr('Colour is fire. Hatching marks months with few cloud-free looks.', 'Warna adalah api. Arsiran menandai bulan dengan sedikit pandangan bebas awan.')}>
-        {rows ? (
-          <RecordCalendar rows={rows} area={area} series={series} onSeries={(s) => set({ s })}
-            selected={selected} onSelect={(m) => set({ m })} computed={computed} obsElsewhere={obsElsewhere}
-            ratio={ratio?.ratio ?? null} unit={unit} source={calSource} seasonHref={seasonHref} range={range} locked={locked} />
-        ) : (
-          <ChartFrame title={tr(`${area}: every month`, `${area}: setiap bulan`)} unit={unit} source={calSource}>
-            <State load={rowsLoad} what={tr('the calendar', 'kalender')} height={420} retry={retryRows} />
+      <Section id="sure" title={tr('How sure', 'Seberapa yakin')}
+        subtitle={tr('Every test written in advance, failures included.', 'Setiap uji yang ditulis lebih dulu, termasuk yang gagal.')}>
+        {validation.state === 'ok' ? <><SureStrip v={validation.data} /><HowSure v={validation.data} /></> : (
+          <ChartFrame title={tr('Error on years the fit never saw', 'Galat pada tahun-tahun yang tidak dipakai saat penyesuaian')}
+            unit={tr('Absolute percentage error of the yearly total, raw against harmonized.', 'Galat persentase mutlak dari total tahunan, mentah dibandingkan terharmonisasi.')}
+            source={tr('Source: our validation run (validation_results.json).', 'Sumber: proses validasi kami (validation_results.json).')}>
+            <State load={index.state !== 'ok' ? pending : validation} what={tr('the validation results', 'hasil validasi')} height={230}
+              retry={index.state === 'error' ? retryIndex : retryValidation} />
           </ChartFrame>
         )}
       </Section>
 
       {(aoi?.aoi_id ?? KALTENG) === KALTENG && !waiting ? (
         <Section id="zero" title={tr('The zero, day by day', 'Angka nol, hari demi hari')}
-          subtitle={tr('Central Kalimantan, 1 August to 31 October: each day\'s NASA photo, its VIIRS hotspots, and where Terra and Aqua had no cloud-free look',
-            'Kalimantan Tengah, 1 Agustus sampai 31 Oktober: foto NASA setiap hari, titik panas VIIRS-nya, dan tempat Terra dan Aqua tidak mendapat pandangan bebas awan')}>
+          subtitle={tr('Central Kalimantan, August to October: each day\'s photo, its hotspots, and where there was no cloud-free look.',
+            'Kalimantan Tengah, Agustus sampai Oktober: foto tiap hari, titik panasnya, dan tempat tanpa pandangan bebas awan.')}>
           <div className="ka-rec-seasons">
             {cardYears.map((y) => {
               const ok = seasons?.includes(y) ?? false;
@@ -479,8 +490,28 @@ export function Record() {
         </Section>
       ) : null}
 
-
+      </div>
     </Page>
+  );
+}
+
+/** How sure, at a glance: the tests that pass and fail, and the error on years left out of the fit (the numbers of
+ *  pages/landing-data.ts summarizeValidation, as the home page and the method page print them). */
+function SureStrip({ v }: { v: Validation }) {
+  const tr = useTr();
+  const lang = useLang();
+  const s = useMemo(() => summarizeValidation(v), [v]);
+  const raw = s.raw?.loyo ?? null, ours = s.ours?.loyo ?? null;
+  const pct = (x: number) => `${fmtNumber(x, lang, x >= 100 ? 0 : 1)}%`;
+  return (
+    <ul className="ka-rec-strip">
+      <li><b>{fmtNumber(s.counts.pass, lang)}</b><span>{tr("tests pass", "uji lulus")}</span></li>
+      <li><b className="is-fail">{fmtNumber(s.counts.fail, lang)}</b><span>{tr('fail, and are shown below', 'gagal, dan ditampilkan di bawah')}</span></li>
+      {raw != null && ours != null ? (
+        <li><b className="is-one">{pct(ours)}</b><span>{tr(`error on years left out of the fit, against ${pct(raw)} raw joined`, `galat pada tahun di luar penyesuaian, dibanding ${pct(raw)} mentah disambung`)}</span></li>
+      ) : null}
+      <li className="is-link"><a href="#/method">{tr('Method and checks', 'Metode dan uji')} →</a></li>
+    </ul>
   );
 }
 

@@ -7,6 +7,7 @@
 // question mark.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTr } from '../../lib/lang';
+import '../../styles/home.css';   // the .ka-d-* drawing styles, wherever a drawing is used
 
 // ------------------------------------------------------------------------------------------------ parts
 
@@ -303,5 +304,30 @@ export function PeatTimeline() {
       <path className="ka-d-arrow" d={`M${at(4) + w / 2} ${y0 - 6}C${at(4) + w / 2} ${y0 - 19} ${at(5) + w / 2 - 6} ${y0 - 19} ${at(5) + w / 2} ${y0 - 5}M${at(5) + w / 2 - 6} ${y0 - 11}l6 6 5-7`} />
       <text className="ka-d-label is-fire" x={at(6) + w} y={y0 + w + 52} textAnchor="end">{tr('= 1 come-back', '= 1 kemunculan kembali')}</text>
     </svg>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ the record page's flow
+
+/** The record page in three steps: pick an area, see MODIS and VIIRS on one scale, compare a month or a date range
+ *  and download. The second and third steps jump to their sections. */
+export function RecordFlow({ onGo }: { onGo: (id: string) => void }) {
+  const tr = useTr();
+  const steps: { icon: AskIcon; title: string; text: string; to: string | null }[] = [
+    { icon: 'region', title: tr('Pick your area', 'Pilih wilayah Anda'), text: tr('By name, or by latitude and longitude.', 'Menurut nama, atau lintang dan bujur.'), to: null },
+    { icon: 'harmonize', title: tr('See MODIS and VIIRS on one scale', 'Lihat MODIS dan VIIRS pada satu skala'), text: tr('Before and after, then every month.', 'Sebelum dan sesudah, lalu setiap bulan.'), to: 'jump' },
+    { icon: 'download', title: tr('Compare and download', 'Bandingkan dan unduh'), text: tr('A month or a date range, as CSV and PNG.', 'Satu bulan atau rentang tanggal, sebagai CSV dan PNG.'), to: 'range' },
+  ];
+  return (
+    <ol className="ka-d-flow is-steps">
+      {steps.map((st, i) => (
+        <li key={st.icon}>
+          <AskGlyph icon={st.icon} />
+          <span className="ka-d-flow-n" aria-hidden="true">{i + 1}</span>
+          {st.to ? <button type="button" className="ka-d-flow-go" onClick={() => onGo(st.to!)}>{st.title}</button> : <b>{st.title}</b>}
+          <span>{st.text}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
