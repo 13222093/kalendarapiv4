@@ -23,7 +23,6 @@ export const HOME_MENU: readonly HomeLink[] = [
   { key: 'calendar', href: recordAt('IDN', 'calendar'), sec: 'calendar', en: 'Fire calendar', id: 'Kalender api' },
   { key: 'range', href: recordAt('IDN', 'range'), sec: 'range', en: 'Date range', id: 'Rentang tanggal' },
   { key: 'cloud', href: '#/season?y=2015', en: 'Zero under cloud', id: 'Nol di bawah awan' },
-  { key: 'brief', href: '#/brief?aoi=prov-kalimantan-tengah', en: 'District brief', id: 'Ringkasan kabupaten' },
   { key: 'method', href: '#/method', en: 'Method and data', id: 'Metode dan data' },
 ];
 

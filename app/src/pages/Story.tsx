@@ -47,7 +47,6 @@ const DISTRICTS_URL = `${BASE}ka-data/kalteng_districts.json`;
 const VOICE_URL = `${BASE}ka-data/story/narration_en.mp3`;
 const PHOTOS_URL = `${BASE}ka-data/story/story_photos.json`;
 const visImgUrl = (date: string) => `${BASE}ka-data/vis2019/${date}.png`;
-const KALTENG_AOI = 'prov-kalimantan-tengah';
 
 const CLEAR_DAY = '2019-08-12';
 const SMOKY_DAY = '2019-09-15';
@@ -854,7 +853,6 @@ export function Story() {
             <a className="ka-btn-ghost" href="#/season?y=2015">{tr('Play a fire season, day by day', 'Putar satu musim kebakaran, hari demi hari')}</a>
             <a className="ka-btn-ghost" href="#/record?aoi=IDN&sec=calendar">{tr('Open your area\'s fire calendar', 'Buka kalender api daerah Anda')}</a>
             <a className="ka-btn-ghost" href="#/zero">{tr('Inspect one day, cell by cell', 'Periksa satu hari, petak demi petak')}</a>
-            <a className="ka-btn-ghost" href={`#/brief?aoi=${KALTENG_AOI}`}>{tr('One-page district brief', 'Ringkasan satu halaman per kabupaten')}</a>
           </div>
         )}
       </section>

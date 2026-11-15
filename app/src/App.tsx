@@ -11,7 +11,7 @@ import { Tooltip } from './components/Tooltip.tsx';
 import { MOD_KEY } from './components/platform.ts';
 import {
   IconBook, IconCalendar, IconChart, IconCheck, IconChevronRight, IconClose, IconCode, IconExternal, IconFlame, IconMenu, IconMoon,
-  IconReport, IconSearch, IconSparkle, IconSun, IconTarget,
+  IconSearch, IconSparkle, IconSun, IconTarget,
 } from './components/icons.tsx';
 import { PALETTE_EVENT, panelSearchBox, useCommand } from './lib/commands.ts';
 import { LangToggle } from './components/LangToggle.tsx';
@@ -71,8 +71,6 @@ const NAV: readonly NavItem[] = [
     noteEn: 'Pick a period, then download it as CSV or PNG', noteId: 'Pilih periode, lalu unduh sebagai CSV atau PNG', icon: (s) => <IconSearch size={s} /> },
   { key: 'cloud', href: '#/season?y=2015', en: 'Zero under cloud', id: 'Nol di bawah awan',
     noteEn: 'A season day by day, with the days under cloud: the satellite could not see', noteId: 'Satu musim hari demi hari, dengan hari di bawah awan: satelit tidak dapat melihat', icon: (s) => <IconTarget size={s} /> },
-  { key: 'brief', href: '#/brief?aoi=prov-kalimantan-tengah', en: 'District brief', id: 'Ringkasan kabupaten',
-    noteEn: 'One printable page for a district fire officer', noteId: 'Satu halaman siap cetak untuk petugas kabupaten', icon: (s) => <IconReport size={s} /> },
   { key: 'method', href: HREF.method, route: 'method', en: 'Method and data', id: 'Metode dan data',
     noteEn: 'How the record is made and tested, its data, and its limits', noteId: 'Cara catatan dibuat dan diuji, datanya, serta batasannya', icon: (s) => <IconBook size={s} /> },
 ];
