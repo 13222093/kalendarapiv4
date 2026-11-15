@@ -365,3 +365,9 @@ h1, h2, h3, .fh-brand-name, .ka-display, .ui-page-title, .ui-section-title, .ui-
   .ka-story-pill { min-height: 32px; padding: 0 10px; font-size: 12.5px; }
   .ka-story.is-home .ka-story-pill, .ka-story .ka-story-method { display: none; } /* the buttons below say the same */
 }
+
+/* Story: a click anywhere goes on to the next scene, and the counter says so */
+.ka-story:not(.is-home) { cursor: pointer; }
+.ka-story:not(.is-home) a, .ka-story:not(.is-home) button { cursor: pointer; }
+.ka-story-hint { margin-left: 12px; color: #a79b86; letter-spacing: 0.04em; }
+@media (max-width: 760px) { .ka-story-hint { display: block; margin: 4px 0 0; } }

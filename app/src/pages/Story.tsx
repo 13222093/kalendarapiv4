@@ -665,7 +665,7 @@ export function Story() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, ready, warm, hidden, cues, end, off, data]);
+  }, [playing, ready, warm, hidden, cues, end, off, data, mark.seek]); // a jump (mark.seek) restarts the clock from the new second
 
   // ---------------------------------------------------------------------------------------------- the beats
   const [e0, e1] = WINDOW_EARLY, [r0, r1] = WINDOW_RECENT;
@@ -781,9 +781,33 @@ export function Story() {
       'Satelit NASA mencatat titik panas di setiap lokasi yang terdeteksi terbakar. Tapi di bawah awan satelit tidak bisa melihat tanah, jadi “nol titik panas” bisa berarti tidak terlihat, bukan tidak ada api. KalenderApi menunjukkan, untuk setiap hari, daerah mana yang terlihat satelit dan mana yang tertutup awan.')
     : loadingText ?? beat.body;
 
+  // A click or a tap anywhere outside a control, or the right arrow key: on to the next scene, and from the last
+  // scene to the final frame. (Skip story still goes straight to the end.)
+  const nextScene = () => {
+    if (done || !ready) return;
+    const t = Math.min(now.current, end);
+    const next = beats.find((b) => b.t > t + 0.05);
+    if (next) jumpTo(next.t, true); else jumpTo(end, false);
+  };
+  const nextRef = useRef(nextScene);
+  nextRef.current = nextScene;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowRight' || e.altKey || e.ctrlKey || e.metaKey) return;
+      if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select')) return;
+      nextRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  const onStoryClick = (e: { target: EventTarget }) => {
+    if ((e.target as HTMLElement).closest?.('a, button, input, select, textarea, summary, [role="button"]')) return;
+    nextScene();
+  };
+
   return (
     <>
-    <div className={'ka-story' + (done ? ' is-home' : '')}>
+    <div className={'ka-story' + (done ? ' is-home' : '')} onClick={done ? undefined : onStoryClick}>
       <div ref={box} className="ka-story-canvas" aria-hidden="true" />
       <div className="ka-story-vignette" />
       {intro && inIntro && !done ? (
@@ -818,7 +842,8 @@ export function Story() {
         </div>
       )}
       <section className="ka-story-copy" aria-live="polite">
-        <p className="ka-story-kicker">{done ? tr('Can you trust a report of “zero hotspots”?', 'Bisakah laporan “nol titik panas” dipercaya?') : `${beats.indexOf(beat) + 1} / ${beats.length}`}</p>
+        <p className="ka-story-kicker">{done ? tr('Can you trust a report of “zero hotspots”?', 'Bisakah laporan “nol titik panas” dipercaya?') : `${beats.indexOf(beat) + 1} / ${beats.length}`}
+          {!done && ready ? <span className="ka-story-hint">{tr('click anywhere for the next scene', 'klik di mana saja untuk adegan berikutnya')}</span> : null}</p>
         <h1 key={title}>{title}</h1>
         <p key={body} className="ka-story-body">{body}</p>
         {done && (
