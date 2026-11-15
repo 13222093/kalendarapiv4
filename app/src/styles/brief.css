@@ -189,3 +189,6 @@
   .ka-brief-foot { margin-top: 1mm; padding-top: 1mm; }
   .ka-brief a { color: #000; text-decoration: none; }
 }
+
+/* the small label over the title: mono, in the accent colour (black in print, where --accent is black) */
+.ka-brief-eyebrow { font-family: var(--font-mono); letter-spacing: 0.08em; color: var(--accent); }

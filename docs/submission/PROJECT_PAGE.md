@@ -1,7 +1,7 @@
 # Space Apps project page: text to paste
 
-Draft of 15 November 2026, 19:40. English, as the event rules require. Lines marked **[FILL]** wait for tonight's final
-numbers and links; do not submit with a [FILL] left in.
+Draft of 15 November 2026, 21:30. English, as the event rules require. Lines marked **[FILL]** wait for tonight's
+video link; do not submit with a [FILL] left in.
 
 ## Project name
 
@@ -14,8 +14,11 @@ so a district officer can see when their area usually burns and whether this mon
 question other fire calendars leave as a footnote: when the record says zero, could the satellite see the ground at
 all? For Central Kalimantan we map, for every district and every day of the fire season, where a zero means "no fire
 seen" and where it means "no cloud-free look". On 29 October 2015, 79% of the province's no-fire readings had no
-cloud-free look. We wrote our validation tests before running them and we publish the ones that failed. The app is in
-English and Bahasa Indonesia, with a one-page printable brief for each area.
+cloud-free look. A "Today in my district" page then turns this into action: it reads NASA's latest hotspots, sets a
+level by a rule we publish, and writes ready-to-send messages for residents, the district disaster office and the
+fire crew, with a list of peat sites where fire keeps coming back. We wrote our validation tests before running them
+and we publish the ones that failed. The app is in English and Bahasa Indonesia, with a one-page printable brief for
+each area.
 
 ## Project demonstration
 
@@ -49,6 +52,18 @@ hotspots is read as a quiet day. Under cloud, it is a day the satellite could no
 - **A reporting rule** the map supports: do not report "no hotspots" for a district on a day when most of it had no
   cloud-free look. Over eleven fire seasons that was 1,482 of 13,510 district-days (11%); in the wet-season quarter,
   442 of 1,148 (39%).
+- **Today in my district**: for any of the 514 districts, the hotspots NASA detected in the last 24 hours and 7 days
+  (VIIRS on NOAA-20 and NOAA-21, and MODIS, from the FIRMS near-real-time files, read when the page opens), whether
+  this month is above normal on the one-scale record, and a level (calm, watch or high) set by a rule shown on the
+  page. It is our own rule, not an official status. The page writes three messages ready to send, for residents and
+  the village, for the district disaster office (BPBD) and for the Manggala Agni fire crew, each with a WhatsApp
+  button. If today's data cannot be read, no level is set: the page never calls a district calm without data.
+- **Peat sites where fire comes back**, for Central Kalimantan: a peat cell of about 1 km is a persistent site when
+  VIIRS detects fire there on three or more days of a season, or again after a gap of two days or more. Over eleven
+  fire seasons that is 18,113 persistent sites and 31,476 come-backs. For each gap we read the MODIS fire mask: in
+  25,259 the satellite had a cloud-free look and saw no fire, in 6,184 MODIS saw fire while VIIRS did not, 25 were
+  under cloud throughout and 8 had no data. The Today page lists the top sites of the district with coordinates, as
+  places to re-check on the ground. It does not say fire kept burning in the gap.
 - **A printable one-page brief** per area, in Bahasa Indonesia or English.
 - **A story** that walks through the jump, the fix and the zero in under a minute, and a day-by-day player of a whole
   fire season.
@@ -86,26 +101,32 @@ it is not an early warning.
 
 ### Who it is for
 
-A BPBD district officer deciding how to report a quiet day; a Manggala Agni planner placing patrols by month; a peat
-restoration team choosing where to rewet before the dry season; researchers who need a fire history that does not jump
-with the sensor. We have not yet tested it with an agency. That is the next step.
+A BPBD district officer who opens "Today in my district" in the morning, sees what the satellites detected and how
+far to trust a zero, and forwards a message to the village; a Manggala Agni crew that gets coordinates of the newest
+hotspots and of peat sites to re-check; a planner placing patrols by month; researchers who need a fire history that
+does not jump with the sensor. We have not yet tested it with an agency. That is the next step.
 
 ### Limits
 
 Hotspots are heat detections, not burned area. Values from 2022 rest on a seam that fails its test. District values
-are approximate. The zero layer covers one province and measures cloud only. KalenderApi is not an official product
-and does not forecast.
+are approximate. The zero layer and the peat sites cover one province, and the zero layer measures cloud only. The
+peat index is exploratory: we wrote its rule after looking at the data. The level on the Today page is our own rule.
+KalenderApi is not an official product and does not forecast.
 
 ### Tools
 
 Python (pandas, DuckDB) for the pipeline; TypeScript, React, Vite, deck.gl, MapLibre and Observable Plot for the app;
-Vercel for hosting. Code: https://github.com/13222093/kalendarapiv4
+Vercel for hosting, with two small serverless functions (one reads NASA's near-real-time hotspot files, one drafts
+advice with an AI model). Code: https://github.com/13222093/kalendarapiv4
 
 ### Use of AI
 
 We built KalenderApi with AI assistance and disclose it in full in `AI_USE.md` in the repository. Claude (Anthropic)
 helped write the pipeline scripts, the web app, tests and documents, and helped review results; the team chose the
-challenge, the question and the method, and checked every published number against the data files. **[FILL if used:
+challenge, the question and the method, and checked every published number against the data files. On the "Today in
+my district" page, one optional button asks an OpenAI model (gpt-6-luna) to draft advice from numbers the app has
+already computed. The model is told to add no numbers of its own, the draft is labelled as written by AI, and it must
+be checked before it is sent. The three standard messages on that page are fixed templates, not AI. **[FILL if used:
 The narration in the demo video is an AI voice made with ElevenLabs from a script we wrote.]** No AI-generated images
 or numbers appear in the app: the pictures are NASA imagery and every number is computed from NASA data by code that
 can be rerun. No NASA logos appear in AI-made content.
@@ -113,8 +134,9 @@ can be rerun. No NASA logos appear in AI-made content.
 ## NASA data
 
 - NASA FIRMS active fire data: MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (S-NPP, NOAA-20), Indonesia
+- NASA FIRMS near-real-time files, last 24 hours and last 7 days, South-East Asia: VIIRS NOAA-20, VIIRS NOAA-21, MODIS
 - MODIS Thermal Anomalies and Fire Daily (MOD14A1, MYD14A1) fire mask, Collection 6.1
-- NASA GIBS true-colour imagery (MODIS Terra, VIIRS S-NPP)
+- NASA GIBS true-colour imagery (MODIS Terra, VIIRS S-NPP, VIIRS NOAA-20)
 
 ## Space agency partner and other data
 
@@ -123,7 +145,9 @@ can be rerun. No NASA logos appear in AI-made content.
 - SiPongi (Indonesia's Ministry of Forestry): official burned area, for comparison only
 - NOAA Climate Prediction Center, Oceanic Nino Index (to pick the El Nino years in the robustness check)
 - Fire Harmony (github.com/Warren-530/fire-harmony, Apache-2.0): open-source app code we built on; see NOTICE
-- Claude (Anthropic): AI assistant for code, tests and documents **[add ElevenLabs if used]**
+- Global Forest Watch, Indonesia peat lands map (original: Indonesian Ministry of Agriculture, BBSDLP)
+- Claude (Anthropic): AI assistant for code, tests and documents; OpenAI API (gpt-6-luna): the optional advice draft
+  **[add ElevenLabs if used]**
 - Open-source libraries: React, Vite, deck.gl, MapLibre GL JS, Observable Plot, DuckDB
 
 ## 30-second video: narration and shots (final, 15 November 20:35)
@@ -137,10 +161,10 @@ Narration, one line per scene, so each line can be placed at its scene's start:
 
 | Scene | Starts at | Narration (English) |
 |---|---|---|
-| 1. The 2012 jump | 0.0 s | "In 2012 a sharper satellite arrived, and Indonesia's fires seemed to nearly double." |
-| 2. One scale | 4.8 s | "Counted the same way, the rise disappears." |
+| 1. The 2012 jump | 0.0 s | "In 2012, sharper VIIRS joined older MODIS, and Indonesia's fires seemed to nearly double." |
+| 2. One scale | 4.8 s | "Harmonized onto one scale, the rise disappears." |
 | 3. Central Kalimantan | 9.6 s | "Look closer: Central Kalimantan, 2019." |
-| 4. August | 12.2 s | "August. Clear sky. The satellite sees the fires." |
+| 4. August | 12.2 s | "August. Clear sky. VIIRS sees the fires." |
 | 5. September | 16.0 s | "September. Smoke fills the sky." |
 | 6. 15 October | 20.4 s | "October. Cloud moves in, and the striped land reports zero." |
 | 7. Closing, then home | 24.4 s | "But zero under cloud does not mean no fire. It means the satellite could not see." |

@@ -1,5 +1,5 @@
 /* "Detected and reported" card (components/ReportedCard.tsx), a KalenderApi addition. Only theme tokens are used, so
-   both themes (dark "Mission control", light "Field ledger") work: teal (--accent) for what satellites saw, ember
+   both themes (dark "Mission control", light "Field ledger") work: the accent (--accent) for what satellites saw, ember
    (--ka-fire) for the area reported burned, both at 3:1 or more on the card surface. */
 .ka-rep {
   --ka-rep-detected: var(--accent);
@@ -99,10 +99,10 @@
 .ka-bz-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 10px 0 8px; }
 .ka-bz-map { width: 100%; max-width: 320px; height: auto; justify-self: center; }
 .ka-bz-map path { fill: var(--ka-bz); stroke: var(--bg, #0b1113); stroke-width: 0.8; stroke-linejoin: round; cursor: default; }
-.ka-bz-map path.is-on { stroke: var(--accent, #2fd1b2); stroke-width: 1.6; }
+.ka-bz-map path.is-on { stroke: var(--accent, #f05a28); stroke-width: 1.6; }
 .ka-bz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: var(--fs-12, 12px); }
 .ka-bz-list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) 46px 64px; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 4px; }
-.ka-bz-list li.is-on { background: color-mix(in srgb, var(--accent, #2fd1b2) 14%, transparent); }
+.ka-bz-list li.is-on { background: color-mix(in srgb, var(--accent, #f05a28) 14%, transparent); }
 .ka-bz-sw { width: 10px; height: 10px; border-radius: 2px; background: var(--ka-bz); }
 .ka-bz-name { color: var(--text, inherit); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ka-bz-val { font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; text-align: right; color: var(--text, inherit); }

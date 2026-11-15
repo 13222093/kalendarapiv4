@@ -330,7 +330,8 @@ function TrendCard({ data }: { data: LandingData }) {
         <h2 className="ka-hub-label">{tr('Fire record · yearly', 'Rekaman api · tahunan')}</h2>
         <p className="ka-hub-legend">
           <span className="is-one"><i aria-hidden="true" />{oneTag}</span>
-          <span className="is-raw"><i aria-hidden="true" />{rawTag}</span>
+          <span className="is-modis"><i aria-hidden="true" />{rawTag}: MODIS</span>
+          <span className="is-viirs"><i aria-hidden="true" />VIIRS</span>
         </p>
       </header>
       <svg className="ka-hub-chart" viewBox={`0 0 ${BOX.width} ${BOX.height}`} role="img" aria-label={label}>
@@ -341,8 +342,12 @@ function TrendCard({ data }: { data: LandingData }) {
         <text className="ka-hub-tick" x={BOX.left - 5} y={y(100) + 4} textAnchor="end">100</text>
         {joins != null ? <line className="ka-hub-mark" x1={x(joins)} x2={x(joins)} y1={BOX.top} y2={bottom + 4} /> : null}
         {converts != null ? <line className="ka-hub-mark" x1={x(converts)} x2={x(converts)} y1={BOX.top} y2={bottom + 4} /> : null}
-        <path className="ka-hub-line is-raw" d={geom.rawPath} />
+        {/* the raw joined record: the same path twice, MODIS blue up to 2011 and VIIRS amber after it */}
+        <clipPath id="ka-hub-clip-m"><rect x={0} y={0} width={Math.max(0, x(SEAM_YEAR - 1))} height={BOX.height} /></clipPath>
+        <clipPath id="ka-hub-clip-v"><rect x={Math.max(0, x(SEAM_YEAR - 1))} y={0} width={BOX.width} height={BOX.height} /></clipPath>
+        <g clipPath="url(#ka-hub-clip-v)"><path className="ka-hub-line is-raw" d={geom.rawPath} /></g>
         <path className="ka-hub-line is-one" d={geom.fairPath} />
+        <g clipPath="url(#ka-hub-clip-m)"><path className="ka-hub-line is-raw is-modis" d={geom.rawPath} /></g>
         <text className="ka-hub-end is-raw" x={x(lastYear) + 5} y={y(last.raw) + 4}>{rawEnd}</text>
         <text className="ka-hub-end is-one" x={x(lastYear) + 5} y={y(last.fair) + 4}>{oneEnd}</text>
         <text className="ka-hub-tick" x={BOX.left} y={bottom + 16}>{firstYear}</text>

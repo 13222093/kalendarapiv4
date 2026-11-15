@@ -49,27 +49,45 @@ type Route = 'record' | 'explorer' | 'dashboard' | 'rankings' | 'haze' | 'method
 // pages; one footer line points to the explorer as global context.
 const FH_ROUTES: ReadonlySet<Route> = new Set<Route>(['explorer', 'dashboard', 'rankings', 'haze', 'methods', 'data']);
 const HREF: Record<Route, string> = { record: '#/record', explorer: '#/', dashboard: '#/dashboard', rankings: '#/rankings', haze: '#/haze', methods: '#/methods', data: '#/data', method: '#/method' };
-// The cinematic Story is the first screen, and its final frame is the home ('hub=1' opens that frame without playing).
-const HOME = '#/story?hub=1';
+// The home page (#/home, pages/Home.tsx): the brand and "Home" open it. The cinematic Story is one button from there.
+const HOME = '#/home';
 const CODE_URL = 'https://github.com/13222093/kalendarapiv4';
 
 /** A page linked from the header, the page menu and the footer: KalenderApi's own pages, in English and Bahasa
  *  Indonesia. `route` is set for the pages inside this shell (the others have their own full-screen layout). */
-interface NavItem { key: string; href: string; route?: Route; en: string; id: string; noteEn: string; noteId: string; icon: (size: number) => ReactNode }
+interface NavItem { key: string; href: string; route?: Route; sec?: string; en: string; id: string; noteEn: string; noteId: string; icon: (size: number) => ReactNode }
+// The menu is named by what the challenge asks for (the same names as the home page's menu, lib/home.ts HOME_MENU).
+// Three links open the record page at one of its sections: 'sec' is the id of that section (see useSectionJump).
 const NAV: readonly NavItem[] = [
   { key: 'home', href: HOME, en: 'Home', id: 'Beranda',
-    noteEn: 'Start here: the story, and where to go next', noteId: 'Mulai di sini: ceritanya, dan ke mana selanjutnya', icon: (s) => <IconFlame size={s} /> },
-  { key: 'record', href: HREF.record, route: 'record', en: 'Indonesia record', id: 'Rekaman Indonesia',
-    noteEn: 'Fire on one scale, MODIS to VIIRS, and the months cloud hid', noteId: 'Api pada satu skala, dari MODIS ke VIIRS, dan bulan yang tertutup awan', icon: (s) => <IconChart size={s} /> },
-  { key: 'season', href: '#/season?y=2015', en: 'Play the season', id: 'Putar musim',
-    noteEn: 'Central Kalimantan, one real day per frame', noteId: 'Kalimantan Tengah, satu hari nyata per bingkai', icon: (s) => <IconCalendar size={s} /> },
-  { key: 'zero', href: '#/zero', en: 'Zero inspector', id: 'Pemeriksa nol',
-    noteEn: 'Check a zero: did a satellite have a cloud-free look?', noteId: 'Periksa angka nol: apakah satelit punya pengamatan bebas awan?', icon: (s) => <IconTarget size={s} /> },
-  { key: 'brief', href: '#/brief?aoi=prov-kalimantan-tengah', en: 'Brief', id: 'Ringkasan',
+    noteEn: 'Start here: MODIS and VIIRS on one scale, and where to go next', noteId: 'Mulai di sini: MODIS dan VIIRS pada satu skala, dan ke mana selanjutnya', icon: (s) => <IconFlame size={s} /> },
+  { key: 'now', href: '#/now', en: 'Today', id: 'Hari ini',
+    noteEn: 'The latest condition in one district', noteId: 'Kondisi terbaru di satu kabupaten/kota', icon: (s) => <IconSun size={s} /> },
+  { key: 'harmonize', href: '#/record?aoi=IDN&sec=jump', route: 'record', sec: 'jump', en: 'Harmonize', id: 'Harmonisasi',
+    noteEn: 'MODIS and VIIRS, before and after, on one scale', noteId: 'MODIS dan VIIRS, sebelum dan sesudah, pada satu skala', icon: (s) => <IconChart size={s} /> },
+  { key: 'calendar', href: '#/record?aoi=IDN&sec=calendar', route: 'record', sec: 'calendar', en: 'Fire calendar', id: 'Kalender api',
+    noteEn: 'Every month of the record, for any province or district', noteId: 'Setiap bulan dalam rekaman, untuk provinsi atau kabupaten/kota mana pun', icon: (s) => <IconCalendar size={s} /> },
+  { key: 'range', href: '#/record?aoi=IDN&sec=range', route: 'record', sec: 'range', en: 'Date range', id: 'Rentang tanggal',
+    noteEn: 'Pick a period, then download it as CSV or PNG', noteId: 'Pilih periode, lalu unduh sebagai CSV atau PNG', icon: (s) => <IconSearch size={s} /> },
+  { key: 'cloud', href: '#/season?y=2015', en: 'Zero under cloud', id: 'Nol di bawah awan',
+    noteEn: 'A season day by day, with the days under cloud: the satellite could not see', noteId: 'Satu musim hari demi hari, dengan hari di bawah awan: satelit tidak dapat melihat', icon: (s) => <IconTarget size={s} /> },
+  { key: 'brief', href: '#/brief?aoi=prov-kalimantan-tengah', en: 'District brief', id: 'Ringkasan kabupaten',
     noteEn: 'One printable page for a district fire officer', noteId: 'Satu halaman siap cetak untuk petugas kabupaten', icon: (s) => <IconReport size={s} /> },
-  { key: 'method', href: HREF.method, route: 'method', en: 'About and method', id: 'Tentang dan metode',
-    noteEn: 'Who we are, how the record is made and tested, and its limits', noteId: 'Siapa kami, cara catatan dibuat dan diuji, serta batasannya', icon: (s) => <IconBook size={s} /> },
+  { key: 'method', href: HREF.method, route: 'method', en: 'Method and data', id: 'Metode dan data',
+    noteEn: 'How the record is made and tested, its data, and its limits', noteId: 'Cara catatan dibuat dan diuji, datanya, serta batasannya', icon: (s) => <IconBook size={s} /> },
 ];
+
+/** The section named in the address ('#/record?aoi=IDN&sec=calendar' gives 'calendar'), or null. */
+function secOf(hash: string): string | null {
+  const sec = new URLSearchParams(hash.split('?')[1] ?? '').get('sec');
+  return sec && /^[a-z][a-z0-9-]*$/.test(sec) ? sec : null;
+}
+/** Is this link the open page? The record page has three links (its sections), told apart by 'sec'. */
+function isCurrent(p: NavItem, route: Route, sec: string | null): boolean {
+  if (p.route === undefined || p.route !== route) return false;
+  if (p.sec === undefined) return true;
+  return p.sec === (sec === 'calendar' || sec === 'range' ? sec : 'jump');
+}
 
 // The text of the shell. T: English only (page titles, Fire Harmony's own controls, errors). L: [English, Indonesian],
 // read with tr(...L.key).
@@ -155,8 +173,9 @@ function readHash(): string {
   return window.location.hash;
 }
 
-// The cinematic story is outside the shared app shell. (The old landing page, '#/home', now goes to the Story's final
-// frame: see HomeRedirect.)
+// The home page, the page of the condition right now and the cinematic story are outside the shared app shell.
+const HomePage = lazy(() => import('./pages/Home.tsx').then((m) => ({ default: m.Home })));
+const NowPage = lazy(() => import('./pages/Now.tsx').then((m) => ({ default: m.Now })));
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
@@ -174,7 +193,20 @@ function seasonYearOf(hash: string): number {
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
-  if (hash === '#/home' || hash.startsWith('#/home?')) return <HomeRedirect />;
+  if (hash === '#/home' || hash.startsWith('#/home?')) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <HomePage />
+      </Suspense>
+    );
+  }
+  if (hash === '#/now' || hash.startsWith('#/now?')) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <NowPage />
+      </Suspense>
+    );
+  }
   if (hash === '#/story' || hash.startsWith('#/story?')) {
     return (
       <Suspense fallback={<div className="ka-story" />}>
@@ -215,15 +247,29 @@ export function App() {
   return <Shell />;
 }
 
-/** Old '#/home' links: the address is replaced by the Story's final frame (no new history entry), which the hash
- *  listener then mounts. */
-function HomeRedirect() {
-  useEffect(() => { window.location.replace(HOME); }, []);
-  return <div className="ka-story" aria-hidden="true" />;
+/** A menu link can open the record page at one of its sections ('#/record?aoi=IDN&sec=calendar'): once the page has
+ *  drawn the element with that id, scroll to it, and once more after the layout has settled. */
+function useSectionJump(hash: string): void {
+  useEffect(() => {
+    const sec = secOf(hash);
+    if (!sec) return undefined;
+    let tries = 0, settled = false, timer = 0;
+    const go = () => {
+      const el = document.getElementById(sec);
+      if (el) {
+        el.scrollIntoView({ block: 'start' });
+        if (!settled) { settled = true; timer = window.setTimeout(go, 700); }
+      } else if (!settled && (tries += 1) < 50) timer = window.setTimeout(go, 150);
+    };
+    timer = window.setTimeout(go, 80);
+    return () => window.clearTimeout(timer);
+  }, [hash]);
 }
 
 function Shell() {
-  const route = routeOf(useSyncExternalStore(subscribeHash, readHash));
+  const hash = useSyncExternalStore(subscribeHash, readHash);
+  const route = routeOf(hash);
+  useSectionJump(hash);
   const i18n = useMemo<I18n>(() => ({ lang: 'en', t: DICTS.en, setLang: () => undefined }), []);
   const tr = useTr();
   // Fire Harmony's months and data version: only its own pages show them
@@ -462,6 +508,7 @@ function useShellData(enabled: boolean): ShellData {
 
 function Header({ route, shell }: { route: Route; shell: ShellData }) {
   const tr = useTr();
+  const sec = secOf(useSyncExternalStore(subscribeHash, readHash));
   const header = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -492,7 +539,7 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
           <ul>
             {NAV.map((p) => (
               <li key={p.key}>
-                <a href={p.href} aria-current={p.route !== undefined && p.route === route ? 'page' : undefined}>
+                <a href={p.href} aria-current={isCurrent(p, route, sec) ? 'page' : undefined}>
                   <span className="fh-nav-icon">{p.icon(16)}</span>
                   <span className="fh-nav-label" data-label={tr(p.en, p.id)}>{tr(p.en, p.id)}</span>
                 </a>
@@ -530,7 +577,7 @@ function Header({ route, shell }: { route: Route; shell: ShellData }) {
 
 /** The name of the open page: KalenderApi's pages in the reader's language, Fire Harmony's in English. */
 function pageName(route: Route, tr: (en: string, id: string) => string): string {
-  const own = NAV.find((p) => p.route === route);
+  const own = NAV.find((p) => p.route === route && p.sec === undefined);
   return own ? tr(own.en, own.id) : T.nav[route];
 }
 
@@ -620,6 +667,7 @@ function useHeaderAutoHide(header: RefObject<HTMLElement | null>, locked: boolea
  *  Escape to close), a panel under the menu button on a tablet. A native modal dialog, so focus stays inside. */
 function PageMenu({ open, route, shell, onClosed }: { open: boolean; route: Route; shell: ShellData; onClosed: () => void }) {
   const tr = useTr();
+  const sec = secOf(useSyncExternalStore(subscribeHash, readHash));
   const fh = FH_ROUTES.has(route);
   const dlg = useRef<HTMLDialogElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
@@ -690,7 +738,7 @@ function PageMenu({ open, route, shell, onClosed }: { open: boolean; route: Rout
         <nav aria-label={tr(...L.navLabel)}>
           <ul className="fh-menu-list">
             {NAV.map((p, i) => {
-              const on = p.route !== undefined && p.route === route;
+              const on = isCurrent(p, route, sec);
               return (
                 <li key={p.key}>
                   <a href={p.href} aria-current={on ? 'page' : undefined} onClick={close} style={{ '--i': i } as CSSProperties}>

@@ -611,19 +611,19 @@ export function Story() {
     introBeats.push(
       {
         t: 0,
-        title: tr('2012: a sharper satellite arrives, and the fire count jumps.', '2012: satelit yang lebih tajam datang, dan jumlah api melonjak.'),
+        title: tr('2012: sharper VIIRS joins older MODIS, and the fire count jumps.', '2012: VIIRS yang lebih tajam menyusul MODIS, dan jumlah api melonjak.'),
         body: tr(
-          `The new satellite sees smaller fires, so it counts about ${k} times as many. Joined end to end, the old and new counts make Indonesia's fires seem to ${seems} ${sizeOf(n)} (${r0}-${r1} against ${e0}-${e1}).`,
-          `Satelit baru bisa melihat api yang lebih kecil, sehingga hitungannya sekitar ${k} kali lebih banyak. Jika hitungan lama dan baru disambung begitu saja, kebakaran Indonesia tampak ${seems} ${sizeOf(n)} (${r0}-${r1} dibanding ${e0}-${e1}).`),
+          `MODIS has counted Indonesia's fires since 2000. VIIRS, a newer sensor, sees smaller fires, so it counts about ${k} times as many. Joined end to end, the two records make fires seem to ${seems} ${sizeOf(n)} (${r0}-${r1} against ${e0}-${e1}).`,
+          `MODIS menghitung kebakaran Indonesia sejak 2000. VIIRS, sensor yang lebih baru, bisa melihat api yang lebih kecil, sehingga hitungannya sekitar ${k} kali lebih banyak. Jika dua rekaman itu disambung begitu saja, kebakaran tampak ${seems} ${sizeOf(n)} (${r0}-${r1} dibanding ${e0}-${e1}).`),
       },
       {
         t: T_FIX,
         title: n > 0 && h <= 0
-          ? tr('Counted the same way, the rise disappears.', 'Dihitung dengan cara yang sama, kenaikan itu hilang.')
-          : tr('Counted the same way, the picture changes.', 'Dihitung dengan cara yang sama, gambarannya berubah.'),
+          ? tr('MODIS and VIIRS on one scale: the rise disappears.', 'MODIS dan VIIRS pada satu skala: kenaikan itu hilang.')
+          : tr('MODIS and VIIRS on one scale: the picture changes.', 'MODIS dan VIIRS pada satu skala: gambarannya berubah.'),
         body: tr(
-          `We put both satellites on one scale. On that scale, Indonesia's fire count ${verb(h)} ${sizeOf(h)} over the same years.`,
-          `Kami menempatkan kedua satelit pada satu skala. Pada skala itu, jumlah kebakaran Indonesia ${verb(h)} ${sizeOf(h)} pada tahun-tahun yang sama.`),
+          `We harmonize the two sensors, so every year is counted the same way. On that one scale, Indonesia's fire count ${verb(h)} ${sizeOf(h)} over the same years.`,
+          `Kami mengharmonisasi kedua sensor, sehingga setiap tahun dihitung dengan cara yang sama. Pada satu skala itu, jumlah kebakaran Indonesia ${verb(h)} ${sizeOf(h)} pada tahun-tahun yang sama.`),
       },
     );
   }
@@ -643,8 +643,8 @@ export function Story() {
       t: off + T_AUG,
       title: tr(`${mon(8)}: clear sky. The satellite sees the fires.`, `${mon(8)}: langit cerah. Satelit melihat api.`),
       body: tr(
-        `Each dot is a hotspot: a spot where the satellite detected fire. ${augTotal} of them in ${mon(8)}.`,
-        `Setiap titik adalah titik panas: lokasi tempat satelit mendeteksi api. Ada ${augTotal} titik pada bulan ${mon(8)}.`),
+        `Each dot is a hotspot: a spot where the VIIRS sensor detected fire. ${augTotal} of them in ${mon(8)}.`,
+        `Setiap titik adalah titik panas: lokasi tempat sensor VIIRS mendeteksi api. Ada ${augTotal} titik pada bulan ${mon(8)}.`),
     },
     {
       // the cloud map is introduced here, on a day full of smoke: it knows cloud only, and says so once
@@ -663,8 +663,8 @@ export function Story() {
       title: tr(`${longDate(blindDay)}: cloud covers the province.`, `${longDate(blindDay)}: awan menutupi provinsi ini.`),
       body: vis
         ? tr(
-          `Striped land reported zero hotspots, but cloud hid it every time the satellites passed: ${pct(vis.top)} of the land with no fire detected. Zero there means “could not see”.`,
-          `Lahan bergaris melaporkan nol titik panas, tapi tertutup awan setiap kali satelit melintas: ${pct(vis.top)} dari lahan tanpa deteksi api. Nol di sana berarti “tidak terlihat”.`)
+          `Striped land reported zero hotspots, but cloud hid it every time the MODIS satellites passed: ${pct(vis.top)} of the land with no fire detected. Zero there means “could not see”.`,
+          `Lahan bergaris melaporkan nol titik panas, tapi tertutup awan setiap kali satelit MODIS melintas: ${pct(vis.top)} dari lahan tanpa deteksi api. Nol di sana berarti “tidak terlihat”.`)
         : tr(
           'Under cloud, a satellite reports zero hotspots because it cannot see the ground. Zero there means “could not see”.',
           'Di bawah awan, satelit melaporkan nol titik panas karena tidak bisa melihat tanah. Nol di sana berarti “tidak terlihat”.'),
@@ -713,13 +713,14 @@ export function Story() {
         <IntroChart intro={intro} fix={tc >= T_FIX} leaving={tc >= INTRO - 0.7} still={!playing} oneScale={oneScale} />
       ) : null}
       <header className="ka-story-top">
-        <a className="ka-story-brand" href="#/home">KalenderApi</a>
+        <a className="ka-story-brand" href="#/story?hub=1">KalenderApi</a>
         <span className="ka-story-tag">{tr('Indonesian for "fire calendar" . NASA Space Apps 2026', 'Kalender api . NASA Space Apps 2026')}</span>
         <nav className="ka-story-tools" aria-label={tr('Story controls', 'Kontrol cerita')}>
           {!done ? (
             <button type="button" className="ka-story-skip" onClick={() => jumpTo(end, false)}>{tr('Skip story', 'Lewati cerita')}</button>
           ) : null}
           <LangToggle className="ka-story-lang" />
+          <a className="ka-story-method" href="#/home">{tr('Overview', 'Ringkasan')}</a>
           <a className="ka-story-method" href="#/method">{tr('Method', 'Metode')}</a>
         </nav>
       </header>
@@ -737,6 +738,7 @@ export function Story() {
         {done && (
           <div className="ka-story-cta">
             <a className="ka-btn-primary" href="#/season">{tr('Play a fire season, day by day', 'Putar satu musim kebakaran, hari demi hari')}</a>
+            <a className="ka-btn-ghost" href="#/now">{tr("Check today's hotspots in your district", 'Cek titik panas hari ini di daerah Anda')}</a>
             <a className="ka-btn-ghost" href="#/zero">{tr('Inspect one day, cell by cell', 'Periksa satu hari, petak demi petak')}</a>
             <a className="ka-btn-ghost" href="#/record">{tr('Open your area\'s fire calendar', 'Buka kalender api daerah Anda')}</a>
             <a className="ka-btn-ghost" href={`#/brief?aoi=${KALTENG_AOI}`}>{tr('One-page district brief', 'Ringkasan satu halaman per kabupaten')}</a>
@@ -826,6 +828,11 @@ function IntroChart({ intro, fix, leaving, still, oneScale }: { intro: Intro; fi
   const { x, y, last } = geo;
   return (
     <figure className={'ka-story-chart' + (fix ? ' is-fix' : '') + (leaving ? ' is-leaving' : '') + (still ? ' is-still' : '')} aria-hidden="true">
+      <ul className="ka-sc-key">
+        <li className="is-modis"><i />MODIS</li>
+        <li className="is-viirs"><i />VIIRS</li>
+        <li className="is-harm"><i />{tr('One scale (MODIS + VIIRS, harmonized)', 'Satu skala (MODIS + VIIRS, terharmonisasi)')}</li>
+      </ul>
       <svg viewBox={`0 0 ${CW} ${CH}`} role="presentation">
         {geo.ticks.map((v) => (
           <g key={v}>
@@ -837,8 +844,13 @@ function IntroChart({ intro, fix, leaving, still, oneScale }: { intro: Intro; fi
         <line x1={x(SEAM_YEAR)} x2={x(SEAM_YEAR)} y1={PAD.t - 6} y2={CH - PAD.b} className="ka-sc-seam" />
         <text x={x(SEAM_YEAR) + 6} y={PAD.t + 4} className="ka-sc-seamtext">{tr(`${SEAM_YEAR}: VIIRS joins`, `${SEAM_YEAR}: VIIRS masuk`)}</text>
         <path d={geo.band} className="ka-sc-band" />
-        <path d={geo.raw} className="ka-sc-raw" pathLength={1} />
+        {/* the record as recorded: the same path twice, MODIS blue up to 2011 and VIIRS amber after it */}
+        <clipPath id="ka-sc-clip-m"><rect x={0} y={0} width={Math.max(0, x(SEAM_YEAR - 1))} height={CH} /></clipPath>
+        <clipPath id="ka-sc-clip-v"><rect x={Math.max(0, x(SEAM_YEAR - 1))} y={0} width={CW} height={CH} /></clipPath>
+        <g clipPath="url(#ka-sc-clip-v)"><path d={geo.raw} className="ka-sc-raw" pathLength={1} /></g>
         <path d={geo.harm} className="ka-sc-harm" pathLength={1} />
+        {/* on top: up to 2011 the one-scale line is the same MODIS count, so the blue stays visible as its core */}
+        <g clipPath="url(#ka-sc-clip-m)"><path d={geo.raw} className="ka-sc-raw is-modis" pathLength={1} /></g>
         {last ? (
           <>
             <text x={x(last.year) + 8} y={y(last.naive) + 4} className="ka-sc-lab ka-sc-lab-raw">{tr('As recorded', 'Apa adanya')}</text>

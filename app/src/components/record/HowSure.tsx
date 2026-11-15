@@ -191,10 +191,10 @@ export function HowSure({ v }: { v: Validation }) {
               x: { type: 'log', label: tr('error (%)', 'galat (%)'), grid: true, domain: [lo, hi], tickFormat: (n: number) => (n >= 1 ? fmtNumber(n, lang) : String(n)) },
               y: { label: null, axis: null, padding: 0.18, domain: [sUn, sConv] },
               fy: { label: null, padding: 0.2, domain: HELD_KEYS.map((k) => heldName(k, tr)) },
-              color: { domain: [sUn, sConv], range: [cssVar('--text-3', '#7f908c'), cssVar('--harmonized', '#f2f3f5')] },
+              color: { domain: [sUn, sConv], range: [cssVar('--text-3', '#a79b86'), cssVar('--harmonized', '#f05a28')] },
               marks: [
                 Plot.barX(bars, { y: 's', x1: lo, x2: 'v', fy: 'k', fill: 's' }),
-                Plot.text(bars, { y: 's', x: 'v', fy: 'k', text: (d: { s: string; v: number }) => `${d.s} ${pctNum(d.v, lang)}%`, dx: 6, textAnchor: 'start', fontSize: 11, fill: cssVar('--text-2', '#a6b6b2') }),
+                Plot.text(bars, { y: 's', x: 'v', fy: 'k', text: (d: { s: string; v: number }) => `${d.s} ${pctNum(d.v, lang)}%`, dx: 6, textAnchor: 'start', fontSize: 11, fill: cssVar('--text-2', '#d6cab5') }),
               ],
             };
           }}

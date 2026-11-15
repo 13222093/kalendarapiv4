@@ -135,7 +135,7 @@ export function DistrictCalendar() {
             <div className="ka-cal-legend" aria-label={tr('Legend', 'Legenda')}>
               <span>{tr('Fire cell-days', 'Sel-hari api')}
                 <span className="ka-cal-ramp" aria-hidden="true">
-                  {['#fbe3a0', '#f4ae55', '#df7230', '#b0401f', '#6a1c17'].map((c) => <i key={c} style={{ background: c }} />)}
+                  {['#57210f', '#98350d', '#e85d14', '#ffb347', '#ffe59e'].map((c) => <i key={c} style={{ background: c }} />)}
                 </span>
                 {tr('(log scale)', '(skala log)')}
               </span>

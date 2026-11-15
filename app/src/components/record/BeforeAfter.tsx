@@ -264,8 +264,10 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
         deps={[pts, makeup, lang]}
         build={(width) => {
           const narrow = width < 640;
-          const c = { naive: cssVar('--sensor-snpp', '#e8693a'), summed: cssVar('--text-3', '#7f908c'), H: cssVar('--harmonized', '#f2f3f5') };
-          const muted = cssVar('--text-3', '#7f908c');
+          // the data colours (brand.css): the raw stitched line is MODIS blue up to 2011 and VIIRS amber from 2012, the one-scale line orange
+          const c = { naive: cssVar('--ka-viirs', '#f2c14e'), summed: cssVar('--text-3', '#a79b86'), H: cssVar('--ka-harm', '#f05a28') };
+          const modis = cssVar('--ka-modis', '#7db3ff');
+          const muted = cssVar('--text-3', '#a79b86');
           const endPt = solid[solid.length - 1];
           const ends = endPt ? (['summed', 'naive', 'H'] as Key[]).map((k) => ({ year: endPt.year, v: endPt[k], label: label[k], k })) : [];
           const yMax = Math.max(100, ...pts.map((p) => Math.max(p.naive, p.summed, p.hi)));
@@ -300,13 +302,17 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
                 Plot.ruleX([makeup.convertedFrom], { stroke: muted, strokeOpacity: 0.8, strokeDasharray: '3 3' }),
                 Plot.text([makeup.convertedFrom], { x: (d: number) => d, frameAnchor: 'top', dy: narrow ? -14 : -30, dx: -4, textAnchor: 'end', text: () => seamText, fill: muted, fontSize: 11 }),
               ] : []),
-              line('summed', 1.2), line('naive', 2), line('H', 2.6),
+              line('summed', 1.2),
+              Plot.lineY(solid.filter((p) => p.year >= SEAM_YEAR - 1), { x: 'year', y: 'naive', stroke: c.naive, strokeWidth: 2, curve: 'monotone-x' }),
+              line('H', 2.6),
+              // up to 2011 the raw line and the one-scale line are the same MODIS count: the blue is dashed and drawn on top, so both show
+              Plot.lineY(solid.filter((p) => p.year < SEAM_YEAR), { x: 'year', y: 'naive', stroke: modis, strokeWidth: 2.4, strokeDasharray: '7 6', strokeLinecap: 'butt', curve: 'monotone-x' }),
               ...(tail.length ? [tailLine('summed', 1.2), tailLine('naive', 2), tailLine('H', 2.6)] : []),
               ...(lastProv ? [Plot.text([lastProv], { x: 'year', frameAnchor: 'top', dy: narrow ? 2 : -16, textAnchor: 'end', text: () => (narrow ? tr('so far', 'sejauh ini') : tr(`${lastProv.year} so far`, `${lastProv.year} sejauh ini`)), fill: muted, fontSize: 11 })] : []),
               ...(labels ? [Plot.text(ends, { x: 'year', y: 'v', text: 'label', fill: (d: { k: Key }) => c[d.k], dx: 10, textAnchor: 'start', fontSize: 12, fontWeight: 600 })] : []),
               Plot.ruleX(pts, Plot.pointerX({ x: 'year', stroke: muted, strokeOpacity: 0.6 })),
               Plot.tip(long, Plot.pointerX({
-                x: 'year', y: 'v', fill: cssVar('--surface-2', '#10191c'), stroke: cssVar('--border-strong', '#2a3a3d'),
+                x: 'year', y: 'v', fill: cssVar('--surface-2', '#1e1812'), stroke: cssVar('--border-strong', '#33405c'),
                 title: (d: { year: number; k: Key; v: number; p: YearPoint }) => {
                   const raw = d.k === 'naive' ? d.p.rawNaive : d.k === 'summed' ? d.p.rawSummed : d.p.rawH;
                   const how = made(d.year);
@@ -321,8 +327,10 @@ export function BeforeAfterFigure({ area, ba, source, ratio, pooled }: {
         }}
       />
       <ul className="ka-rec-key" aria-label={tr('Lines', 'Garis')}>
-        <li><i className="ka-rec-sw ka-rec-sw-h" aria-hidden="true" />{tr(`Harmonized: ${words} (band: 90% range of the conversion)`, `Terharmonisasi: ${words} (pita: rentang 90% konversi)`)}</li>
-        <li><i className="ka-rec-sw ka-rec-sw-naive" aria-hidden="true" />{label.naive}</li>
+        <li><i className="ka-rec-sw ka-rec-sw-h" aria-hidden="true" />{tr(`One scale (MODIS + VIIRS, harmonized): ${words} (band: 90% range of the conversion)`, `Satu skala (MODIS + VIIRS, terharmonisasi): ${words} (pita: rentang 90% konversi)`)}</li>
+        <li>{label.naive}:</li>
+        <li><i className="ka-rec-sw ka-rec-sw-modis" aria-hidden="true" /><b>MODIS</b></li>
+        <li><i className="ka-rec-sw ka-rec-sw-viirs" aria-hidden="true" /><b>VIIRS</b></li>
         <li><i className="ka-rec-sw ka-rec-sw-summed" aria-hidden="true" />{label.summed}</li>
       </ul>
       <p className="ka-rec-note">

@@ -3,7 +3,7 @@
 
 /* charts sit on the card surface, like the Dashboard's */
 .ka-rec-ba > .ui-figure, .ka-rec-cal, .ka-rec-frame, .ka-rec-sure > .ui-figure {
-  padding: var(--sp-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+  padding: var(--sp-5); border: 1px solid var(--card-border); border-radius: 16px; background: var(--card);
 }
 @media (max-width: 560px) {
   .ka-rec-ba > .ui-figure, .ka-rec-cal, .ka-rec-frame, .ka-rec-sure > .ui-figure { padding: var(--sp-4) var(--sp-3); }
@@ -41,7 +41,9 @@
 .ka-rec-key li { display: inline-flex; align-items: center; gap: var(--sp-2); }
 .ka-rec-sw { display: inline-block; width: 22px; height: 0; border-top: 2px solid; }
 .ka-rec-sw-h { border-top-width: 3px; border-color: var(--harmonized); box-shadow: 0 -5px 0 2px color-mix(in srgb, var(--harmonized) 14%, transparent); }
-.ka-rec-sw-naive { border-color: var(--sensor-snpp); }
+.ka-rec-sw-naive, .ka-rec-sw-viirs { border-color: var(--ka-viirs); }
+.ka-rec-sw-modis { border-color: var(--ka-modis); border-top-style: dashed; }
+.ka-rec-key b { font-weight: 650; color: var(--text); }
 .ka-rec-sw-summed { border-top-width: 1px; border-color: var(--text-3); }
 
 /* ------------------------------------------------------------------------------------------------ calendar */
@@ -58,7 +60,7 @@
 .ka-rec-cal-row.is-seam::before {
   content: "2012: VIIRS joins MODIS"; position: absolute; left: 3rem; right: 0; bottom: calc(100% + 4px);
   border-bottom: 1px solid var(--border-strong); color: var(--text-3); font-size: var(--fs-11, 11px); line-height: 14px;
-  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+  letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font-mono);
 }
 .ka-rec-cal-y, .ka-rec-cal-mh, .ka-rec-cal-th, .ka-rec-cal-tot {
   display: flex; align-items: center; color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-12);

@@ -104,7 +104,7 @@ function drawStates(d: Data, states: string): HTMLCanvasElement {
     c.fill();
   }, 6);
   const style: Partial<Record<Letter, string | CanvasPattern | null>> = {
-    F: '#ff7a2f', T: 'rgba(255, 255, 255, 0.14)', U: hatch, N: dots,
+    F: '#f05a28', T: 'rgba(255, 255, 255, 0.14)', U: hatch, N: dots,
   };
   for (const letter of ['T', 'N', 'U', 'F'] as const) {
     const fill = style[letter];
@@ -233,7 +233,7 @@ export function Zero() {
       }));
     }
     layers.push(new PathLayer<[number, number][]>({
-      id: 'outline', data: data.outline, getPath: (x) => x, getColor: [143, 227, 208, 220], getWidth: 1.5,
+      id: 'outline', data: data.outline, getPath: (x) => x, getColor: [255, 165, 58, 235], getWidth: 1.5,
       widthUnits: 'pixels',
     }));
     d.setProps({ layers });

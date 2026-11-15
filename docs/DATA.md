@@ -712,3 +712,133 @@ were not rewritten (same sha256 as in 4.5). `app/public/ka-data` is 25 MB in tot
 - Housekeeping: the one-line total that `build_season.py` prints about its re-appeared marks was removed from today's
   logs. The same clean-up command also passed over `data-raw/vis2015.log` and `data-raw/vis2023.log` of 14 November; they
   had no such line, so their content is unchanged and only their modification time moved.
+
+## 15. Peat persistence index (persistence of fire activity on peat), added 15 November 2026
+
+Exploratory. Written after looking at the data; **not the registered re-appearance test**, and a different rule from the
+per-point "re-appeared" marks of `build_season.py` (those are not used here). The sentence in 14.8 about no re-appearance
+statistic describes the work up to that point; this section adds a count of gaps for the seasons other than 2019.
+**2019 was not read, computed or emitted**: the script lists the season files by name, skips 2019 without opening it, and
+refuses any MODIS file dated 2019. Counts and classes only: no estimate of hidden fire, no statement that fire was present
+during a gap, no forecast.
+
+### 15.1 Commands and run time (14:04 UTC, venv python of section 2, nothing installed)
+
+```
+.venv/Scripts/python.exe -I pipeline/peat/build_peat_persistence.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson data-raw/ss/support/peat/gfw_indonesia_peat_lands.geojson app/public/ss-data/districts/index.json     (30 s; 27 to 35 s over four runs)
+.venv/Scripts/python.exe -I pipeline/peat/check_peat_persistence.py data-raw app/public/ka-data data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson data-raw/ss/support/peat/gfw_indonesia_peat_lands.geojson     (5 s)
+```
+
+No network access. `build_peat_persistence.py` imports `pipeline/visibility/build_visibility.py` for the grid, the
+sinusoidal index and the FireMask reader (that file was not edited).
+
+### 15.2 Rule
+
+- Cell: the 0.01 degree grid of the visibility layer (box 110.7 to 115.9 E, -3.6 to 0.9 N, 520 x 450). A hotspot goes to
+  column floor((lon - 110.7) / 0.01), row floor((0.9 - lat) / 0.01), on whole thousandths of a degree.
+- Peat: the cell centre lies inside a polygon of the GFW peat layer (source polygons, `make_valid` applied; 205 of the
+  1,524 polygons touch the box). District: the cell centre lies inside one of the 14 outlines. 22,880 of the 125,293
+  district cells are peat. Barito Utara, Gunung Mas and Murung Raya have no peat cell; Lamandau has 2.
+- Gap: two or more days in a row with no VIIRS detection in the cell, between two detection days of the same season
+  (1 Aug to 31 Oct). No upper limit on the length. Each gap is one come-back.
+- **Persistent peat site: a peat cell detected on three or more days in the season, or detected again after at least one gap.**
+- Look on a gap day, from the MODIS FireMask of the 1 km pixel at the cell centre, Terra and Aqua together: fire (7, 8, 9
+  from either), else cloud-free look with no fire (5 from either), else cloud (4 from either), else no usable look.
+- Gap classes: `modis_fire` when either sensor classed a gap day as fire (the gap exists only in the VIIRS record; this
+  fourth class was added to the three asked for, so that those gaps are not called quiet or cloudy); else `seen_quiet`
+  when at least one gap day had a cloud-free look with no fire; else `under_cloud` when every gap day was cloud; else `no_data`.
+- No water or land mask is applied (a pixel classed water counts as no usable look).
+
+### 15.3 Inputs and checksums
+
+| Input | sha256 |
+|---|---|
+| `app/public/ka-data/kalteng_<Y>_season.json`, Y = 2014 to 2018, 2020 to 2024, 2026 (11 files, 653,074 hotspots; 57 exactly on the east or south edge of the box left out) | as in 4.5 and 14.6; each is recorded again in the output under `sources.per_season` |
+| `app/public/ka-data/visibility_kalteng_<Y>.json`, same years (only for the list of FireMask files and the days without a sensor file) | same |
+| `data-raw/modis14a1/*.FireMask.tif`, the 538 files those 11 lists name | each file was checked against the sha256 in its list before reading; all matched |
+| `data-raw/ss/support/peat/gfw_indonesia_peat_lands.geojson` | `007628883194fcaac9f6ec4fc62c621a56da01e87699d8fd77817499f5ebca17` (equals its `.source.json`) |
+| `data-raw/geoboundaries/geoBoundaries-IDN-ADM2_simplified.geojson` | `146653d488331086ddc43d159a261b01ea6dd08c7ed422e34a9886c3c690430c` |
+| `app/public/ss-data/districts/index.json` (only `aoi_id`, name, province) | `b303bfbe7644a69e9ab552df24808a585263629e6c184764269b06fb2dc4d6ba` at 14:04 UTC |
+
+Peat licence line, exactly as in `gfw_indonesia_peat_lands.geojson.source.json`:
+`UNVERIFIED (GFW open data portal; CC BY 4.0 assumed; original: Kementan/BBSDLP peat map)`. It was not verified here either.
+
+### 15.4 Totals (peat cells of the 14 districts)
+
+| Season | peat cells with fire | persistent peat sites | come-backs | under cloud | seen quiet | no data | MODIS fire in the gap |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2014 | 4,874 | 2,922 | 4,964 | 3 | 4,010 | 0 | 951 |
+| 2015 | 9,648 | 7,271 | 15,279 | 4 | 12,560 | 5 | 2,710 |
+| 2016 | 180 | 31 | 29 | 0 | 27 | 0 | 2 |
+| 2017 | 134 | 30 | 40 | 0 | 34 | 0 | 6 |
+| 2018 | 1,426 | 626 | 678 | 0 | 522 | 0 | 156 |
+| 2020 | 24 | 1 | 1 | 0 | 1 | 0 | 0 |
+| 2021 | 36 | 1 | 1 | 0 | 1 | 0 | 0 |
+| 2022 | 11 | 1 | 3 | 0 | 3 | 0 | 0 |
+| 2023 | 2,598 | 1,358 | 1,833 | 1 | 1,451 | 0 | 381 |
+| 2024 | 186 | 32 | 36 | 0 | 31 | 0 | 5 |
+| 2026 (provisional) | 8,407 | 5,840 | 8,612 | 17 | 6,619 | 3 | 1,973 |
+| **11 seasons** (site-seasons) | **27,524** | **18,113** | **31,476** | **25** | **25,259** | **8** | **6,184** |
+
+**What the numbers say, plainly.** Gaps with no cloud-free look are rare in Aug to Oct: 25 of 31,476 come-backs (0.08%),
+and all 17 of 2026 include a day on which only one MODIS sensor had a file. 80.2% of the come-backs were "seen quiet" and
+19.6% had MODIS fire on a gap day. This agrees with the visibility layer, where 5.5% to 7.9% of the no-fire cell-days of
+2015, 2023 and 2026 had no cloud-free look (the FireMask is a daily composite, so one clear pass is enough). So in the dry
+season the cloud map explains very few of the gaps on peat; the larger caveat is smoke: thick smoke is usually not flagged
+as cloud, so a "seen quiet" day can be a day under smoke.
+
+Most recent season with a persistent peat site, per district (2026 for all eleven that have one, provisional):
+
+| District | peat cells | persistent peat sites 2026 | come-backs | under cloud / seen quiet / no data / MODIS fire | sites in the file |
+|---|---:|---:|---:|---|---:|
+| Barito Selatan | 1,476 | 149 | 227 | 0 / 193 / 0 / 34 | 40 |
+| Barito Timur | 289 | 6 | 9 | 0 / 7 / 0 / 2 | 6 |
+| Kapuas | 3,384 | 881 | 1,276 | 1 / 956 / 0 / 319 | 40 |
+| Katingan | 3,801 | 415 | 549 | 0 / 400 / 0 / 149 | 40 |
+| Kota Palangka Raya | 914 | 320 | 803 | 0 / 633 / 0 / 170 | 40 |
+| Kotawaringin Barat | 1,915 | 519 | 645 | 4 / 462 / 1 / 178 | 40 |
+| Kotawaringin Timur | 2,610 | 896 | 1,393 | 1 / 1,074 / 0 / 318 | 40 |
+| Lamandau | 2 | 1 | 0 | 0 / 0 / 0 / 0 | 1 |
+| Pulang Pisau | 5,335 | 1,434 | 1,765 | 8 / 1,330 / 0 / 427 | 40 |
+| Seruyan | 2,300 | 891 | 1,233 | 3 / 978 / 2 / 250 | 40 |
+| Sukamara | 854 | 328 | 712 | 0 / 586 / 0 / 126 | 40 |
+
+367 sites are listed (top 40 per district by days detected, then come-backs).
+
+### 15.5 Checks (`check_peat_persistence.py`: no shapely, own cell arithmetic with Decimal, own MODIS pixel lookup; exit 0)
+
+- District rows add up to each season row, the four classes add up to the come-backs, the seasons add up to the total.
+- All 367 listed sites: are cell centres; lie inside their district outline and inside a peat polygon (even-odd ray cast on
+  the raw GeoJSON rings); also all lie inside the drawn `peat_kalteng.geojson`; meet the rule; are in ranking order; and
+  their days, first and last date, detections, night share and gaps equal a recount from the season file.
+- Three sites by hand, 2026 (detections per day read from the season file, FireMask classes read per gap day):
+  - Kotawaringin Barat, 111.575, -2.905: 11 days, 7 to 29 Oct, 14 of 19 detections at night (0.74). Gaps: 12 to 16 Oct
+    `modis_fire` (Terra 8 on 13 Oct, 9 on 15 Oct); 19 to 20 Oct `seen_quiet` (Terra 5 on 19 Oct, no Aqua file);
+    25 to 28 Oct `under_cloud` (Aqua 4 on all four days, no Terra file).
+  - Barito Selatan, 114.685, -2.235: 17 days, 10 Aug to 14 Sep, 25 of 32 at night (0.78). Gaps: 20 to 21 Aug `modis_fire`
+    (Aqua 8 on 21 Aug); 25 to 27 Aug and 30 Aug to 2 Sep `seen_quiet`; 6 to 13 Sep `modis_fire` (8 and 9 on 8 and 10 Sep).
+  - Barito Selatan, 114.635, -2.415: 14 days, 7 to 23 Oct, 23 of 26 at night (0.88). One gap, 19 to 20 Oct, `modis_fire`
+    (Terra 9 on 20 Oct, no Aqua file).
+  All three agree with the file.
+
+### 15.6 Files written (sha256)
+
+| File | bytes | sha256 |
+|---|---:|---|
+| `app/public/ka-data/peat_persistence_kalteng.json` | 220,171 | `6032b083df8b5619a3958ef67542fa2d796b730bf6b1aa8fc99f9b75c720bca6` |
+| `app/public/ka-data/peat_kalteng.geojson` (206 features; clipped to the box, simplified at 0.0005 degree, 4 decimals; the unsimplified clip was over 1.5 MB) | 327,182 | `f129d7ae1158f1be17e08ac8e04c5691dd113f8de2b97c7ebbd405e4fc420687` |
+| `pipeline/peat/build_peat_persistence.py` | | `a9e72963a6fb459b7b8ba7940db82c569f1cbabff8c29fb6275154034a9fb9c9` |
+| `pipeline/peat/check_peat_persistence.py` | | `5f3ddbdb416c59f08e7c18945cc8be4862249bd8d25a8fe6efae93bb10079d59` |
+
+No existing season or visibility file was modified.
+
+### 15.7 What was not done
+
+- 2019 (locked), Aug to Oct 2025 (no season file) and the Jan to Mar 2023 wet quarter are not in the index.
+- No upper limit on a gap, and nothing outside 1 Aug to 31 Oct is seen, so long gaps (re-burning weeks later) count the
+  same as short ones; each listed site carries its gaps with their length, the totals do not split by length.
+- No check on the ground and no comparison with burned-area or peat-depth data. The peat layer licence is unverified.
+- Not wired into the app here, and no unit test was written (only the check script). No log file was kept.
+- Seen while reading, not changed: `build_visibility.py` places a VIIRS hotspot with `int((lon - W) / STEP)` in floating
+  point, which puts a hotspot lying exactly on a cell edge one cell off (113.42 gives column 271, not 272). It only
+  decides which of two neighbouring cells is marked fire in the visibility layer; the peat index does not use that mark.

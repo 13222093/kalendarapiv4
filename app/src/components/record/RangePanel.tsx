@@ -201,7 +201,7 @@ function SameMonthsFigure({ area, eff, same, held, source }: { area: string; eff
       deps={[same, held, lang]}
       build={(width) => {
         const narrow = width < 560;
-        const accent = cssVar('--accent', '#ff7a3d'), base = cssVar('--harmonized', '#f2f3f5'), muted = cssVar('--text-3', '#7f908c'), ink = cssVar('--text', '#f2f3f5');
+        const accent = cssVar('--accent', '#f05a28'), base = cssVar('--harmonized', '#f05a28'), muted = cssVar('--text-3', '#a79b86'), ink = cssVar('--text', '#f4ecdc');
         const bar = (rows: typeof data, fill: string, fillOpacity: number) =>
           Plot.rectY(rows, { x1: (d: { yr: number }) => d.yr - 0.38, x2: (d: { yr: number }) => d.yr + 0.38, y: 'H', fill, fillOpacity });
         const solid = (p: SamePeriod) => p.complete && !p.provisional;
@@ -220,7 +220,7 @@ function SameMonthsFigure({ area, eff, same, held, source }: { area: string; eff
               Plot.text([same.median!], { y: (d: number) => d, frameAnchor: 'right', dx: 6, textAnchor: 'start', text: () => 'median', fill: muted, fontSize: 11 }),
             ] : []),
             Plot.tip(data, Plot.pointerX({
-              x: 'yr', y: 'H', fill: cssVar('--surface-2', '#10191c'), stroke: cssVar('--border-strong', '#2a3a3d'),
+              x: 'yr', y: 'H', fill: cssVar('--surface-2', '#1e1812'), stroke: cssVar('--border-strong', '#33405c'),
               title: (d: SamePeriod) => `${periodLabel(d)}${status(d, tr) ? ` (${status(d, tr)})` : ''}\n${fmtInt(d.H!, lang)} ${tr('fire cell-days, harmonized', 'sel-hari api, terharmonisasi')}${d.lo != null && d.hi != null && Math.round(d.lo) !== Math.round(d.hi) ? `\n90%: ${fmtInt(d.lo, lang)} ${to} ${fmtInt(d.hi, lang)}` : ''}${d.raw != null ? `\n${tr('raw, as recorded', 'mentah, sebagaimana tercatat')}: ${fmtInt(d.raw, lang)}` : ''}`,
             })),
           ],
