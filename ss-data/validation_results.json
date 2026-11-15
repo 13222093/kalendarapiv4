@@ -1,0 +1,1055 @@
+{
+  "meta": {
+    "run_utc": "2026-11-14T06:41:46+00:00",
+    "commit": "3edd9bc118cdae24bd0fccdcfe3c2f7056256861",
+    "data_dir": "data-raw/ss",
+    "data_manifest_sha256": "de7fff88ca8c969a483ed6985e78085b073b0fa33950fb2eb962657dadd80661",
+    "monthly_stratum_sha256": "40cd4b21ecab0a7a5a854ad7cd4b6d76dad2a27a7c7b6cd009260554c7ffcad7",
+    "n_boot": 1000,
+    "input": {
+      "peat_values": [
+        "unknown"
+      ],
+      "rows": 7731,
+      "season_note": "data layer season (dry Jun-Oct / wet) replaced by pre-registered 3-season split from the month",
+      "peat_joined": false,
+      "file": "monthly_stratum.parquet"
+    },
+    "year_range": [
+      2000,
+      2026
+    ],
+    "last_month": "2026-01",
+    "ablation": [
+      {
+        "method": "M0",
+        "overlap_kge": -4.919620708149198,
+        "loyo_mdape": 434.679230746079,
+        "ape_2015": 442.9424372320882,
+        "ape_2019": 409.16659676201664,
+        "sunset_kge": -4.853842911249865,
+        "delta_seam_2012": 1.5191654683453744,
+        "pettitt_p_2012": 4.3981098245120204e-08
+      },
+      {
+        "method": "M1",
+        "overlap_kge": 0.9893257320185914,
+        "loyo_mdape": 8.400787206439867,
+        "ape_2015": 6.603597717650615,
+        "ape_2019": 2.027355235140529,
+        "sunset_kge": 0.9004231392949601,
+        "delta_seam_2012": -0.12530576587892064,
+        "pettitt_p_2012": 0.6643848953542273
+      },
+      {
+        "method": "M2",
+        "overlap_kge": 0.9627434645135029,
+        "loyo_mdape": 2.315744294255058,
+        "ape_2015": 12.792045541451918,
+        "ape_2019": 3.216444762908429,
+        "sunset_kge": 0.9382655095099474,
+        "delta_seam_2012": -0.1347954125522699,
+        "pettitt_p_2012": 0.5486908195238092
+      },
+      {
+        "method": "M3",
+        "overlap_kge": 0.9572526850629459,
+        "loyo_mdape": 7.225533597457382,
+        "ape_2015": 0.803167363550171,
+        "ape_2019": 8.359702399112889,
+        "sunset_kge": 0.8894308726931089,
+        "delta_seam_2012": -0.056923865671886155,
+        "pettitt_p_2012": 0.35064625147659123
+      },
+      {
+        "method": "M3x",
+        "overlap_kge": 0.9520154254569104,
+        "loyo_mdape": 7.320257245039233,
+        "ape_2015": 1.3166018167725886,
+        "ape_2019": 8.697281132554352,
+        "sunset_kge": 0.882684080169702,
+        "delta_seam_2012": -0.056879269643166364,
+        "pettitt_p_2012": 0.3927991030010214
+      }
+    ],
+    "data_dir_note": "absolute path on the build machine replaced by the project-relative path when published"
+  },
+  "results": [
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Jawa-NusaTenggara-Bali-Maluku D",
+      "value": 0.14280316106700006,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.138,0.162]; sum_A=30611 sum_V=214358",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Jawa-NusaTenggara-Bali-Maluku N",
+      "value": 0.030379120774601,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.021,0.033]; sum_A=1597 sum_V=52569",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Kalimantan D",
+      "value": 0.27344519015659957,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.230,0.276]; sum_A=122230 sum_V=447000",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Kalimantan N",
+      "value": 0.09727371117107499,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.055,0.103]; sum_A=19863 sum_V=204197",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Papua D",
+      "value": 0.22699449265972138,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.199,0.243]; sum_A=26626 sum_V=117298",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Papua N",
+      "value": 0.07126964759922486,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.061,0.111]; sum_A=993 sum_V=13933",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Sulawesi D",
+      "value": 0.17774088010768008,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.138,0.186]; sum_A=18091 sum_V=101783",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Sulawesi N",
+      "value": 0.03538692294872507,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.035,0.036]; sum_A=637 sum_V=18001",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Sumatra D",
+      "value": 0.255530576584064,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.230,0.267]; sum_A=99002 sum_V=387437",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled Sumatra N",
+      "value": 0.10818328016661834,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "EB stratum kappa range [0.102,0.123]; sum_A=24621 sum_V=227586",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "kappa pooled national",
+      "value": 0.19295949583053557,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "n strata=30; plausible(0<k<1)=30",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "chain pooled Terra->Aqua",
+      "value": 2.5782964801967565,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "window [[2002, 7], [2005, 12]]",
+      "status": "run"
+    },
+    {
+      "test_id": "CAL",
+      "metric": "chain pooled NOAA20->SNPP",
+      "value": 0.9710438717881588,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "window [[2018, 4], [2026, 10]]",
+      "status": "run"
+    },
+    {
+      "test_id": "ENSO",
+      "metric": "el nino years 2000-2026",
+      "value": 6.0,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "2002, 2004, 2009, 2015, 2023, 2026",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO MdAPE M0",
+      "value": 434.679230746079,
+      "ci": null,
+      "rule": "see V1 rule",
+      "passed": null,
+      "notes": "spearman=1.000; bias=434.68%; APE {2015: 442.94, 2019: 409.17}",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO Spearman M0",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": ">= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO MdAPE M1",
+      "value": 8.400787206439867,
+      "ci": null,
+      "rule": "see V1 rule",
+      "passed": null,
+      "notes": "spearman=1.000; bias=3.37%; APE {2015: 6.6, 2019: 2.03}",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO Spearman M1",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": ">= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO MdAPE M2",
+      "value": 2.315744294255058,
+      "ci": null,
+      "rule": "see V1 rule",
+      "passed": null,
+      "notes": "spearman=1.000; bias=-0.16%; APE {2015: 12.79, 2019: 3.22}",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO Spearman M2",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": ">= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO MdAPE M3",
+      "value": 7.225533597457382,
+      "ci": null,
+      "rule": "see V1 rule",
+      "passed": null,
+      "notes": "spearman=1.000; bias=2.37%; APE {2015: 0.8, 2019: 8.36}",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO Spearman M3",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": ">= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO MdAPE M3x",
+      "value": 7.320257245039233,
+      "ci": null,
+      "rule": "see V1 rule",
+      "passed": null,
+      "notes": "spearman=1.000; bias=2.01%; APE {2015: 1.32, 2019: 8.7}",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO Spearman M3x",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": ">= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V1",
+      "metric": "LOYO decision (M3 vs M1)",
+      "value": 7.225533597457382,
+      "ci": null,
+      "rule": "MdAPE(M3) <= MdAPE(M1) and MdAPE(M3) <= 25% and Spearman >= 0.8",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M1 Jawa-NusaTenggara-Bali-Maluku",
+      "value": 71.03962706444604,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M1 Kalimantan",
+      "value": 19.793322610258272,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M1 Papua",
+      "value": 9.513788390163553,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M1 Sulawesi",
+      "value": 23.110679639680686,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M1 Sumatra",
+      "value": 8.099770206301795,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M2 Jawa-NusaTenggara-Bali-Maluku",
+      "value": 72.84683950814666,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M2 Kalimantan",
+      "value": 20.95672004623176,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M2 Papua",
+      "value": 11.499443516852905,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M2 Sulawesi",
+      "value": 22.16620676636917,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M2 Sumatra",
+      "value": 8.199931655517707,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": null,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M3 Jawa-NusaTenggara-Bali-Maluku",
+      "value": 88.99066517934119,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M3 Kalimantan",
+      "value": 20.337624488577926,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M3 Papua",
+      "value": 5.848136001402738,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M3 Sulawesi",
+      "value": 42.40022782679007,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO MdAPE M3 Sumatra",
+      "value": 13.39858131441019,
+      "ci": null,
+      "rule": "MdAPE <= 2 x MdAPE(V1, M3) and <= 40%",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V2",
+      "metric": "LORO decision M3 (all regions)",
+      "value": null,
+      "ci": null,
+      "rule": "every region MdAPE <= 2 x V1 M3 and <= 40%",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset KGE M0",
+      "value": -4.853842911249865,
+      "ci": null,
+      "rule": "see V5 rule",
+      "passed": null,
+      "notes": "cal 2012-2016, test 2017-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset KGE M1",
+      "value": 0.9004231392949601,
+      "ci": null,
+      "rule": "see V5 rule",
+      "passed": null,
+      "notes": "cal 2012-2016, test 2017-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset KGE M2",
+      "value": 0.9382655095099474,
+      "ci": null,
+      "rule": "see V5 rule",
+      "passed": null,
+      "notes": "cal 2012-2016, test 2017-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset KGE M3",
+      "value": 0.8894308726931089,
+      "ci": null,
+      "rule": "see V5 rule",
+      "passed": null,
+      "notes": "cal 2012-2016, test 2017-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset KGE M3x",
+      "value": 0.882684080169702,
+      "ci": null,
+      "rule": "see V5 rule",
+      "passed": null,
+      "notes": "cal 2012-2016, test 2017-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V5",
+      "metric": "sunset decision M3",
+      "value": 0.8894308726931089,
+      "ci": null,
+      "rule": "KGE(M3) >= 0.7 and KGE(M3) > KGE(M1)",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2002-07 Terra->Aqua M0/main",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2012-01 MODIS->VIIRS overlap M0/main",
+      "value": 0.0,
+      "ci": [
+        0.0,
+        0.0
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": null,
+      "notes": "placebo90=[-0.204,0.011] n_placebo=196; Pettitt p=1.000; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction; NOT APPLICABLE: no sensor switch at this date in this series",
+      "status": "not_applicable"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2018-04 NOAA-20 M0/main",
+      "value": 0.0,
+      "ci": [
+        0.0,
+        0.0
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": null,
+      "notes": "placebo90=[-0.204,0.011] n_placebo=196; Pettitt p=1.000; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction; NOT APPLICABLE: no sensor switch at this date in this series",
+      "status": "not_applicable"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2022-01 SNPP x kappa M0/main",
+      "value": 2.0057683397149657,
+      "ci": [
+        1.7429425139325847,
+        2.2000525766301546
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": false,
+      "notes": "placebo90=[-0.204,0.011] n_placebo=196; Pettitt p=0.000; FAILURE NOTE: Pettitt change point at seam (p<0.10); reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2026-11 NOAA-20 x r x kappa M0/main",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "PELT breakpoints M0/main",
+      "value": 1.0,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "2022-02; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2002-07 Terra->Aqua M3/main",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2012-01 MODIS->VIIRS overlap M3/main",
+      "value": 0.0,
+      "ci": [
+        0.0,
+        0.0
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": null,
+      "notes": "placebo90=[-0.240,0.047] n_placebo=196; Pettitt p=1.000; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction; NOT APPLICABLE: no sensor switch at this date in this series",
+      "status": "not_applicable"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2018-04 NOAA-20 M3/main",
+      "value": 0.0,
+      "ci": [
+        0.0,
+        0.0
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": null,
+      "notes": "placebo90=[-0.240,0.047] n_placebo=196; Pettitt p=1.000; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction; NOT APPLICABLE: no sensor switch at this date in this series",
+      "status": "not_applicable"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2022-01 SNPP x kappa M3/main",
+      "value": 0.3649565531378585,
+      "ci": [
+        0.10980435201037338,
+        0.5552601504282576
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": false,
+      "notes": "placebo90=[-0.240,0.047] n_placebo=196; Pettitt p=0.001; FAILURE NOTE: Pettitt change point at seam (p<0.10); reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2026-11 NOAA-20 x r x kappa M3/main",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "PELT breakpoints M3/main",
+      "value": 3.0,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "2022-02, 2023-05, 2025-06; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2002-07 Terra->Aqua M0/switch2012",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2012-01 MODIS->VIIRS overlap M0/switch2012",
+      "value": 1.5191654683453744,
+      "ci": [
+        1.4516942413332699,
+        1.625209740640768
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": false,
+      "notes": "placebo90=[-0.204,0.145] n_placebo=196; Pettitt p=0.000; FAILURE NOTE: Pettitt change point at seam (p<0.10); reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2018-04 NOAA-20 M0/switch2012",
+      "value": 0.03881803994360311,
+      "ci": [
+        -0.06979188165962916,
+        0.18943681040480975
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": true,
+      "notes": "placebo90=[-0.204,0.145] n_placebo=196; Pettitt p=0.462; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2022-01 SNPP x kappa M0/switch2012",
+      "value": 0.19191296477361286,
+      "ci": [
+        -0.05747259265430642,
+        0.4344683460029322
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": false,
+      "notes": "placebo90=[-0.204,0.145] n_placebo=196; Pettitt p=0.438; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2026-11 NOAA-20 x r x kappa M0/switch2012",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "PELT breakpoints M0/switch2012",
+      "value": 1.0,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "2012-02; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2002-07 Terra->Aqua M3/switch2012",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2012-01 MODIS->VIIRS overlap M3/switch2012",
+      "value": -0.056923865671886155,
+      "ci": [
+        -0.11707847165647056,
+        0.04053757610407015
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": true,
+      "notes": "placebo90=[-0.240,0.181] n_placebo=196; Pettitt p=0.351; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2018-04 NOAA-20 M3/switch2012",
+      "value": 0.0011930246749286971,
+      "ci": [
+        -0.06268045205028266,
+        0.1033392991101921
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": true,
+      "notes": "placebo90=[-0.240,0.181] n_placebo=196; Pettitt p=0.076; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2022-01 SNPP x kappa M3/switch2012",
+      "value": 0.2616033432305255,
+      "ci": [
+        0.028055817593175988,
+        0.5254291665670595
+      ],
+      "rule": "Delta_seam inside placebo 90% range",
+      "passed": false,
+      "notes": "placebo90=[-0.240,0.181] n_placebo=196; Pettitt p=0.120; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam 2026-11 NOAA-20 x r x kappa M3/switch2012",
+      "value": null,
+      "ci": null,
+      "rule": "inside placebo 90%",
+      "passed": null,
+      "notes": "insufficient data around seam; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "PELT breakpoints M3/switch2012",
+      "value": 2.0,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "2021-09, 2023-05; reference R = Aqua native (MCD64A1 not available); in the Aqua era z == 0 by construction",
+      "status": "run"
+    },
+    {
+      "test_id": "V3",
+      "metric": "seam decision M3 (2012-01 and 2022-01)",
+      "value": null,
+      "ci": null,
+      "rule": "M3 passes 2012-01 (switch2012 variant) and 2022-01 (main)",
+      "passed": false,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V9",
+      "metric": "peat hypotheses H1-H3",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "peat labels not joined in monthly_stratum (peat values ['unknown']); DAT-03 peat join pending",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V10",
+      "metric": "flag agreement F1",
+      "value": 0.8421052631578947,
+      "ci": null,
+      "rule": ">= 0.7",
+      "passed": true,
+      "notes": "national monthly 2012-2021, n=120, TP=8 FP=2 FN=1; threshold = Aqua p90 per calendar month 2003-2022; kappa M3 fitted in-sample 2012-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V10",
+      "metric": "flag agreement Cohen kappa",
+      "value": 0.8285714285714285,
+      "ci": null,
+      "rule": ">= 0.6",
+      "passed": true,
+      "notes": "national monthly 2012-2021, n=120, TP=8 FP=2 FN=1; threshold = Aqua p90 per calendar month 2003-2022; kappa M3 fitted in-sample 2012-2021",
+      "status": "run"
+    },
+    {
+      "test_id": "V10",
+      "metric": "flag agreement decision",
+      "value": null,
+      "ci": null,
+      "rule": "Cohen kappa >= 0.6 and F1 >= 0.7",
+      "passed": true,
+      "notes": "",
+      "status": "run"
+    },
+    {
+      "test_id": "V12",
+      "metric": "annual rank Spearman Aqua vs SNPP*kappa",
+      "value": 0.9999999999999999,
+      "ci": null,
+      "rule": "Spearman >= 0.9 and top-3 years identical",
+      "passed": true,
+      "notes": "top3 Aqua=[2014, 2015, 2019] top3 SNPP*kappa=[2014, 2015, 2019]; H equals Aqua in 2012-2021, so SNPP*kappa (in-sample M3) is compared",
+      "status": "run"
+    },
+    {
+      "test_id": "V6",
+      "metric": "SiPongi Spearman H (national)",
+      "value": 1.0,
+      "ci": null,
+      "rule": "rho(H) >= rho(raw); descriptive",
+      "passed": null,
+      "notes": "verified national years only: [2015, 2019, 2023] (n=3); descriptive because n < 5; H=[91448.0, 47684.0, 30197.0] raw=[91448.0, 47684.0, 155333.0] BA=[2611411.44, 1649258.0, 1161192.93]",
+      "status": "run"
+    },
+    {
+      "test_id": "V6",
+      "metric": "SiPongi Spearman raw concat (national)",
+      "value": -0.5,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "verified national years only: [2015, 2019, 2023] (n=3); descriptive because n < 5; H=[91448.0, 47684.0, 30197.0] raw=[91448.0, 47684.0, 155333.0] BA=[2611411.44, 1649258.0, 1161192.93]",
+      "status": "run"
+    },
+    {
+      "test_id": "V7",
+      "metric": "share of variants with unchanged anomaly class (partial)",
+      "value": 100.0,
+      "ci": null,
+      "rule": ">= 80% of variants unchanged (full variant set required)",
+      "passed": null,
+      "notes": "latest month 2026-01; classes {'M3 main': 'below_p10', 'M3 min_rel_sd x0.5': 'below_p10', 'M3 min_rel_sd x2': 'below_p10', 'strata region x daynight': 'below_p10', 'M2 region x season': 'below_p10', 'M1 global': 'below_p10'}. PARTIAL: only strata/shrinkage variants are computable from monthly_stratum. Confidence filter (all / high only), grid 0.01 vs 0.05 deg and static mask N=5/20 need re-running pipeline/data clean+aggregate with those settings. min_rel_sd is the available shrinkage knob (no n0 parameter in calibrate.py).",
+      "status": "run"
+    },
+    {
+      "test_id": "VAL-04",
+      "metric": "ablation M0",
+      "value": 434.679230746079,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "overlap_kge=-4.920; loyo_mdape=434.68%; APE2015=442.94%; APE2019=409.17%; sunset_kge=-4.854; delta_seam_2012=1.519; pettitt_p=4.4e-08",
+      "status": "run"
+    },
+    {
+      "test_id": "VAL-04",
+      "metric": "ablation M1",
+      "value": 8.400787206439867,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "overlap_kge=0.989; loyo_mdape=8.40%; APE2015=6.60%; APE2019=2.03%; sunset_kge=0.9; delta_seam_2012=-0.125; pettitt_p=0.664",
+      "status": "run"
+    },
+    {
+      "test_id": "VAL-04",
+      "metric": "ablation M2",
+      "value": 2.315744294255058,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "overlap_kge=0.963; loyo_mdape=2.32%; APE2015=12.79%; APE2019=3.22%; sunset_kge=0.938; delta_seam_2012=-0.135; pettitt_p=0.549",
+      "status": "run"
+    },
+    {
+      "test_id": "VAL-04",
+      "metric": "ablation M3",
+      "value": 7.225533597457382,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "overlap_kge=0.957; loyo_mdape=7.23%; APE2015=0.80%; APE2019=8.36%; sunset_kge=0.889; delta_seam_2012=-0.057; pettitt_p=0.351",
+      "status": "run"
+    },
+    {
+      "test_id": "VAL-04",
+      "metric": "ablation M3x",
+      "value": 7.320257245039233,
+      "ci": null,
+      "rule": "descriptive",
+      "passed": null,
+      "notes": "overlap_kge=0.952; loyo_mdape=7.32%; APE2015=1.32%; APE2019=8.70%; sunset_kge=0.883; delta_seam_2012=-0.057; pettitt_p=0.393",
+      "status": "run"
+    },
+    {
+      "test_id": "V4/H5",
+      "metric": "M3x LOYO MdAPE > M3 LOYO MdAPE (drift component)",
+      "value": 7.320257245039233,
+      "ci": null,
+      "rule": "MdAPE(M3x) > MdAPE(M3)",
+      "passed": null,
+      "notes": "M3=7.23%, M3x=7.32%; component only, physics slope part of V4 not run",
+      "status": "run"
+    },
+    {
+      "test_id": "V4",
+      "metric": "V4",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "physics drift prediction R_pred not wired (pipeline/physics) in runner",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V8",
+      "metric": "V8",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "dry-season rainfall series not available in derived/",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V11",
+      "metric": "V11",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "readiness calendar backtest not wired",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V13",
+      "metric": "V13",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "observability O and burned area per cell-month not available",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V14",
+      "metric": "V14",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "triangulation classes not in derived/",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V15",
+      "metric": "V15",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "M4 FRP-conditioned kappa needs daily_cell covariates; not run here",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V16",
+      "metric": "V16",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "physics prior m_s not available",
+      "status": "not_run"
+    },
+    {
+      "test_id": "V17",
+      "metric": "V17",
+      "value": null,
+      "ci": null,
+      "rule": null,
+      "passed": null,
+      "notes": "Amazon-west data not ingested",
+      "status": "not_run"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "area": "Central Kalimantan (Kalimantan Tengah)",
+  "province_code": "62",
+  "app_place": "state:IDN-1931",
+  "accessed": "2026-11-14",
+  "definitions": {
+    "burned_area_ha": "Indicative burned area (luas indikasi kebakaran) in hectares, per calendar year, as listed by SiPongi+ (Directorate of Forest Fire Control, Ministry of Forestry). The page says the area is computed from Landsat 8 OLI/TIRS images overlaid with hotspot data, together with hotspot ground-check reports and Manggala Agni suppression reports. It is an area on the ground after checks, not a count of satellite detections.",
+    "official_hotspots": "Hotspots (titik panas) as published by SiPongi+: satellite thermal anomalies from Terra/Aqua MODIS, Suomi NPP and NOAA-20 VIIRS, which SiPongi lets users filter by its own confidence classes (low, medium, high). No annual count per province was found, so every year is null.",
+    "detected_hotspots_app": "Computed in the app, not stored here: the sum over the 12 months of the harmonized monthly series of Central Kalimantan (Fire Harmony dataset v1.0, web/series/state/IDN-1931.json, field h: MODIS and VIIRS detections put on one NOAA-20 VIIRS scale). A hotspot count is not an area and cannot be converted to hectares."
+  },
+  "sources": [
+    {
+      "id": "sipongi_luas",
+      "title": "Indikasi Luas Kebakaran: Rekapitulasi Luas Kebakaran Hutan dan Lahan (Ha) per Provinsi di Indonesia (year range 2015 to 2026 selected, row 62 Kalimantan Tengah)",
+      "url": "https://sipongi.gakkum.kehutanan.go.id/indikasi-luas-kebakaran",
+      "publisher": "SiPongi+, Direktorat Pengendalian Kebakaran Hutan, Kementerian Kehutanan (attribution required: SIPONGI KEMENHUT)",
+      "type": "official"
+    },
+    {
+      "id": "sipongi_hotspot",
+      "title": "Sebaran Hotspot (hotspot lists for 12, 24 or 48 hours or one chosen date, by province, satellite and confidence) and Grafik Hotspot (national monthly chart by satellite)",
+      "url": "https://sipongi.gakkum.kehutanan.go.id/sebaran-titik-panas",
+      "publisher": "SiPongi+, Direktorat Pengendalian Kebakaran Hutan, Kementerian Kehutanan",
+      "type": "official"
+    },
+    {
+      "id": "mongabay_2026_08_06",
+      "title": "Ketika kebakaran hutan dan lahan menggila di Kalimantan (Mongabay Indonesia, 6 August 2026), citing SiPongi: Kalteng 317,749 ha in 2019 and 165,894 ha four years later",
+      "url": "https://mongabay.co.id/2026/08/06/ketika-kebakaran-hutan-dan-lahan-menggila-di-kalimantan/",
+      "publisher": "Mongabay Indonesia",
+      "type": "secondary"
+    },
+    {
+      "id": "goodstats_2026_08_24",
+      "title": "Luas kebakaran hutan Kalimantan hingga Juni 2026 lampaui luas 2025 (GoodStats, 24 August 2026), citing SiPongi: all Kalimantan 65,608.11 ha in 2024 and 55,717.27 ha in 2025",
+      "url": "https://goodstats.id/article/luas-kebakaran-hutan-kalimantan-hingga-juni-2026-lampaui-luas-2025-Ia6Rd",
+      "publisher": "GoodStats",
+      "type": "secondary"
+    }
+  ],
+  "years": [
+    { "year": 2015, "burned_area_ha": 583833.44, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2016, "burned_area_ha": 6148.42, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2017, "burned_area_ha": 1743.82, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2018, "burned_area_ha": 47432.57, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2019, "burned_area_ha": 317749.0, "official_hotspots": null, "source_ids": ["sipongi_luas", "mongabay_2026_08_06"] },
+    { "year": 2020, "burned_area_ha": 7681.0, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2021, "burned_area_ha": 3653.0, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2022, "burned_area_ha": 1554.0, "official_hotspots": null, "source_ids": ["sipongi_luas"] },
+    { "year": 2023, "burned_area_ha": 165896.44, "official_hotspots": null, "source_ids": ["sipongi_luas", "mongabay_2026_08_06"],
+      "note": "Mongabay (August 2026) quotes 165,894 ha from SiPongi; the SiPongi table on 2026-11-14 shows 165,896.44 ha. The table value is used." },
+    { "year": 2024, "burned_area_ha": 11459.89, "official_hotspots": null, "source_ids": ["sipongi_luas", "goodstats_2026_08_24"],
+      "note": "The five Kalimantan provinces in the SiPongi table add up to 65,608.11 ha, the same total GoodStats quoted from SiPongi in August 2026." },
+    { "year": 2025, "burned_area_ha": null, "official_hotspots": null, "source_ids": ["sipongi_luas", "goodstats_2026_08_24"],
+      "displayed_not_used_ha": 149.06,
+      "short_note": "On 14 Nov 2026 the table and the summary text on the SiPongi page gave different 2025 totals, so no figure is shown until one is settled.",
+      "note": "No verified figure. On 2026-11-14 the SiPongi table shows 149.06 ha for Central Kalimantan and 12,226.72 ha for Indonesia in 2025, while the text on the same page implies about 119,213 ha for Indonesia in January to July 2025 (202,004.30 ha minus the 82,791.04 ha rise), and GoodStats quoted 55,717.27 ha for all Kalimantan in 2025 from SiPongi in August 2026 (the table's five Kalimantan provinces now add up to 1,806.37 ha). Until one settled 2025 figure is published, the year is left empty." }
+  ],
+  "notes": [
+    "Every burned_area_ha value was read on 2026-11-14 from the SiPongi+ page 'Indikasi Luas Kebakaran' with the year range set to 2015 to 2026 (row 62, Kalimantan Tengah). Values are as published; the page notes that data input runs to July 2026.",
+    "The national totals in the same table match widely quoted official figures: 2,611,411.44 ha in 2015 and 1,649,258.00 ha in 2019.",
+    "No official annual hotspot count per province was found. SiPongi+ publishes hotspot lists only for the last 12, 24 or 48 hours or one chosen date, and a national monthly chart by satellite. No current BPS table of hotspots or burned area by province was found either (searches on 2026-11-10 and 2026-11-14). official_hotspots is therefore null for every year.",
+    "Burned area and hotspot counts measure different things: one is an area on the ground after checks, the other a count of satellite thermal detections. They are shown side by side and are not divided, ranked or compared as if equal.",
+    "Data use condition stated by SiPongi+: every use of its data must name the source 'SIPONGI KEMENHUT'.",
+    "2026 is outside the 2015 to 2025 range shown (SiPongi lists 7,634.46 ha for Central Kalimantan for January to July 2026)."
+  ]
+}
