@@ -9,16 +9,24 @@ KalenderApi: zero hotspots is not always zero fire
 
 ## Summary (high-level)
 
-KalenderApi is a web app for Indonesia's fire agencies. It puts 25 years of NASA MODIS and VIIRS hotspots on one scale,
-so a district officer can see when their area usually burns and whether this month is unusual. Then it answers a
-question other fire calendars leave as a footnote: when the record says zero, could the satellite see the ground at
-all? For Central Kalimantan we map, for every district and every day of the fire season, where a zero means "no fire
-seen" and where it means "no cloud-free look". On 29 October 2015, 79% of the province's no-fire readings had no
-cloud-free look. A "Today in my district" page then turns this into action: it reads NASA's latest hotspots, sets a
-level by a rule we publish, and writes ready-to-send messages for residents, the district disaster office and the
-fire crew, with a list of peat sites where fire keeps coming back. We wrote our validation tests before running them
-and we publish the ones that failed. The app is in English and Bahasa Indonesia, with a one-page printable brief for
-each area.
+(191 words; the form suggests 50 to 200.)
+
+KalenderApi ("fire calendar" in Indonesian) answers a question a district fire officer in Central Kalimantan faces
+every morning: can I trust a report of zero hotspots?
+
+First we harmonize NASA's MODIS and VIIRS hotspots since 2000 onto one scale, as a burning calendar for Indonesia's 34
+provinces and 514 districts. Joined as recorded, Indonesia's fires seem to rise 95% between 2003-2007 and 2017-2021.
+On one scale they fall 64%. The rise was the sharper sensor.
+
+Then we go where harmonization stops. Under cloud a satellite cannot see the ground, so a zero can mean "not seen".
+From NASA's daily MODIS fire masks we map this for every district and every day of eleven fire seasons: on 1,482 of
+13,510 district-days, most of the district had no cloud-free look.
+
+"Today in my district" turns this into action: live NASA hotspots, whether this month is unusual, a level set by a
+published rule, peat sites where fire keeps coming back, and messages ready to send to the village, the disaster
+office and the fire crew, in Bahasa Indonesia.
+
+We wrote our validation tests before running them, and we show the ones that failed.
 
 ## Project demonstration
 
@@ -149,6 +157,37 @@ can be rerun. No NASA logos appear in AI-made content.
 - Claude (Anthropic): AI assistant for code, tests and documents; OpenAI API (gpt-6-luna): the optional advice draft
   **[add ElevenLabs if used]**
 - Open-source libraries: React, Vite, deck.gl, MapLibre GL JS, Observable Plot, DuckDB
+
+## References
+
+The submission form asks for every outside resource (code, text, images), even open ones. Paste this list in the
+References field; it repeats the two lists above so nothing is missed.
+
+Data and imagery
+- NASA FIRMS active fire data, MODIS Collection 6.1 and VIIRS 375 m: https://firms.modaps.eosdis.nasa.gov
+- NASA FIRMS near-real-time active fire files (VIIRS NOAA-20, VIIRS NOAA-21, MODIS), South-East Asia
+- NASA MODIS Thermal Anomalies and Fire Daily, MOD14A1 and MYD14A1, Collection 6.1 (NASA LP DAAC), read through
+  Microsoft Planetary Computer: https://planetarycomputer.microsoft.com
+- NASA GIBS / Worldview imagery (MODIS Terra and VIIRS true colour, Blue Marble): https://earthdata.nasa.gov/gibs
+- geoBoundaries gbOpen, Indonesia ADM2 (CC BY 3.0 IGO): https://www.geoboundaries.org
+- Global Forest Watch open data, Indonesia peat lands (original map: Ministry of Agriculture, BBSDLP); licence not
+  verified by us
+- SiPongi, Ministry of Forestry of Indonesia: official burned area, for comparison only
+- NOAA Climate Prediction Center, Oceanic Nino Index
+
+Code
+- Fire Harmony (Apache-2.0), the open-source web app our app is built on: https://github.com/Warren-530/fire-harmony
+- FireLens (MIT, Team Aquila), a few lines of the globe's setup: https://github.com/abubokkor-cse/firelens
+- Open-source libraries: React, Vite, TypeScript, deck.gl, MapLibre GL JS, Observable Plot, h3-js, DuckDB, pandas
+- Fonts: Fraunces, Public Sans, Geist Mono (SIL Open Font License)
+
+Ideas, no code taken
+- PeatForge (another team's project): the idea of a message for residents, the disaster office and the village
+
+AI tools
+- Claude (Anthropic), in Claude Code: code, tests, documents and review
+- OpenAI API (gpt-6-luna): the optional advice draft inside the app
+- ElevenLabs: the narration voice in the demo video and in the app's Story **[delete this line if no narration is used]**
 
 ## 30-second video: narration and shots (final, 15 November 20:35)
 

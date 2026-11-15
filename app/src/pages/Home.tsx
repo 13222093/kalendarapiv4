@@ -15,6 +15,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { LangToggle } from '../components/LangToggle';
 import { HubPanel } from '../components/HubPanel';
 import { FireRibbon } from '../components/home/FireRibbon';
+import { AskGlyph, OfficerFlow, PeatTimeline, SatellitePixels, ZeroSideView, type AskIcon } from '../components/home/Drawings';
 import { fmtNumber, monthName, useLang, useTr, type Lang } from '../lib/lang';
 import {
   NATIONAL, SEAM_YEAR, fmtCompact, getJson, loadDistricts, loadIndex, loadMonthly, sensorRatio,
@@ -189,22 +190,19 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
         {/* ------------------------------------------------------------ MODIS and VIIRS, yearly */}
         <section className="ka-home-sec" aria-labelledby="ka-home-yearly">
           <p className="ka-home-eyebrow">MODIS · VIIRS</p>
-          <h2 id="ka-home-yearly">{tr('MODIS and VIIRS, yearly', 'MODIS dan VIIRS, per tahun')}</h2>
-          <div className="ka-home-split is-chart">
-            <SensorTrend years={years} />
-            <div>
+          <h2 id="ka-home-yearly">{tr('MODIS and VIIRS: two sizes of pixel', 'MODIS dan VIIRS: dua ukuran piksel')}</h2>
+          <div className="ka-home-split is-sats">
+            {/* the same square of ground under each satellite */}
+            <SatellitePixels modisSince={firstYear} viirsSince={SEAM_YEAR} />
+            <div className="ka-home-sats">
               {ratio ? (
-                <p>
-                  {tr(`Over the same months of ${ratio.from} to ${ratio.to}, VIIRS recorded `, `Pada bulan-bulan yang sama dari ${ratio.from} sampai ${ratio.to}, VIIRS mencatat `)}
+                <p className="ka-home-sats-line">
+                  {tr(`So over the same months of ${ratio.from} to ${ratio.to}, VIIRS recorded `, `Maka pada bulan-bulan yang sama dari ${ratio.from} sampai ${ratio.to}, VIIRS mencatat `)}
                   <b className="ka-home-em">{fmtNumber(ratio.ratio, lang, 1)} {tr('times', 'kali')}</b>
-                  {tr(` as many fire cell-days as MODIS in Indonesia (${fmtNumber(ratio.months, lang)} months; Suomi NPP against Aqua).`,
-                    ` lebih banyak sel-hari api daripada MODIS di Indonesia (${fmtNumber(ratio.months, lang)} bulan; Suomi NPP terhadap Aqua).`)}
+                  {tr(' as many fire cell-days as MODIS in Indonesia. One scale removes that gap.', ' lebih banyak sel-hari api daripada MODIS di Indonesia. Satu skala menghapus selisih itu.')}
                 </p>
               ) : null}
-              <p className="ka-home-note">
-                {tr('A fire cell-day is one 1 km cell with a hotspot on one day. The one scale is that of MODIS Aqua. These are counts of detections, not burned area.',
-                  'Satu sel-hari api adalah satu sel 1 km dengan titik panas pada satu hari. Satu skala yang dipakai adalah skala MODIS Aqua. Ini hitungan deteksi, bukan luas terbakar.')}
-              </p>
+              <SensorTrend years={years} />
               <p className="ka-home-links">
                 <a className="ka-home-btn is-quiet" href={recordAt('IDN', 'jump')}>{tr('Before and after', 'Sebelum dan sesudah')}</a>
                 <a className="ka-home-btn is-quiet" href="#/method">{tr('How it is made and tested', 'Cara dibuat dan diuji')}</a>
@@ -218,8 +216,7 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
           <p className="ka-home-eyebrow">{tr('The challenge', 'Tantangan')}</p>
           <h2 id="ka-home-answers">{tr('How this answers the challenge', 'Cara aplikasi ini menjawab tantangan')}</h2>
           <p className="ka-home-note">
-            {tr('“Harmonization of MODIS and VIIRS Hot Spots”: each thing the challenge asks for, and where it is in this app.',
-              '“Harmonization of MODIS and VIIRS Hot Spots”: setiap hal yang diminta tantangan, dan letaknya di aplikasi ini.')}
+            {tr('“Harmonization of MODIS and VIIRS Hot Spots”: eleven asks, each one open.', '“Harmonization of MODIS and VIIRS Hot Spots”: sebelas permintaan, semuanya bisa dibuka.')}
           </p>
           <Answers firstYear={firstYear} lastYear={lastYear} provinces={provinces} districts={districts.length} toFind={toFind} />
         </section>
@@ -253,10 +250,8 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
                     ))}
                   </ol>
                   <p className="ka-home-note">
-                    {tr(`Times the median ${monthName(at.month, lang, 'long')} of each province, ${monthLong}.`,
-                      `Kelipatan median ${monthName(at.month, lang, 'long')} tiap provinsi, ${monthLong}.`)}
-                    {provisional ? ` ${tr('This month is provisional: it comes from near-real-time data and can still change.', 'Bulan ini masih sementara: berasal dari data hampir-waktu-nyata dan masih bisa berubah.')}` : ''}
-                    {' '}{tr('Where the median is small, a few detections make a large ratio.', 'Bila mediannya kecil, beberapa deteksi saja sudah menghasilkan rasio besar.')}
+                    {tr(`Times each province’s median ${monthName(at.month, lang, 'long')}${provisional ? '; this month is provisional' : ''}. A small median makes a large ratio.`,
+                      `Kelipatan median ${monthName(at.month, lang, 'long')} tiap provinsi${provisional ? '; bulan ini masih sementara' : ''}. Median yang kecil menghasilkan rasio besar.`)}
                   </p>
                 </>
               ) : null}
@@ -268,18 +263,14 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
         <section className="ka-home-sec" id="ka-home-find" aria-labelledby="ka-home-find-h">
           <p className="ka-home-eyebrow">{tr('In practice', 'Dalam praktik')}</p>
           <h2 id="ka-home-find-h">{tr('Today in your district', 'Hari ini di kabupaten/kota Anda')}</h2>
+          {/* from a detection to a message, in four steps */}
+          <OfficerFlow />
           <div className="ka-home-split">
             {/* the home panel's own "Find your area" card (search, latitude and longitude, quick regions); its other
                 cards are hidden here by home.css */}
             <div className="ka-home-findcard"><HubPanel /></div>
             <div className="ka-home-officer">
-              <p className="ka-home-sub">{tr('What a district fire officer gets', 'Yang didapat petugas kebakaran kabupaten/kota')}</p>
-              <ol className="ka-home-steps">
-                <li>{tr('The district’s fire calendar: which months burn, year after year, on one scale.', 'Kalender api kabupaten/kota: bulan mana yang terbakar, dari tahun ke tahun, pada satu skala.')}</li>
-                <li>{tr('This month against the median of the same month.', 'Bulan ini dibanding median bulan yang sama.')}</li>
-                <li>{tr('The reporting rule: for a day when most of the district was under cloud, report “not observed”, not “no hotspots”, and ask for a ground check.',
-                  'Aturan pelaporan: untuk hari ketika sebagian besar wilayah berada di bawah awan, laporkan “tidak teramati”, bukan “nihil titik panas”, lalu minta pengecekan lapangan.')}</li>
-              </ol>
+              <p>{tr('Search your district, or start with one.', 'Cari kabupaten/kota Anda, atau mulai dari satu contoh.')}</p>
               <p className="ka-home-links">
                 <a className="ka-home-btn" href={nowAt(NOW_DISTRICT)}>{tr(`Today in ${nowName}`, `Hari ini di ${nowName}`)}</a>
                 <a className="ka-home-btn is-quiet" href="#/brief?aoi=prov-kalimantan-tengah">{tr('A printable brief', 'Ringkasan siap cetak')}</a>
@@ -295,15 +286,20 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
             <p className="ka-home-eyebrow">{tr('Central Kalimantan · peat', 'Kalimantan Tengah · gambut')}</p>
             <h2 id="ka-home-peat">{tr('On peat, fire comes back', 'Di lahan gambut, api datang kembali')}</h2>
             <dl className="ka-home-nums">
-              <div><dt>{fmtNumber(peat.sites, lang)}</dt><dd>{tr(`persistent peat sites over ${fmtNumber(peat.seasons, lang)} August-to-October seasons (a 1 km cell, counted once per season)`, `lokasi gambut persisten selama ${fmtNumber(peat.seasons, lang)} musim Agustus–Oktober (satu sel 1 km, dihitung sekali per musim)`)}</dd></div>
-              <div><dt>{fmtNumber(peat.comeBacks, lang)}</dt><dd>{tr('come-backs: fire detected again after two or more days with no detection', 'kemunculan kembali: api terdeteksi lagi setelah dua hari atau lebih tanpa deteksi')}</dd></div>
-              <div><dt>{fmtNumber(peat.seenQuiet, lang)}</dt><dd>{tr('of them followed days with a cloud-free look and nothing detected', 'di antaranya terjadi setelah hari dengan pandangan bebas awan dan tanpa deteksi')}</dd></div>
+              <div><dt>{fmtNumber(peat.sites, lang)}</dt><dd>{tr(`persistent peat sites, over ${fmtNumber(peat.seasons, lang)} August-to-October seasons`, `lokasi gambut persisten, selama ${fmtNumber(peat.seasons, lang)} musim Agustus–Oktober`)}</dd></div>
+              <div><dt>{fmtNumber(peat.comeBacks, lang)}</dt><dd>{tr('come-backs', 'kemunculan kembali')}</dd></div>
+              <div><dt>{fmtNumber(peat.seenQuiet, lang)}</dt><dd>{tr('of them after a cloud-free look with nothing detected', 'di antaranya setelah pandangan bebas awan tanpa deteksi')}</dd></div>
             </dl>
-            <p>
-              {tr('On peat, a fire that the satellites stop detecting is often detected again in the same place days later. These sites are candidates for a ground re-check after the hotspots vanish. They are not confirmed fire, and this index is exploratory.',
-                'Di lahan gambut, api yang tidak lagi terdeteksi satelit sering terdeteksi kembali di tempat yang sama beberapa hari kemudian. Lokasi ini adalah kandidat untuk pengecekan ulang di lapangan setelah titik panas menghilang. Ini bukan kebakaran yang terkonfirmasi, dan indeks ini bersifat eksploratif.')}
-            </p>
-            <p className="ka-home-links"><a className="ka-home-btn is-quiet" href={nowAt(NOW_DISTRICT)}>{tr(`See the sites in ${nowName}`, `Lihat lokasinya di ${nowName}`)}</a></p>
+            <div className="ka-home-peatrow">
+              <PeatTimeline />
+              <div>
+                <p>
+                  {tr('Places to re-check on the ground after the hotspots vanish. Candidates, not confirmed fire; the index is exploratory.',
+                    'Tempat untuk dicek ulang di lapangan setelah titik panas menghilang. Ini kandidat, bukan kebakaran terkonfirmasi; indeksnya bersifat eksploratif.')}
+                </p>
+                <p className="ka-home-links"><a className="ka-home-btn is-quiet" href={nowAt(NOW_DISTRICT)}>{tr(`See the sites in ${nowName}`, `Lihat lokasinya di ${nowName}`)}</a></p>
+              </div>
+            </div>
           </section>
         ) : null}
 
@@ -311,9 +307,9 @@ export function Home({ embedded = false }: { embedded?: boolean } = {}) {
         <section className="ka-home-sec" aria-labelledby="ka-home-zero">
           <p className="ka-home-eyebrow">{tr('Cloud', 'Awan')}</p>
           <h2 id="ka-home-zero">{tr('When zero is not zero', 'Ketika nol belum tentu nol')}</h2>
+          <ZeroSideView />
           <p>
-            {tr('A satellite cannot see the ground through cloud. On such a day the count is zero, but the zero only says that nothing was seen. KalenderApi marks those days as under cloud: the satellite could not see. It does not say whether anything burned.',
-              'Satelit tidak dapat melihat permukaan menembus awan. Pada hari seperti itu hitungannya nol, tetapi nol itu hanya berarti tidak ada yang terlihat. KalenderApi menandai hari tersebut sebagai di bawah awan: satelit tidak dapat melihat. Tanda itu tidak menyatakan ada atau tidaknya kebakaran.')}
+            {tr('The count is zero both times. KalenderApi tells the two apart.', 'Hitungannya nol di kedua keadaan. KalenderApi membedakan keduanya.')}
           </p>
           <p className="ka-home-links">
             <a className="ka-home-btn is-quiet" href="#/season?y=2015">{tr('Play the season', 'Putar musim')}</a>
@@ -675,8 +671,8 @@ function SensorTrend({ years }: { years: SensorYear[] }) {
           <span className="is-viirs"><i aria-hidden="true" />{tr('VIIRS as recorded', 'VIIRS apa adanya')}</span>
         </p>
         <p className="ka-home-src">
-          {tr(`Fire cell-days per year, Indonesia, complete years ${y0} to ${y1}. The one scale is MODIS Aqua’s, so the two lines run together until VIIRS takes over. Source: NASA FIRMS.`,
-            `Sel-hari api per tahun, Indonesia, tahun lengkap ${y0} sampai ${y1}. Satu skala yang dipakai adalah skala MODIS Aqua, sehingga kedua garis berimpit sampai VIIRS mengambil alih. Sumber: NASA FIRMS.`)}
+          {tr(`Fire cell-days per year, Indonesia, ${y0} to ${y1}: detections, not burned area. Source: NASA FIRMS.`,
+            `Sel-hari api per tahun, Indonesia, ${y0} sampai ${y1}: deteksi, bukan luas terbakar. Sumber: NASA FIRMS.`)}
         </p>
       </figcaption>
     </figure>
@@ -691,59 +687,57 @@ function Answers({ firstYear, lastYear, provinces, districts, toFind }: {
   const tr = useTr();
   const lang = useLang();
   const areas = provinces && districts
-    ? tr(`${fmtNumber(provinces, lang)} provinces and ${fmtNumber(districts, lang)} districts, by name`, `${fmtNumber(provinces, lang)} provinsi dan ${fmtNumber(districts, lang)} kabupaten/kota, menurut nama`)
-    : tr('Provinces and districts, by name', 'Provinsi dan kabupaten/kota, menurut nama');
+    ? tr(`${fmtNumber(provinces, lang)} provinces, ${fmtNumber(districts, lang)} districts`, `${fmtNumber(provinces, lang)} provinsi, ${fmtNumber(districts, lang)} kabupaten/kota`)
+    : tr('Provinces and districts', 'Provinsi dan kabupaten/kota');
   const since = firstYear && lastYear ? `${firstYear}–${lastYear}` : '';
   const FIND = '#ka-home-find';
-  const rows: { ask: string; how: string; href: string; go: string }[] = [
-    { ask: tr('Harmonize MODIS and VIIRS so the sensor of origin no longer matters', 'Menyelaraskan MODIS dan VIIRS sehingga sensor asal tidak lagi berpengaruh'),
-      how: tr('One record on the MODIS Aqua scale, shown beside the two records joined as recorded', 'Satu rekaman pada skala MODIS Aqua, ditampilkan di samping dua rekaman yang disambung apa adanya'),
+  const rows: { icon: AskIcon; ask: string; how: string; href: string; go: string }[] = [
+    { icon: 'harmonize', ask: tr('Harmonize MODIS and VIIRS', 'Menyelaraskan MODIS dan VIIRS'),
+      how: tr('One scale: the sensor of origin no longer matters', 'Satu skala: sensor asal tidak lagi berpengaruh'),
       href: recordAt('IDN', 'jump'), go: tr('Before and after', 'Sebelum dan sesudah') },
-    { ask: tr('A burning-activity calendar from the early 2000s to now', 'Kalender aktivitas kebakaran dari awal 2000-an sampai sekarang'),
-      how: tr(`Every month ${since}, one cell per month`, `Setiap bulan ${since}, satu kotak per bulan`),
+    { icon: 'calendar', ask: tr('A burning calendar, early 2000s to now', 'Kalender kebakaran, awal 2000-an sampai kini'),
+      how: tr(`Every month ${since}`, `Setiap bulan ${since}`),
       href: recordAt('IDN', 'calendar'), go: tr('Fire calendar', 'Kalender api') },
-    { ask: tr('Pick a region', 'Memilih wilayah'), how: areas, href: FIND, go: tr('Find your area', 'Cari wilayah Anda') },
-    { ask: tr('Enter a latitude and longitude', 'Memasukkan lintang dan bujur'),
-      how: tr('Finds the district that holds the point', 'Mencari kabupaten/kota yang memuat titik itu'),
+    { icon: 'region', ask: tr('Pick a region', 'Memilih wilayah'), how: areas, href: FIND, go: tr('Find your area', 'Cari wilayah Anda') },
+    { icon: 'latlon', ask: tr('Enter latitude and longitude', 'Memasukkan lintang dan bujur'),
+      how: tr('Finds the district at that point', 'Mencari kabupaten/kota di titik itu'),
       href: FIND, go: tr('Find your area', 'Cari wilayah Anda') },
-    { ask: tr('Pick a date range', 'Memilih rentang tanggal'),
-      how: tr('Any months of the record; the page and its files follow the range', 'Bulan mana pun dalam rekaman; halaman dan berkasnya mengikuti rentang'),
+    { icon: 'range', ask: tr('Pick a date range', 'Memilih rentang tanggal'),
+      how: tr('Any months of the record', 'Bulan mana pun dalam rekaman'),
       href: recordAt('IDN', 'range'), go: tr('Pick a period', 'Pilih periode') },
-    { ask: tr('Compare the current month with the historical median', 'Membandingkan bulan berjalan dengan median historis'),
-      how: tr('The latest month against the median of the same month, and its rank among the years', 'Bulan terakhir dibanding median bulan yang sama, dan peringkatnya di antara tahun-tahun'),
+    { icon: 'median', ask: tr('Current month against the historical median', 'Bulan berjalan dibanding median historis'),
+      how: tr('The same month’s median, and its rank', 'Median bulan yang sama, dan peringkatnya'),
       href: recordAt('IDN', 'month'), go: tr('This month', 'Bulan ini') },
-    { ask: tr('Flag unusual months (anomalies)', 'Menandai bulan yang tidak biasa (anomali)'),
-      how: tr('Each province’s month against its own median, on the globe above and in its record', 'Bulan tiap provinsi dibanding mediannya sendiri, pada bola dunia di atas dan di rekamannya'),
+    { icon: 'anomaly', ask: tr('Anomalies', 'Anomali'),
+      how: tr('Each month against its own median', 'Tiap bulan dibanding mediannya sendiri'),
       href: recordAt('prov-kalimantan-tengah', 'month'), go: tr('A province’s month', 'Bulan sebuah provinsi') },
-    { ask: tr('Download the analytics', 'Mengunduh analitik'),
-      how: tr('The monthly record as CSV, and the calendar and the chart as PNG', 'Rekaman bulanan sebagai CSV, serta kalender dan grafik sebagai PNG'),
+    { icon: 'download', ask: tr('Download the analytics', 'Mengunduh analitik'),
+      how: tr('The record as CSV; calendar and chart as PNG', 'Rekaman sebagai CSV; kalender dan grafik sebagai PNG'),
       href: recordAt('IDN', 'range'), go: tr('Downloads', 'Unduhan') },
-    { ask: tr('A CSV of hotspots', 'CSV titik panas'),
-      how: tr('VIIRS hotspots of Central Kalimantan’s built seasons; other areas link to the NASA FIRMS archive', 'Titik panas VIIRS untuk musim yang tersedia di Kalimantan Tengah; wilayah lain ditautkan ke arsip NASA FIRMS'),
+    { icon: 'csv', ask: tr('A CSV of hotspots', 'CSV titik panas'),
+      how: tr('VIIRS points for Central Kalimantan’s seasons; elsewhere a link to NASA FIRMS', 'Titik VIIRS untuk musim di Kalimantan Tengah; wilayah lain ditautkan ke NASA FIRMS'),
       href: recordAt('prov-kalimantan-tengah', 'range'), go: tr('Hotspot CSV', 'CSV titik panas') },
-    { ask: tr('Accessible colour ramps', 'Rentang warna yang mudah dibaca'),
-      how: tr('One ramp whose lightness rises from low to high, with a legend; cloud is drawn as hatching, not as another colour', 'Satu rentang yang makin terang dari rendah ke tinggi, dengan legenda; awan digambar sebagai arsiran, bukan warna lain'),
+    { icon: 'ramp', ask: tr('Accessible colour ramps', 'Rentang warna yang mudah dibaca'),
+      how: tr('Lighter means more fire; cloud is hatching, not a colour', 'Makin terang berarti makin banyak api; awan berupa arsiran, bukan warna'),
       href: recordAt('prov-kalimantan-tengah', 'calendar'), go: tr('Calendar legend', 'Legenda kalender') },
-    { ask: tr('Detected fire against officially reported fire', 'Api terdeteksi dibanding api yang dilaporkan resmi'),
-      how: tr('Our record beside the official burned area (SIPONGI KEMENHUT), in the printable brief', 'Rekaman kami di samping luas terbakar resmi (SIPONGI KEMENHUT), dalam ringkasan siap cetak'),
+    { icon: 'reported', ask: tr('Detected against officially reported', 'Terdeteksi dibanding dilaporkan resmi'),
+      how: tr('Beside SIPONGI’s official burned area', 'Di samping luas terbakar resmi SIPONGI'),
       href: '#/brief?aoi=prov-kalimantan-tengah', go: tr('District brief', 'Ringkasan kabupaten') },
   ];
   return (
-    <div className="ka-home-answers">
-      <table>
-        <thead>
-          <tr><th scope="col">{tr('The challenge asks for', 'Yang diminta tantangan')}</th><th scope="col">{tr('In KalenderApi', 'Di KalenderApi')}</th><th scope="col">{tr('Open', 'Buka')}</th></tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.ask}>
-              <th scope="row">{r.ask}</th>
-              <td>{r.how}</td>
-              <td><a href={r.href} onClick={r.href === FIND ? toFind : undefined}>{r.go} →</a></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ol className="ka-home-asks">
+      {rows.map((r, i) => (
+        <li key={r.icon}>
+          <a href={r.href} onClick={r.href === FIND ? toFind : undefined}>
+            <AskGlyph icon={r.icon} />
+            <span className="ka-home-ask-n">{String(i + 1).padStart(2, '0')}</span>
+            <span className="ka-home-ask-t">{r.ask}</span>
+            <span className="ka-home-ask-h">{r.how}</span>
+            <span className="ka-home-ask-go">{r.go} →</span>
+          </a>
+        </li>
+      ))}
+    </ol>
   );
 }
+

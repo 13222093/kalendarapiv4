@@ -153,6 +153,7 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 .ka-home-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px 44px; align-items: start; }
 .ka-home-split.is-map { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); }
 .ka-home-split.is-chart { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+.ka-home-split.is-sats { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; }
 .ka-home-split p { color: var(--text-2); margin: 0 0 12px; }
 .ka-home-split p.ka-home-sub, .ka-home-split p.ka-home-note { color: var(--text-3); }
 
@@ -290,7 +291,7 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
   .ka-home-nav ul { margin: 0 calc(var(--home-pad) * -1); padding: 0 var(--home-pad); }
 }
 @media (max-width: 900px) {
-  .ka-home-lede, .ka-home-facts, .ka-home-split, .ka-home-split.is-map, .ka-home-split.is-chart, .ka-home-nums { grid-template-columns: minmax(0, 1fr); }
+  .ka-home-lede, .ka-home-facts, .ka-home-split, .ka-home-split.is-map, .ka-home-split.is-chart, .ka-home-split.is-sats, .ka-home-nums { grid-template-columns: minmax(0, 1fr); }
   .ka-home-facts { gap: 12px; }
   .ka-rib { --mw: 30px; --ch: 15px; }
   .ka-rib-years span:not([data-five]):not([data-seam]) { visibility: hidden; }
@@ -311,6 +312,113 @@ button.ka-rib-cell:hover, button.ka-rib-cell:focus-visible { outline: 2px solid 
 }
 @media (prefers-reduced-motion: reduce) {
   .ka-home *, .ka-home *::before, .ka-home *::after { transition: none !important; }
+}
+
+/* ------------------------------------------------------------------------------------------------ the drawings
+   (components/home/Drawings.tsx): inline SVG, coloured by the tokens */
+.ka-d { display: block; width: 100%; height: auto; overflow: visible; }
+.ka-d-sat .ka-d-body { fill: var(--surface-3); stroke: var(--sat, var(--text-2)); stroke-width: 1.6; }
+.ka-d-sat .ka-d-panel { fill: color-mix(in srgb, var(--sat, var(--text-2)) 30%, var(--surface)); stroke: var(--sat, var(--text-2)); stroke-width: 1.4; }
+.ka-d-sat .ka-d-panel-line { fill: none; stroke: var(--sat, var(--text-2)); stroke-width: 1; }
+.ka-d-sat .ka-d-eye { fill: var(--sat, var(--text-2)); }
+.ka-d-sat.is-modis { --sat: var(--ka-modis); }
+.ka-d-sat.is-viirs { --sat: var(--ka-viirs); }
+.ka-d-flame { fill: var(--ka-fire, var(--accent)); stroke: var(--ember-900); stroke-width: 0.8; }
+.ka-d-label { fill: var(--text-2); font: 600 12px var(--font-mono); }
+.ka-d-label.is-strong { fill: var(--text); }
+.ka-d-label.is-fire { fill: var(--accent-strong); font-size: 13px; }
+.ka-d-dim { fill: none; stroke: var(--text-3); stroke-width: 1.2; }
+
+.ka-d-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; align-items: start; }
+.ka-d-fig { margin: 0; min-width: 0; }
+.ka-d-fig figcaption { display: grid; gap: 2px; margin-top: 8px; font-size: 13.5px; line-height: 1.4; color: var(--text-2); }
+.ka-d-fig figcaption b { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); }
+.ka-d-fig figcaption b.is-modis { color: var(--ka-modis); }
+.ka-d-fig figcaption b.is-viirs { color: var(--ka-viirs); }
+.ka-d-meta { font: 500 11px/1.4 var(--font-mono); color: var(--text-3); }
+
+/* 1. one square of ground, two pixel sizes */
+.ka-d-pix { --tone: var(--ka-modis); max-width: 260px; margin: 0 auto; }
+.ka-d-pix.is-viirs { --tone: var(--ka-viirs); }
+.ka-d-pix .ka-d-beam { fill: color-mix(in srgb, var(--tone) 12%, transparent); }
+.ka-d-pix .ka-d-ground { fill: var(--surface-2); }
+.ka-d-pix .ka-d-cell { fill: none; stroke: var(--tone); stroke-width: 2.5; }
+.ka-d-pix .ka-d-gridline { fill: none; stroke: var(--tone); stroke-width: 1.2; }
+.ka-d-pix .ka-d-hit { fill: color-mix(in srgb, var(--tone) 45%, transparent); }
+.ka-home-sats { display: grid; gap: 12px; }
+.ka-home-sats-line { margin: 0; font-size: 15px; color: var(--text-2); }
+
+/* 2. the challenge, as tiles */
+.ka-home-asks { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 12px; }
+.ka-home .ka-home-asks a {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; align-content: start; height: 100%;
+  padding: 14px 14px 12px; border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--text-2); text-decoration: none; transition: border-color 0.15s, transform 0.15s;
+}
+.ka-home .ka-home-asks a:hover { border-color: var(--accent); transform: translateY(-2px); }
+.ka-home-asks .ka-d-icon { grid-row: span 2; width: 48px; height: 48px; padding: 8px; border-radius: 8px; background: var(--surface-2); }
+.ka-home-ask-n { font: 600 10.5px/1.2 var(--font-mono); letter-spacing: 0.1em; color: var(--text-3); }
+.ka-home-ask-t { font-weight: 700; font-size: 14.5px; line-height: 1.25; color: var(--text); }
+.ka-home-ask-h { grid-column: 1 / -1; margin-top: 8px; font-size: 13px; line-height: 1.4; }
+.ka-home-ask-go { grid-column: 1 / -1; margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--link, var(--accent-strong)); }
+.ka-d-icon { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ka-d-icon .is-modis { stroke: var(--ka-modis); }
+.ka-d-icon .is-viirs { stroke: var(--ka-viirs); }
+.ka-d-icon .is-harm { stroke: var(--ka-harm); }
+.ka-d-icon .is-harm-fill { fill: var(--ka-harm); stroke: none; }
+.ka-d-icon .is-dash { stroke: var(--text-3); stroke-dasharray: 2 2.5; }
+.ka-d-icon [class^="is-ramp"] { stroke: none; }
+.ka-d-icon .is-ramp1 { fill: var(--ember-300); } .ka-d-icon .is-ramp2 { fill: var(--ember-500); }
+.ka-d-icon .is-ramp3 { fill: var(--ember-700); } .ka-d-icon .is-ramp4 { fill: var(--ember-900); }
+
+/* 3. two zeros */
+.ka-d-pair.is-zero { margin: 4px 0 16px; max-width: 900px; }
+.ka-d-zero { border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--surface) 60%, transparent); }
+.ka-d-zero .ka-d-soil { fill: var(--surface-3); }
+.ka-d-zero .ka-d-tree { fill: var(--ka-down); opacity: 0.55; }
+.ka-d-look { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-dasharray: 5 5; }
+.ka-d-zero .ka-d-spot { fill: none; stroke: var(--text); stroke-width: 1.6; }
+.ka-d-zero .ka-d-tick { fill: none; stroke: var(--ka-down); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ka-d-cloud ellipse { fill: var(--ka-blind, var(--text-3)); }
+.ka-d-zero .ka-d-shade { fill: color-mix(in srgb, var(--bg) 55%, transparent); }
+.ka-d-zero .ka-d-stop { fill: none; stroke: var(--text); stroke-width: 2.4; stroke-linecap: round; }
+.ka-d-zero .ka-d-q { fill: var(--text); font: 600 44px var(--font-display); }
+.ka-d-chip rect { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1; }
+.ka-d-chip text { fill: var(--text); font: 600 30px var(--font-display); }
+
+/* 4. from detection to a message */
+.ka-d-flow { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 26px; }
+.ka-d-flow li { position: relative; display: grid; gap: 3px; align-content: start; font-size: 13px; line-height: 1.4; color: var(--text-2); }
+.ka-d-flow li + li::before {
+  content: ""; position: absolute; left: -20px; top: 40px; width: 11px; height: 11px;
+  border-top: 2px solid var(--text-3); border-right: 2px solid var(--text-3); transform: rotate(45deg);
+}
+.ka-d-flowicon { width: 118px; height: auto; margin-bottom: 4px; }
+.ka-d-flow-n { font: 600 10.5px/1.2 var(--font-mono); letter-spacing: 0.1em; color: var(--accent-strong); }
+.ka-d-flow b { font-size: 14.5px; color: var(--text); }
+.ka-d-bar { fill: none; stroke: var(--text-3); stroke-width: 6; }
+.ka-d-bar.is-hot { stroke: var(--ka-up); }
+.ka-d-dashline { fill: none; stroke: var(--text); stroke-width: 1.4; stroke-dasharray: 3 3; }
+.ka-d-step.is-1 { fill: var(--ember-300); } .ka-d-step.is-2 { fill: var(--ember-600); } .ka-d-step.is-3 { fill: var(--ember-800); }
+.ka-d-bubble { fill: var(--surface-2); stroke: var(--text-2); stroke-width: 1.6; stroke-linejoin: round; }
+.ka-d-bubble-line { fill: none; stroke: var(--text-3); stroke-width: 3; stroke-linecap: round; }
+
+/* 5. the peat rule */
+.ka-home-peatrow { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px 44px; align-items: center; margin-bottom: 16px; }
+.ka-d-peat { max-width: 380px; }
+.ka-d-day.is-fire { fill: var(--ember-400); stroke: var(--ember-700); stroke-width: 1.2; }
+.ka-d-day.is-quiet { fill: none; stroke: var(--border-strong); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.ka-d-arrow { fill: none; stroke: var(--accent-strong); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-width: 900px) {
+  .ka-home-peatrow { grid-template-columns: minmax(0, 1fr); }
+  .ka-d-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ka-d-flow li:nth-child(3)::before { display: none; }
+}
+@media (max-width: 520px) {
+  .ka-d-pair.is-zero { grid-template-columns: minmax(0, 1fr); }
+  .ka-d-pair { gap: 14px 12px; }
+  .ka-home-asks { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Under the Story's final frame (pages/Story.tsx renders this page there): the sections follow the first screen and
