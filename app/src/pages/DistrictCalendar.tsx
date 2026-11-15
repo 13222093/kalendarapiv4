@@ -4,7 +4,7 @@
 // Built from the NASA daily FireMask. Months a registered test covers stay locked: the data file holds no numbers for
 // them. Every number on screen comes from the data file (public/ka-data/states), copied as it is.
 import { useEffect, useMemo, useState } from 'react';
-import { LangToggle } from '../components/LangToggle.tsx';
+import { SiteHeader } from '../components/SiteHeader.tsx';
 import { fmtNumber, monthName, useLang, useTr } from '../lib/lang.ts';
 import '../styles/calendar.css';
 
@@ -71,14 +71,8 @@ export function DistrictCalendar() {
 
   return (
     <div className="ka-cal">
-      <nav className="ka-cal-top" aria-label={tr('Pages', 'Halaman')}>
-        <a className="ka-cal-brand" href="#/home">KalenderApi</a>
-        <a href="#/home">{tr('Home', 'Beranda')}</a>
-        <a href="#/record">{tr('Indonesia record', 'Rekaman Indonesia')}</a>
-        <a href="#/season?y=2015">{tr('Play the season', 'Putar musim')}</a>
-        <a href="#/zero">{tr('Zero inspector', 'Pemeriksa nol')}</a>
-        <LangToggle className="ka-cal-lang" />
-      </nav>
+      {/* the same top bar as the home sections and the record (components/SiteHeader.tsx) */}
+      <SiteHeader />
       {cal?.exploratory ? (
         <p className="ka-cal-ribbon" role="note">
           <b>{tr('Development data, not a result.', 'Data pengembangan, bukan hasil.')}</b>{' '}

@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEv
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import { LangToggle } from '../components/LangToggle.tsx';
 import { saveText } from '../lib/download.ts';
 import { fmtNumber, monthName as monthOnly, useLang, useTr, type Lang } from '../lib/lang.ts';
 import {
@@ -23,6 +22,7 @@ import {
   type AoiEntry, type BlindRule, type DistrictIndex, type DistrictShapes, type Load, type MonthRow,
 } from '../lib/record.ts';
 import { MIN_EARLIER_YEARS, STATUS_CUTS, monthStatus } from '../lib/robust.ts';
+import { SiteHeader } from '../components/SiteHeader.tsx';
 import '../styles/now.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -498,15 +498,8 @@ export function Now() {
 
   return (
     <div className="now-page">
-      <header className="now-top">
-        <nav className="now-nav" aria-label={tr('Pages', 'Halaman')}>
-          <a className="now-brand" href="#/home">KalenderApi</a>
-          <a href="#/record">{tr('Indonesia record', 'Rekaman Indonesia')}</a>
-          <a href="#/season?y=2026">{tr('Play the season', 'Putar musim')}</a>
-          <a href="#/method">{tr('Method', 'Metode')}</a>
-        </nav>
-        <LangToggle className="now-lang" />
-      </header>
+      {/* the same top bar as the home sections and the record (components/SiteHeader.tsx) */}
+      <SiteHeader current="now" />
 
       <main className="now-main" id="now-main">
         <p className="now-kicker">{tr('Today in my district', 'Hari ini di daerah saya')}</p>

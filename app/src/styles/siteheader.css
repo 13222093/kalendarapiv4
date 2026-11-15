@@ -1,0 +1,32 @@
+/* KalenderApi (new file): the shared top bar (components/SiteHeader.tsx). The same measures as the home sections' menu
+   (styles/home.css, "top menu"), under its own class names so it can sit on any page. Tokens of brand.css only. */
+.ka-site-top {
+  --site-pad: clamp(16px, 2.4vw, 36px);
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap;
+  min-height: 56px; padding: 6px var(--site-pad); box-sizing: border-box;
+  background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+}
+.ka-site-top a.ka-site-brand {
+  display: inline-flex; align-items: center; gap: 9px; flex: none;
+  font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--text); text-decoration: none;
+}
+.ka-site-brand svg { width: 26px; height: 26px; flex: none; }
+.ka-site-mark-hex { fill: var(--accent); }
+.ka-site-mark-flame { fill: var(--text); }
+.ka-site-nav { flex: 1 1 auto; min-width: 0; }
+.ka-site-nav ul { display: flex; gap: 2px; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.ka-site-nav ul::-webkit-scrollbar { display: none; }
+.ka-site-top .ka-site-nav a {
+  display: block; padding: 9px 11px; white-space: nowrap; font-size: 14px; font-weight: 500; text-decoration: none; color: var(--text-2);
+  border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.ka-site-top .ka-site-nav a:hover { color: var(--text); border-bottom-color: var(--border-strong); text-decoration: none; }
+.ka-site-top .ka-site-nav a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
+.ka-site-top a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+.ka-site-tools { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; color: var(--text-2); }
+/* the district calendar pads its whole page: the bar still runs edge to edge */
+.ka-cal > .ka-site-top { margin: -20px -24px 18px; }
+@media print { .ka-site-top { display: none; } }
