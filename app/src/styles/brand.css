@@ -53,8 +53,10 @@
   --harmonized: var(--ka-harm); --sensor-modis: var(--ka-modis); --sensor-snpp: var(--ka-viirs);
   /* the fire ramp, least to most: dark, ember, pale yellow. Lightness rises at every step, so the order also reads
      in greyscale and for colour-blind readers. */
-  --ember-100: #3a1a10; --ember-200: #57210f; --ember-300: #76290e; --ember-400: #98350d; --ember-500: #b8430f;
-  --ember-600: #e85d14; --ember-700: #ff8526; --ember-800: #ffb347; --ember-900: #ffe59e;
+  /* the amount of fire: a many-hued ramp (the "inferno" family used in science: dark indigo, purple, red, orange,
+     yellow), so a quiet month and a severe one differ in hue as well as in brightness */
+  --ember-100: #241157; --ember-200: #4a1079; --ember-300: #781c6d; --ember-400: #a52c60; --ember-500: #cf4446;
+  --ember-600: #ed6925; --ember-700: #fb9b06; --ember-800: #f7d13d; --ember-900: #fcffa4;
 }
 
 :root[data-theme="light"] {
