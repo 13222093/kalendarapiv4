@@ -12,6 +12,11 @@ should check that rule against the official guide before submitting; this file s
 - **Second Sight** (the harmonization question, its method and its pre-written validation): the Second Sight team.
   Its own AI statement is `vendor/second-sight/docs/ai_acknowledgement.md`.
 - **Building four parallel versions and comparing them:** the team's decision.
+- **Peat sites where fire comes back:** the team's summary of 13 November (section 8.3, the peat niche).
+- **"Today in my district"** (the condition now, a message to residents, the district disaster office and the village,
+  advice drafted by AI): a team member's request on 15 November, after looking at FireLens and PeatForge.
+- **The look** (which landing to keep, the palette, the home sections under the Story): the team's choices, made by
+  looking at each build.
 
 ## What AI did
 
@@ -24,9 +29,36 @@ should check that rule against the official guide before submitting; this file s
   after the team approved it; it is described in `docs/DATA.md` section 9.1.
 - **Research and writing:** AI helped search and summarize competitor repositories and papers, and drafted
   documents (comparison, integration plan, PRD drafts). The team made the choices.
+- **The submission build (15 November):** the same assistant, with several AI sessions working in parallel, wrote
+  the code of that day: "Today in my district", the peat and district scripts, the home sections, the rebuilt Story,
+  the interactive season player, the downloads, the brief, both languages, the colour palette and the tests. The
+  files are listed in `app/NOTICE.md`.
+- **Review:** two AI reviewers were asked to score the project as a science judge and as a local-impact judge
+  would. Their findings (for example: say "under cloud: the satellite could not see", never "seen clearly"; lead with
+  the 2017 to 2021 window; show the failed tests first) led to changes. They did not write the findings of the
+  project.
+- **The project page text and the narration script:** drafted by AI from the numbers in the data files, read and
+  corrected by the team.
+
+## AI inside the app
+
+One feature calls an AI model while the app runs. On "Today in my district", the button "Draft advice with AI" sends
+the numbers already on the page (district, hotspot counts, the level, the cloud history, the peat count) to an OpenAI
+model (`gpt-6-luna`) through `app/public/api/advise.js`. Nothing about the visitor is sent. The model is told to use
+only those numbers, to add none of its own, to give no forecast and no cause, and never to say there is no fire. The
+draft is labelled "Drafted by AI" with the model's name and a line saying it must be checked before it is sent. The
+three standard messages on that page are fixed templates filled with the page's numbers; they are not AI.
+
+## AI in the demo video
+
+The picture is a recording of the app, rendered frame by frame. If the video has a narration, the voice is an AI
+voice made with ElevenLabs from the team's script, and the video description says so.
 
 ## What AI did not do
 
 - **No AI-generated numbers.** Every number on screen comes from NASA data (FIRMS, MODIS FireMask, GIBS imagery),
   Second Sight's deterministic pipeline, or the official SiPongi table, through code that can be rerun.
 - **No AI-generated images.** The photos are NASA GIBS true-colour imagery.
+- **No numbers from the AI draft.** The draft on "Today in my district" may only repeat numbers the page computed,
+  and it is shown apart from them, marked as AI.
+- **No NASA logo or flag** appears in anything AI made.

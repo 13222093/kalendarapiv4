@@ -71,3 +71,75 @@ unchanged pipeline; see `docs/DATA.md`). Changes to the app (full notes in `docs
 - Second and third rounds: `src/lib/record.ts`, `src/lib/record.test.ts`, `src/components/record/*`, `src/pages/Record.tsx`, `src/styles/record.css`: the blind share of each month with FireMask observability, "not applicable" tests counted apart, and province months from 2022 drawn with the 90% band of the patched export (source lines name the patch).
 - `vendor/second-sight/pipeline/export/bundle.py` (Second Sight, MIT): one 7-line patch, approved by the team, so province rows use their parent island kappa strata (see `docs/DATA.md` 9.1); `public/ss-data/` re-exported with it.
 - `public/ka-data/` (new, built by `pipeline/visibility/` with the year as an argument): Central Kalimantan 2015 and 2023 season and visibility files, same rules as 2019.
+
+## Submission build (15 November 2026)
+
+Live at https://kalenderapi.vercel.app (Vercel, static files plus two serverless functions).
+
+### Other people's work used in this build
+
+- **FireLens** (github.com/abubokkor-cse/firelens, MIT License, Copyright (c) 2026 Team Aquila; licence text in
+  `LICENSE-firelens-MIT.txt`). Used in `src/pages/Home.tsx`, the globe under "Indonesia this month". One line is
+  copied as written (it collapses MapLibre's compact attribution when the map loads). Adapted, not copied: a
+  transparent background layer under a globe-projection raster style, `dragRotate: false` with `maxPitch: 0`, a zoom
+  control without a compass, stopping the slow turn when the visitor touches the globe, the frame loop with `jumpTo`,
+  and `flyTo` with `essential: true`. FireLens's "condition right now" view was also the model for our
+  "Today in my district" page; that page's code is our own.
+- **PeatForge** (another team's project; no licence, so no code or assets were taken). Its use case, a message to
+  residents, the district disaster office and the village, shaped what "Today in my district" offers.
+- **OpenAI API**: `public/api/advise.js` sends the numbers shown on "Today in my district" to an OpenAI model
+  (`gpt-6-luna`, with smaller models as a fallback) and returns a draft of advice. The key is read from the host's
+  environment (`OPENAI_API_KEY`); it is not in the repository.
+- **Fonts**: Fraunces, Public Sans and Geist Mono (SIL Open Font License 1.1), bundled through the `@fontsource-variable`
+  packages.
+
+### Data added in this build
+
+- **NASA FIRMS near-real-time files** (VIIRS NOAA-20, VIIRS NOAA-21 and MODIS Collection 6.1; South-East Asia; last
+  24 hours and last 7 days), read when "Today in my district" opens, through `public/api/live.js`.
+- **NASA GIBS imagery**: VIIRS NOAA-20 true colour (the map on "Today in my district") and Blue Marble shaded relief and
+  bathymetry (the globe).
+- **geoBoundaries gbOpen, Indonesia ADM2** (CC BY 3.0 IGO, as the geoBoundaries API states): outlines of the 514 districts
+  and cities in `public/ss-data/districts/`.
+- **Indonesia peat lands** from the Global Forest Watch open data portal (original: Ministry of Agriculture, BBSDLP):
+  `public/ka-data/peat_kalteng.geojson` and the peat cells behind `peat_persistence_kalteng.json`. **Its licence is not
+  verified.** The source file's own note reads "UNVERIFIED (GFW open data portal; CC BY 4.0 assumed)".
+- **NOAA Climate Prediction Center, Oceanic Nino Index** (US government work): `public/ka-data/enso_oni.json`, used to
+  name the El Nino years in the robustness check.
+- **MODIS MOD14A1 and MYD14A1 FireMask** from Microsoft Planetary Computer, as before, now for the fire seasons of
+  2014 to 2024 and 2026 and one wet-season quarter (`docs/DATA.md` section 14).
+
+### Changes to the app (by file)
+
+- `src/pages/Now.tsx`, `src/lib/now.ts` (+ tests), `src/styles/now.css`, `public/api/live.js`, `public/api/advise.js`,
+  `public/vercel.json` (all new): "Today in my district" (`#/now?aoi=`): hotspots of the last 24 hours and 7 days per
+  district, this month against normal, a level by a rule shown on the page, three template messages with a WhatsApp
+  link, peat sites to re-check, and the optional AI draft.
+- `pipeline/peat/` (new) and `public/ka-data/peat_persistence_kalteng.json`: the exploratory peat persistence index
+  (`docs/DATA.md` section 15). The 2019 season is not read.
+- `pipeline/districts/` (new) and `public/ss-data/districts/`: monthly records for 514 districts, shared out from their
+  province's conversion and marked approximate (`docs/DATA.md` section 13).
+- `pipeline/visibility/build_blind_rule.py` (new) and `public/ka-data/blind_rule_kalteng.json`: the count of
+  district-days when most of a district had no cloud-free look.
+- `src/pages/Home.tsx`, `src/components/home/FireRibbon.tsx`, `src/lib/home.ts` (+ tests), `src/styles/home.css`
+  (new): the home sections (the 2001 to 2026 calendar, MODIS and VIIRS by year, the challenge table, the globe, peat).
+  `src/pages/Story.tsx` renders them under its final frame, so a first visit plays the Story and then scrolls on.
+- `src/pages/Story.tsx`, `src/lib/storyHex.ts`: the 3D hexagon Story again, on our own VIIRS points and bundled NASA
+  photos (`public/ka-data/story/`), with plain-language captions that name MODIS and VIIRS.
+- `src/pages/Season.tsx`, `src/components/season/`, `src/lib/seasonGeo.ts`, `src/lib/seasonTheme.ts`: zoom and pan,
+  a card for a hotspot and for a district, three speeds.
+- `src/pages/Record.tsx`, `src/components/record/` (`RangePanel`, `DownloadPanel`, `AreaSearch`, `DownloadFigures`),
+  `src/lib/download.ts`, `src/lib/robust.ts` (+ tests): a date range, CSV and PNG downloads, a hotspot CSV, search by
+  name or by latitude and longitude, the robustness strip.
+- `src/pages/Brief.tsx`, `src/lib/brief.ts` (+ tests): the printable one-page brief.
+- `src/pages/Method.tsx`, `src/pages/Zero.tsx`, `src/pages/DistrictCalendar.tsx`: about and method, the zero inspector
+  and the district calendar (the last two from KalenderApi v1.1).
+- `src/lib/lang.ts`, `src/components/LangToggle.tsx`: English and Bahasa Indonesia on every page of ours.
+- `src/styles/brand.css`: the "peat night" palette (warm near-black, bone text, one ember accent; MODIS blue, VIIRS
+  gold), replacing the two themes named above.
+
+### The demo video
+
+The picture is a frame-by-frame render of the Story on the live site (headless Chrome, 1920 x 1080, 30 frames a
+second); nothing in it is generated imagery. If the video carries a narration, the voice is an AI voice made with
+ElevenLabs from a script the team wrote.

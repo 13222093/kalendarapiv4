@@ -280,6 +280,8 @@ function introNumbers(rows: MonthRow[], window_: [number, number]): Intro | null
   return { ba, ratio: r.ratio, from: r.from, to: r.to, naive, harm, aquaTo: clean ? aquaTo : null, viirsFrom: clean ? viirsFrom : null };
 }
 
+/** The final frame's slow turn: degrees to each side, and the seconds one full to-and-fro takes. */
+const HUB_SWAY = 6, HUB_SWAY_SECONDS = 40;
 /** The camera's path: a slow push over the wide shot (the hexagon field left of the chart), into Central Kalimantan
  *  for the day-by-day beats with a slow turn, then out to the tilted final frame. Each leg is one deck.gl transition. */
 function cameraPath(bbox: Box, off: number): Seg[] {
@@ -563,6 +565,27 @@ export function Story() {
     }
   }, [mark, segs, ready, playing, hidden, end, warm]);
   useEffect(() => () => window.clearTimeout(camTimer.current), []);
+
+  // The final frame is not a still: once the story has ended the camera turns a few degrees to and fro, slowly, around
+  // where the story left it. It rests while the tab is hidden, while the page is scrolled past the first screen (the
+  // home sections are below), and for a visitor who asked for reduced motion.
+  const atEnd = mark.t >= end;
+  useEffect(() => {
+    const d = deck.current;
+    const home = segs?.[segs.length - 1]?.to;
+    if (!d || !home || !ready || !atEnd || playing || hidden || reduced) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const turn = (stamp: number) => {
+      raf = requestAnimationFrame(turn);
+      if (window.scrollY > window.innerHeight * 0.85) return; // the map is out of sight
+      const s = (stamp - t0) / 1000;
+      const sway = HUB_SWAY * Math.min(1, s / 3) * Math.sin((2 * Math.PI * s) / HUB_SWAY_SECONDS); // starts from rest
+      d.setProps({ initialViewState: { ...home, bearing: home.bearing + sway } });
+    };
+    raf = requestAnimationFrame(turn);
+    return () => cancelAnimationFrame(raf);
+  }, [segs, ready, atEnd, playing, hidden, reduced]);
 
   // the clock (it starts once the data is in, so the beats never shift; a hidden tab stops it). Each frame it moves
   // the progress bar; it tells React only when a cue is passed, and redraws August's dots only when the day changes.

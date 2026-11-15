@@ -91,7 +91,7 @@
 .ka-method-fact p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; }
 .ka-method-fact .ka-method-fact-label { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 6px 10px; color: var(--m-accent); font: 500 11.5px/1.4 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.06em; text-transform: uppercase; }
 .ka-method-flag { padding: 1px 7px; border: 1px solid color-mix(in srgb, var(--m-fail) 60%, transparent); border-radius: 999px; color: var(--m-fail); letter-spacing: 0.04em; }
-.ka-method-fact .ka-method-fact-value { color: var(--m-text); font: 600 clamp(23px, 2.5vw, 30px)/1.16 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-wrap: balance; }
+.ka-method-fact .ka-method-fact-value { color: var(--m-text); font: 600 clamp(22px, 2.4vw, 26px)/1.18 var(--font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-wrap: balance; }
 .ka-method-fact-value span { display: inline-block; }   /* a two-part value breaks between its parts, not inside one */
 .ka-method-fact .ka-method-source { margin-bottom: 0; color: var(--m-muted); font-size: 12.5px; }
 
@@ -152,7 +152,7 @@
   .ka-method { font-size: 15.5px; }
   .ka-method-inner { padding: 0 16px; }
   .ka-method-cta .ka-method-btn { flex: 1 1 100%; justify-content: space-between; }
-  .ka-method-cta .ka-method-btn--quiet { flex: 0 1 auto; }
+  .ka-method-cta .ka-method-btn--quiet { flex: 0 1 auto; padding-inline: 0; }
   .ka-method-steps li { padding-left: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {

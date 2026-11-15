@@ -424,8 +424,8 @@ export function Method() {
                   <li>
                     <b>{tr(`${v.counts.not_run} planned checks were not run.`, `${v.counts.not_run} pengujian yang direncanakan tidak dijalankan.`)}</b>{' '}
                     {v.peatNotRun
-                      ? tr('Their inputs were not ready. The peat checks are among them, so nothing here is specific to peat.',
-                        'Masukannya belum siap. Uji gambut termasuk di dalamnya, sehingga tidak ada hasil di sini yang khusus untuk gambut.')
+                      ? tr('Their inputs were not ready. The peat checks are among them, so no checked result here is specific to peat.',
+                        'Masukannya belum siap. Uji gambut termasuk di dalamnya, sehingga tidak ada hasil teruji di sini yang khusus untuk gambut.')
                       : tr('Their inputs were not ready.', 'Masukannya belum siap.')}
                   </li>
                 ) : null}
@@ -512,7 +512,12 @@ export function Method() {
               ': deteksi api aktif, MODIS Collection 6.1 (Terra, Aqua) dan VIIRS 375 m (S-NPP, NOAA-20). Data terbuka NASA. Kami mengakui penggunaan data dari Fire Information for Resource Management System (FIRMS) NASA, bagian dari Earth Science Data and Information System (ESDIS) NASA.')}</li>
             <li><b>MODIS MOD14A1 / MYD14A1 FireMask</b>{tr(' (Collection 6.1, NASA LP DAAC): the daily fire mask behind the cloud layer, read through Microsoft Planetary Computer.',
               ' (Collection 6.1, NASA LP DAAC): masker api harian di balik lapisan awan, dibaca melalui Microsoft Planetary Computer.')}</li>
-            <li><b>NASA GIBS</b>{tr(': the daily true-colour imagery in the Story and in Play the season.', ': citra warna asli harian di Cerita dan Putar musim.')}</li>
+            <li><b>{tr('NASA FIRMS, near real time', 'NASA FIRMS, hampir waktu nyata')}</b>{tr(': the detections of the last 24 hours and 7 days from VIIRS (NOAA-20, NOAA-21) and MODIS, read when “Today in my district” opens.',
+              ': deteksi 24 jam dan 7 hari terakhir dari VIIRS (NOAA-20, NOAA-21) dan MODIS, dibaca saat halaman “Hari ini di daerah saya” dibuka.')}</li>
+            <li><b>NASA GIBS</b>{tr(': the daily true-colour imagery in the Story, in Play the season and on “Today in my district”, and the Blue Marble image on the globe.',
+              ': citra warna asli harian di Cerita, Putar musim, dan halaman “Hari ini di daerah saya”, serta citra Blue Marble pada bola dunia.')}</li>
+            <li><b>{tr('Indonesia peat lands', 'Lahan gambut Indonesia')}</b>{tr(' (Global Forest Watch open data; original map: Ministry of Agriculture, BBSDLP): which cells are peat, for the peat sites to re-check. We could not verify its licence.',
+              ' (data terbuka Global Forest Watch; peta asli: Kementerian Pertanian, BBSDLP): sel mana yang gambut, untuk lokasi gambut yang perlu dicek ulang. Lisensinya belum dapat kami verifikasi.')}</li>
             <li><b>geoBoundaries</b>{tr(' (gbOpen, Indonesia ADM2; from BPS, WFP and OCHA ROAP): district borders, licence ', ' (gbOpen, Indonesia ADM2; dari BPS, WFP, dan OCHA ROAP): batas kabupaten/kota, lisensi ')}{districts?.licence ?? frame?.boundaryLicence ?? 'CC BY 3.0 IGO'}.</li>
             <li><b>SiPongi</b>{tr(' (Kementerian Kehutanan): officially reported burned area, shown beside detections for comparison. It is not used to validate the record.',
               ' (Kementerian Kehutanan): luas terbakar yang dilaporkan resmi, ditampilkan di samping deteksi sebagai pembanding. Tidak dipakai untuk memvalidasi catatan.')}</li>
@@ -526,6 +531,10 @@ export function Method() {
             {tr('. The Indonesia record, its harmonization, the checks and the cloud layer are ours; the code is in ', '. Rekaman Indonesia, harmonisasinya, pengujiannya, dan lapisan awan adalah karya kami; kodenya ada di ')}
             <a href={REPO_URL} target="_blank" rel="noopener">{tr('our repository', 'repositori kami')}</a>.
           </p>
+          <p>
+            {tr('The globe on the home page adapts a few lines from FireLens (MIT License, Team Aquila), and FireLens’s view of the condition right now was the model for “Today in my district”. The idea of a message for residents, the district disaster office and the village came from looking at another team’s project, PeatForge; none of its code is used.',
+              'Bola dunia di beranda mengadaptasi beberapa baris dari FireLens (Lisensi MIT, Team Aquila), dan tampilan kondisi terkini di FireLens menjadi contoh untuk halaman “Hari ini di daerah saya”. Gagasan pesan untuk warga, BPBD, dan desa muncul setelah melihat proyek tim lain, PeatForge; tidak ada kodenya yang dipakai.')}
+          </p>
         </Section>
 
         {/* ---------------------------------------------------------------- AI use */}
@@ -533,14 +542,18 @@ export function Method() {
           <ul className="ka-method-list">
             <li><b>{tr('Ideas: the team.', 'Gagasan: tim.')}</b>{' '}{tr('The challenge choice, the question of how far a zero can be relied on, Play the season, and the harmonization question with its checks written in advance all came from team members.',
               'Pilihan tantangan, pertanyaan seberapa jauh angka nol bisa diandalkan, Putar musim, serta pertanyaan harmonisasi beserta pengujian yang ditulis lebih dulu, semuanya berasal dari anggota tim.')}</li>
-            <li><b>{tr('Code: mostly AI, under our direction.', 'Kode: sebagian besar AI, di bawah arahan kami.')}</b>{' '}{tr('An AI coding assistant (Claude, in Claude Code) wrote most of the new app code and the visibility scripts.',
-              'Asisten pemrograman AI (Claude, di Claude Code) menulis sebagian besar kode aplikasi yang baru dan skrip keterlihatan.')}</li>
+            <li><b>{tr('Code: mostly AI, under our direction.', 'Kode: sebagian besar AI, di bawah arahan kami.')}</b>{' '}{tr('An AI coding assistant (Claude, in Claude Code) wrote most of the new app code and the visibility, district and peat scripts.',
+              'Asisten pemrograman AI (Claude, di Claude Code) menulis sebagian besar kode aplikasi yang baru serta skrip keterlihatan, kabupaten/kota, dan gambut.')}</li>
             <li><b>{tr('Runs: AI sessions, logged.', 'Eksekusi: sesi AI, tercatat.')}</b>{' '}{tr('AI sessions ran the pipelines and recorded every command, input checksum and run time.',
               'Sesi AI menjalankan pipeline dan mencatat setiap perintah, checksum masukan, dan waktu eksekusi.')}</li>
             <li><b>{tr('Research and drafts: AI helped.', 'Riset dan draf: dibantu AI.')}</b>{' '}{tr('It searched and summarized repositories and papers and drafted documents. The team made the choices.',
               'AI mencari dan merangkum repositori serta makalah dan menyusun draf dokumen. Keputusan diambil oleh tim.')}</li>
             <li><b>{tr('No AI-generated numbers or images.', 'Tidak ada angka atau gambar buatan AI.')}</b>{' '}{tr('Every number comes from NASA data or the official SiPongi table through code that can be rerun. The photos are NASA GIBS imagery.',
               'Setiap angka berasal dari data NASA atau tabel resmi SiPongi melalui kode yang dapat dijalankan ulang. Fotonya adalah citra NASA GIBS.')}</li>
+            <li><b>{tr('One AI feature in the app.', 'Satu fitur AI di dalam aplikasi.')}</b>{' '}{tr('On “Today in my district”, a button asks an OpenAI model to draft advice from the numbers already on the page. The draft is marked as written by AI, adds no numbers of its own, and must be checked before it is sent. The three standard messages there are fixed templates, not AI.',
+              'Di halaman “Hari ini di daerah saya”, satu tombol meminta model OpenAI menyusun saran dari angka yang sudah ada di halaman. Draf itu ditandai sebagai tulisan AI, tidak menambah angka sendiri, dan harus diperiksa sebelum dikirim. Tiga pesan standar di sana adalah templat tetap, bukan AI.')}</li>
+            <li><b>{tr('The demo video.', 'Video demo.')}</b>{' '}{tr('The picture is a recording of this app. If it has a narration, the voice is an AI voice (ElevenLabs) reading a script the team wrote.',
+              'Gambarnya adalah rekaman aplikasi ini. Jika ada narasi, suaranya adalah suara AI (ElevenLabs) yang membacakan naskah tulisan tim.')}</li>
           </ul>
           <p><a href={AI_USE_URL} target="_blank" rel="noopener">{tr('Read the full AI use statement on GitHub', 'Baca pernyataan penggunaan AI selengkapnya di GitHub')}</a></p>
         </Section>
@@ -556,7 +569,9 @@ export function Method() {
             ) : null}
             <li>{tr('Every check uses Aqua MODIS as its reference. There is no independent check against burned area, and none at province or district level.',
               'Setiap pengujian memakai Aqua MODIS sebagai acuan. Tidak ada pengujian independen terhadap luas terbakar, dan tidak ada pengujian pada tingkat provinsi atau kabupaten/kota.')}</li>
-            <li>{tr('Nothing here is specific to peat: peat labels are not in the data.', 'Tidak ada hasil yang khusus untuk gambut: label gambut tidak ada dalam data.')}</li>
+            <li>{tr('The peat checks written in advance were not run. The peat sites on “Today in my district” come from a separate count, made after looking at the data: they are places to re-check, not proof that fire kept burning.',
+              'Pengujian gambut yang ditulis lebih dulu tidak dijalankan. Lokasi gambut di halaman “Hari ini di daerah saya” berasal dari hitungan terpisah yang dibuat setelah melihat data: itu tempat untuk dicek ulang, bukan bukti bahwa api terus menyala.')}</li>
+            <li>{tr('The level on “Today in my district” is our own rule, not an official status.', 'Tingkat di halaman “Hari ini di daerah saya” adalah aturan kami sendiri, bukan status resmi.')}</li>
             <li>{tr('The cloud layer is cloud only, MODIS only, Central Kalimantan only, and retrospective. We do not estimate fire under cloud.',
               'Lapisan awan hanya tentang awan, hanya dari MODIS, hanya Kalimantan Tengah, dan bersifat retrospektif. Kami tidak menaksir api di bawah awan.')}</li>
             <li>{tr('District values are approximate and untested.', 'Nilai kabupaten/kota bersifat perkiraan dan belum diuji.')}</li>
