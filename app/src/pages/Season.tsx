@@ -277,7 +277,7 @@ export function Season({ year = 2019 }: { year?: number }) {
     return () => { live = false; };
   }, [year]);
 
-  // the blind-zero layer: its numbers, the district borders, and one small image per day (all 92 load at once, about
+  // the observation-gap layer: its numbers, the district borders, and one small image per day (all 92 load at once, about
   // 0.5 MB). Without it the season still plays, and the foot says the layer is missing.
   const [vis, setVis] = useState<Vis | null>(null);
   const [visErr, setVisErr] = useState<string | null>(null);
@@ -681,7 +681,7 @@ export function Season({ year = 2019 }: { year?: number }) {
               </div>
               {vd ? (
                 <div className="ka-season-stat-blind">
-                  <dt><span className="ka-sw ka-sw-blind" aria-hidden="true" />Blind zeros<span className="ka-season-wide"> today</span></dt>
+                  <dt><span className="ka-sw ka-sw-blind" aria-hidden="true" />No-clear-view share<span className="ka-season-wide"> today</span></dt>
                   <dd>{vd.blind === null ? 'n/a' : pct1(vd.blind)} <small>Aug to Oct {seasonBlind === null ? 'n/a' : pct1(seasonBlind)}</small></dd>
                 </div>
               ) : null}
@@ -695,7 +695,7 @@ export function Season({ year = 2019 }: { year?: number }) {
             </div>
             {vis ? (
               <details className="ka-season-dist">
-                <summary>Blind zeros by district</summary>
+                <summary>No-clear-view share by district</summary>
                 <table>
                   <thead><tr><th scope="col">District</th><th scope="col">{day.date.slice(5)}</th><th scope="col">Aug to Oct</th></tr></thead>
                   <tbody>
@@ -719,7 +719,7 @@ export function Season({ year = 2019 }: { year?: number }) {
                     </tr>
                   </tfoot>
                 </table>
-                <p>Of each district's land with no fire detected, the share that Terra and Aqua saw only under cloud, on every pass (hatched on the map).</p>
+                <p>For land with no FIRMS hotspot, the hatched share is labelled U by the FireMask (no clear view). It does not estimate fires hidden from satellites.</p>
               </details>
             ) : null}
             <ul className="ka-season-legend">
@@ -728,7 +728,7 @@ export function Season({ year = 2019 }: { year?: number }) {
               <li><span className="ka-sw ka-sw-ring" aria-hidden="true" />Re-appeared after a gap of 2 or more days</li>
               {vis ? (
                 <>
-                  <li><span className="ka-sw ka-sw-blind" aria-hidden="true" />Blind zero: no fire detected, but Terra and Aqua saw only cloud all day</li>
+                  <li><span className="ka-sw ka-sw-blind" aria-hidden="true" />No clear view (U): no FIRMS hotspot detected; the FireMask reports an observation gap</li>
                   <li><span className="ka-sw ka-sw-nodata" aria-hidden="true" />No data: no usable Terra or Aqua look</li>
                 </>
               ) : null}
@@ -761,7 +761,7 @@ export function Season({ year = 2019 }: { year?: number }) {
           </div>
           {vis ? (
             <button type="button" className="ka-season-blindbtn" aria-pressed={showBlind} onClick={() => setShowBlind((v) => !v)}>
-              <span className="ka-sw ka-sw-blind" aria-hidden="true" /><span className="ka-season-blindtxt">Blind zeros</span>
+              <span className="ka-sw ka-sw-blind" aria-hidden="true" /><span className="ka-season-blindtxt">No-clear-view share</span>
             </button>
           ) : null}
           <span className="ka-season-rate">{fmt(BASE_FPS * speed)} days per second</span>
@@ -786,9 +786,9 @@ export function Season({ year = 2019 }: { year?: number }) {
             Hotspots: NASA FIRMS VIIRS S-NPP 375 m.
             Imagery: NASA GIBS / Worldview ({photoName(season?.days[0]?.date ?? `${year}-08-01`)} true colour of the same day; black wedges are gaps between passes{year < 2016 ? '; GIBS has VIIRS true colour only from 24 November 2015' : ''}).
             {vis ? (
-              <> Blind zeros: NASA MODIS Terra and Aqua daily fire mask (MOD14A1, MYD14A1 C6.1) via Microsoft Planetary Computer,
+              <> No-clear-view share: NASA MODIS Terra and Aqua daily fire mask (MOD14A1, MYD14A1 C6.1) via Microsoft Planetary Computer,
                 read {vis.file.source.firemask.read_utc.slice(0, 10)}. Districts: geoBoundaries (BPS, WFP, OCHA ROAP), {vis.file.source.districts.license}.</>
-            ) : visErr ? <> The blind-zero layer could not be loaded ({visErr}).</> : null}
+            ) : visErr ? <> The observation-gap layer could not be loaded ({visErr}).</> : null}
             {src ? (
               <> Data file: {fmt(season?.kept ?? 0)} hotspots kept of {fmt(src.rows_total)} rows in the FIRMS {year} Indonesia archive
                 {season && season.kept !== src.rows_kept ? ' (the file\'s own count differs)' : ''}, sha256 <code title={src.sha256}>{src.sha256.slice(0, 12)}</code>.</>
@@ -801,7 +801,7 @@ export function Season({ year = 2019 }: { year?: number }) {
             ) : null}
             {vis ? (
               <details className="ka-season-rule">
-                <summary>How blind zeros are counted</summary>
+                <summary>How observation gaps are counted</summary>
                 <span>{vis.file.rule}</span>
               </details>
             ) : null}
@@ -820,12 +820,12 @@ function captions(s: Season, i: number, v: VisDay | null): string[] {
   const prev = s.days.slice(Math.max(0, i - TRAIL), i).map((d) => d.pts.length);
   const peak = prev.length ? Math.max(...prev) : 0;
   const out: string[] = [];
-  // blind share = of the land in the 14 districts with no fire detected, what Terra and Aqua saw only under cloud
+  // U share = fraction of land without a FIRMS hotspot that the FireMask marks as having no clear view.
   const blind = v?.blind ?? null;
   if (v && blind !== null) {
     // the clear share rounds down, so 99.96 reads "99.9%", never "100.0%"
     out.push(blind >= BLIND_NOTE
-      ? `Terra and Aqua never saw clear ground on ${pct1(blind)} of the land with no fire detected today (hatched): a zero there is a blind zero.`
+      ? `The FireMask labels ${pct1(blind)} of land with no detected hotspot as U (hatched, no clear view). This is not an estimate of fires hidden from satellites.`
       : `Terra and Aqua saw clear ground on ${pct1(Math.floor((1000 * v.T) / (v.T + v.U)) / 10)} of the land with no fire detected today.`);
   }
   if (prev.length && n < LOW_SHARE * peak) {

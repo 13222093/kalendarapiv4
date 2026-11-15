@@ -132,7 +132,8 @@ function readHash(): string {
   return window.location.hash;
 }
 
-// KalenderApi (modification): '#/story' opens the full-screen cinematic landing; everything else is the original app.
+// KalenderApi landing and cinematic story routes remain outside the shared app shell.
+const LandingPage = lazy(() => import('./pages/Landing.tsx').then((m) => ({ default: m.Landing })));
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
@@ -145,6 +146,13 @@ function seasonYearOf(hash: string): number {
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
+  if (hash === '#/home' || hash.startsWith('#/home?')) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <LandingPage />
+      </Suspense>
+    );
+  }
   if (hash === '#/story' || hash.startsWith('#/story?')) {
     return (
       <Suspense fallback={<div className="ka-story" />}>

@@ -215,3 +215,16 @@ a.ka-rec-season:focus-visible { outline: 2px solid var(--focus); outline-offset:
 .ka-rec-cell-track > .ka-rec-cell-blind { border-radius: 0; box-shadow: none; }
 .ka-rec-note a, .ka-rec-month a { color: var(--accent); }
 :root[data-theme="light"] :is(.ka-rec-note, .ka-rec-month) a { color: var(--accent-strong); }
+
+.ka-rec-featured-tests { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.ka-rec-featured-test { min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.ka-rec-featured-test[data-status="fail"] { border-color: color-mix(in srgb, var(--critical) 60%, var(--border)); }
+.ka-rec-featured-test[data-status="pass"] { border-color: color-mix(in srgb, var(--good) 55%, var(--border)); }
+.ka-rec-featured-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: var(--fs-13); }
+.ka-rec-featured-value { margin: 8px 0; font-size: var(--fs-20); font-variant-numeric: tabular-nums; }
+.ka-rec-featured-test .ka-rec-rule, .ka-rec-featured-test .ka-rec-test-why { margin: 4px 0 0; color: var(--text-2); font-size: var(--fs-12); line-height: 1.45; }
+.ka-rec-all-tests { border-top: 1px solid var(--border); padding-top: 10px; }
+.ka-rec-all-tests > summary { width: fit-content; color: var(--link); cursor: pointer; font-size: var(--fs-13); font-weight: 600; }
+.ka-rec-all-tests[open] > summary { margin-bottom: 10px; }
+@media (max-width: 620px) { .ka-rec-featured-tests { grid-template-columns: 1fr; } }
+.ka-rec-featured-ci { margin: 4px 0; color: var(--text-2); font-size: var(--fs-12); font-variant-numeric: tabular-nums; }

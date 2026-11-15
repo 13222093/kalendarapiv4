@@ -68,3 +68,16 @@ nothing about a missing range: the second-round handling is driven by the data (
 - Play the season wraps its 60 px date over two lines at 1440x900, as v1.0 does for 2019.
 - The Browser pane often draws no frames while hidden, so charts (which wait for a ResizeObserver) and maps can look
   empty there; headless Chrome is the reliable check.
+
+
+## Best-of landing and evidence update on branch codex/best-of-kalenderapi
+
+- index.html: a clean first visit with no hash now opens #/home; explicit hashes still work, and #/ remains Fire Harmony’s global explorer.
+- src/App.tsx: lazy-loads the landing page outside the global app shell.
+- src/pages/Landing.tsx, src/pages/landing-data.ts, src/styles/landing.css: Sokrates-paced story structure and reveal/chart motion, using the integrated national bundle and reduced-motion support.
+- src/pages/Record.tsx and src/components/record/HowSure.tsx: put compact 2012/2022 seam evidence next to the finding, retain the full decision ledger in an expandable table, and link the validation JSON.
+- src/components/record/RecordCalendar.tsx, src/components/record/ThisMonth.tsx, src/lib/record.ts, and src/components/record/BeforeAfter.tsx: describe the observation mask as a limited no-clear-look layer rather than a hidden-fire estimate.
+- src/styles/record.css: status styling for featured validation evidence and the expandable ledger.
+- docs/BEST-OF-TICKETS.md, docs/methodology.md, docs/limitations.md, docs/project_page_draft.md, and README.md: coverage map and reviewer documentation.
+
+These branch additions have not been followed by a new build or test run. Earlier checks above describe the earlier v4 snapshot only.

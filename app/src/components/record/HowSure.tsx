@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import * as Plot from '@observablehq/plot';
 import { Badge, Card, PlotFigure, cssVar } from '../ui';
-import { dateOnly, fmtInt, fmt1, testStatus, trust, type TestStatus, type Validation } from '../../lib/record';
+import { dateOnly, fmtInt, fmt1, testStatus, trust, type TestRow, type TestStatus, type Validation } from '../../lib/record';
 
 const HELD = { ape_2015: 'Held-out 2015', ape_2019: 'Held-out 2019', loyo_mdape: 'Every year (median)' } as const;
 const ST_WORD: Record<TestStatus, string> = { pass: 'Pass', fail: 'Fail', not_run: 'Not run', na: 'Not applicable', info: 'Descriptive' };
@@ -16,6 +16,11 @@ function num(v: number | null): string {
   if (v == null || !Number.isFinite(v)) return '–';
   const a = Math.abs(v);
   return a >= 100 ? fmtInt(v) : a >= 1 ? fmt1(v) : v.toFixed(3);
+}
+function intervalText(r: TestRow): string | null {
+  const ci = r.ci;
+  if (!Array.isArray(ci) || ci.length < 2 || typeof ci[0] !== 'number' || typeof ci[1] !== 'number') return null;
+  return num(ci[0]) + ' to ' + num(ci[1]);
 }
 /** An error in % for the chart: whole numbers from 100, one decimal below (two under 0.1). */
 const pctNum = (v: number) => (v >= 100 ? fmtInt(v) : v >= 0.1 ? fmt1(v) : v.toFixed(2));
@@ -31,6 +36,14 @@ export function HowSure({ v }: { v: Validation }) {
   }, [v]);
   const listed = useMemo(() => v.results.map((r, i) => ({ r, i, s: testStatus(r) })).filter((x) => x.s !== 'info')
     .sort((a, b) => ORDER[a.s] - ORDER[b.s] || a.i - b.i), [v]);
+  const seam = (year: number) => {
+    const variant = year === 2012 ? 'switch2012' : 'main';
+    const method = v.meta?.chosen_method ?? 'M3';
+    return v.results.find((r) => r.test_id === 'V3'
+      && r.metric.includes('seam ' + year + '-01')
+      && r.metric.includes(method + '/' + variant));
+  };
+  const featured: (TestRow | undefined)[] = [seam(2012), seam(2022)];
 
   const bars = useMemo(() => {
     if (!t) return [];
@@ -82,43 +95,62 @@ export function HowSure({ v }: { v: Validation }) {
         </p>
       ) : null}
 
-      <Card title="Every test, as pre-written by Second Sight" subtitle="Rules written before the run; a failure is shown, not hidden">
+      <Card title="Key validation checks" subtitle="Selected seam checks are shown with their own method variant, status, interval, and rule.">
         <p className="ka-rec-badges">
           <Badge tone="good">{counts.pass} passed</Badge>
           <Badge tone="critical">{counts.fail} failed</Badge>
           <Badge>{counts.not_run} not run</Badge>
           {counts.na ? <Badge>{counts.na} not applicable</Badge> : null}
-          {counts.info ? <span className="ka-rec-note">{counts.info} descriptive results without a pass rule are not listed.</span> : null}
+          {counts.info ? <span className="ka-rec-note">{counts.info} descriptive checks have no pass rule.</span> : null}
         </p>
-        {listed.length ? (
-          <div className="ui-table-wrap ka-rec-tests">
-            <table className="ui-table">
-              <thead>
-                <tr><th scope="col">Test</th><th scope="col">What it measures</th><th scope="col" className="ui-num">Value</th><th scope="col">Rule</th><th scope="col">Result</th></tr>
-              </thead>
-              <tbody>
-                {listed.map(({ r, s, i }) => (
-                  <tr key={`${r.test_id}-${i}`} data-status={s}>
-                    <th scope="row">{r.test_id}</th>
-                    <td>{r.metric}{(s === 'fail' || s === 'not_run' || s === 'na') && r.notes ? <span className="ka-rec-test-why">{r.notes}</span> : null}</td>
-                    <td className="ui-num">{num(r.value)}</td>
-                    <td className="ka-rec-rule">{r.rule ?? '–'}</td>
-                    <td><Badge tone={ST_TONE[s]}>{ST_WORD[s]}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : <p className="ka-rec-note">The file has no tests with a pass rule.</p>}
-        <p className="ui-figure-source">{source}</p>
+        <div className="ka-rec-featured-tests">
+          {featured.map((r, i) => r ? (
+            <article className="ka-rec-featured-test" data-status={testStatus(r)} key={r.test_id + '-' + i}>
+              <div className="ka-rec-featured-head">
+                <strong>{r.metric}</strong>
+                <Badge tone={ST_TONE[testStatus(r)]}>{ST_WORD[testStatus(r)]}</Badge>
+              </div>
+              <p className="ka-rec-featured-value">{r.value == null ? 'No estimate' : num(r.value)}</p>
+              {intervalText(r) ? <p className="ka-rec-featured-ci">90% interval: {intervalText(r)}</p> : null}
+              <p className="ka-rec-rule"><strong>Rule:</strong> {r.rule ?? 'No pass rule recorded.'}</p>
+              {r.notes ? <p className="ka-rec-test-why">{r.notes}</p> : null}
+            </article>
+          ) : null)}
+        </div>
+        <p className="ui-figure-source">
+          Source: {source} <a href={import.meta.env.BASE_URL + 'ss-data/validation_results.json'} download>Download the full validation JSON</a>.
+        </p>
+        <details className="ka-rec-all-tests">
+          <summary>Open all registered decision checks ({listed.length}; {counts.info} descriptive rows are counted above)</summary>
+          {listed.length ? (
+            <div className="ui-table-wrap ka-rec-tests">
+              <table className="ui-table">
+                <thead>
+                  <tr><th scope="col">Test</th><th scope="col">What it measures</th><th scope="col" className="ui-num">Value</th><th scope="col">Rule</th><th scope="col">Result</th></tr>
+                </thead>
+                <tbody>
+                  {listed.map(({ r, s, i }) => (
+                    <tr key={r.test_id + '-' + i} data-status={s}>
+                      <th scope="row">{r.test_id}</th>
+                      <td>{r.metric}{(s === 'fail' || s === 'not_run' || s === 'na') && r.notes ? <span className="ka-rec-test-why">{r.notes}</span> : null}</td>
+                      <td className="ui-num">{num(r.value)}</td>
+                      <td className="ka-rec-rule">{r.rule ?? '–'}</td>
+                      <td><Badge tone={ST_TONE[s]}>{ST_WORD[s]}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : <p className="ka-rec-note">The file has no tests with a pass rule.</p>}
+        </details>
       </Card>
 
-      <Card title="Keep in mind">
+      <Card title="Limits that affect this result">
         <ul className="ka-rec-mind">
-          <li>A fire cell-day is a 0.01 degree cell (about 1 km) with at least one hotspot on a local date: not a fire event, not burned area.</li>
-          <li>Fires under thick smoke, under cloud or smouldering in peat can be missed by every satellite. Where the calendar is hatched, a low count is not a measurement.</li>
-          <li>Months marked provisional come from near-real-time data and may change.</li>
-          <li>The VIIRS to MODIS ratio is assumed stable within each stratum, and years outside the calibration window (Aqua's drift from 2022) are less certain.</li>
+          <li>The production seam check and its uncertainty interval are shown above. Values after the 2012–2021 calibration window need additional review.</li>
+          <li>Regional transfer tests show high errors in several regions; their values and notes remain in the complete validation ledger.</li>
+          <li>Visibility is measured for nine Central Kalimantan months only. Peat labels remain unknown, so the peat hypotheses were not run; no hidden-fire count is estimated.</li>
+          <li>A fire cell-day is a 0.01 degree cell with a detected hotspot on a local date, not a unique fire event or burned area. Provisional months may change.</li>
         </ul>
       </Card>
     </div>

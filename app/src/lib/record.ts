@@ -232,7 +232,7 @@ export function pooledRatio(rows: MonthRow[]): { ratio: number; from: number } |
 }
 
 /** The blind share of a month whose observability was computed: of its no-fire cell-days, the share Terra and Aqua
- *  saw only under cloud (f_cloud = U / (T + U), TRI-04). */
+ *  had no clear look (U / (T + U), TRI-04). */
 export const blindShare = (r: MonthRow) => (r.f_cloud == null ? null : r.f_cloud);
 export const pct1 = (x: number) => `${(Math.round(x * 1000) / 10).toFixed(1)}%`;
 

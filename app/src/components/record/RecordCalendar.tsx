@@ -11,7 +11,7 @@ import {
 } from '../../lib/record';
 
 const OBS_WORDS: Record<ObsState, string> = {
-  good: 'seen clearly', partial: 'partly seen (cloud)', unobserved: 'not seen (cloud)', 'not-computed': 'observability not computed',
+  good: 'seen clearly', partial: 'partly observed', unobserved: 'no clear look (cloud or smoke may obscure)', 'not-computed': 'observability not computed',
 };
 
 export function RecordCalendar({ rows, area, series, onSeries, selected, onSelect, computed, obsElsewhere, ratio, unit, source, seasonHref }: {
@@ -56,7 +56,7 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
     }
     parts.push(OBS_WORDS[obsState(r, computed)]);
     const b = obsState(r, computed) !== 'not-computed' ? blindShare(r) : null;
-    if (b != null) parts.push(`${pct1(b)} of the no-fire cell-days blind (cloud)`);
+    if (b != null) parts.push(`${pct1(b)} of no-fire cell-days had no clear look (state U)`);
     if (isProvisional(r)) parts.push('provisional');
     return parts.join(', ');
   };
@@ -170,24 +170,24 @@ export function RecordCalendar({ rows, area, series, onSeries, selected, onSelec
           <span className="ka-rec-ramp" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} data-step={i + 1} />)}</span>
           <span>more fire cell-days (log scale, same for Raw and Harmonized)</span>
         </li>
-        <li><i className="ka-rec-lg" data-obs="partial" aria-hidden="true" />Partly seen: cloud hid part of the no-fire land</li>
-        <li><i className="ka-rec-lg" data-obs="unobserved" aria-hidden="true" />Not seen: a low count here is not a measurement</li>
+        <li><i className="ka-rec-lg" data-obs="partial" aria-hidden="true" />Partly observed: some no-fire cell-days had no clear look</li>
+        <li><i className="ka-rec-lg" data-obs="unobserved" aria-hidden="true" />No clear look: a low count does not tell us whether fire was present</li>
         <li><i className="ka-rec-lg" data-obs="good" aria-hidden="true" />Seen clearly</li>
-        {anyObs ? <li><i className="ka-rec-lg ka-rec-lg-blind" aria-hidden="true"><i /></i>Strip: the month's blind share (no-fire cell-days seen only under cloud)</li> : null}
+        {anyObs ? <li><i className="ka-rec-lg ka-rec-lg-blind" aria-hidden="true"><i /></i>Strip: share of no-fire cell-days with no clear look (state U)</li> : null}
         <li><i className="ka-rec-lg" data-obs="not-computed" aria-hidden="true" />Observability not computed</li>
         <li><i className="ka-rec-lg" data-prov="" aria-hidden="true" />Provisional (near real time){years.some((y) => total(y).prov) ? '; * total so far' : ''}</li>
       </ul>
       <p className="ka-rec-note">
         {anyObs
-          ? `Observability is computed for ${obsCount} month${obsCount === 1 ? '' : 's'} of ${area} from the NASA MODIS Terra and Aqua daily FireMask (Second Sight's rule TRI-04: seen clearly if O is at least 0.6, partly if at least 0.3). Every other month is marked "not computed": it may be clear or cloudy, the record does not say.`
-          : `Observability is not computed for ${area}: no month here is marked seen or not seen, so a low count can be a cloudy month.${obsElsewhere ? ` Months with cloud measured from the NASA MODIS FireMask are in ${obsElsewhere}.` : ''}`}
+          ? `Observability is computed for ${obsCount} month${obsCount === 1 ? '' : 's'} of ${area} from the NASA MODIS Terra and Aqua daily FireMask (Second Sight's rule TRI-04: seen clearly if O is at least 0.6, partly if at least 0.3). Every other month is marked "not computed": its visibility is unknown; the record does not say.`
+          : `Observability is not computed for ${area}: no month here has a computed visibility class, so a low count cannot be read as an absence of fire.${obsElsewhere ? ` Months with visibility measured from the NASA MODIS FireMask are in ${obsElsewhere}.` : ''}`}
         {ratio != null ? ` Raw from 2012 is VIIRS, which counted ${fmt1(ratio)} fire cell-days for every one MODIS Aqua counted in the same months.` : ''}
       </p>
       {obsMonths.length ? (
         <div className="ka-rec-blindlist">
           <p className="ka-rec-note">
-            Even a month seen clearly has blind days. The blind share of each month with observability, and its days in
-            Play the season (each day's NASA photo, hotspots and hatched blind zeros):
+            Even a month marked seen clearly has days with no clear look. The U share of each month with observability, and its days in
+            Play the season (each day's NASA photo, hotspots and hatched no-clear-look days):
           </p>
           <ul>
             {obsMonths.map(({ key, share, href }) => (

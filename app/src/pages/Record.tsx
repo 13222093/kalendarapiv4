@@ -1,6 +1,6 @@
 // Project 4 (new file, not from Fire Harmony): "Indonesia record" (#/record), the main page of the integrated build.
 // The record is Second Sight's harmonized fire cell-days (public/ss-data/, their own pipeline and validation); the
-// blind zero is KalenderApi's (observability per month from the NASA MODIS FireMask, and Play the season day by day).
+// observation-gap layer is KalenderApi's (monthly visibility from NASA MODIS FireMask and day-by-day season playback).
 // Told as INTEGRATION.md's thesis: the jump (2012, MODIS to VIIRS) -> the fix (one scale, 90% range) -> the zero.
 // Link: #/record?aoi=<aoi_id>&m=<YYYY-MM>&s=raw|harm. Every number is computed from the bundle (lib/record.ts); until
 // public/ss-data/index.json exists every section says "not built yet".
@@ -183,15 +183,14 @@ export function Record() {
         eyebrow="Indonesia record"
         title="Indonesia's fire record, on one scale"
         lead={<>When VIIRS joined MODIS in 2012, the raw fire record jumped: the sharper satellite counts more of the same
-          fires. Second Sight's harmonization puts every year on the Aqua MODIS scale, with a 90% range. Where cloud hid
-          the ground, the calendar marks the month: a zero there is a blind zero, not a measurement.</>}
+          fires. Second Sight's harmonization puts every year on the Aqua MODIS scale, with a 90% range. Where cloud or smoke may have prevented a clear look, the calendar marks the observation gap: an unobserved zero is not a measurement.</>}
         actions={<>{picker}<a className="ka-head-story ui-press" href="#/story"><IconPlay size={13} /><span>Watch the story</span></a></>}
       />
 
       {index.state === 'missing' ? (
         <Callout title="The Indonesia record is not built yet">
           <p>{NOT_BUILT}</p>
-          <p>Meanwhile: <a href="#/season">play the 2019 season</a> (Central Kalimantan, the blind zeros day by day),
+          <p>Meanwhile: <a href="#/season">play the 2019 season</a> (Central Kalimantan observation gaps, day by day),
             watch the <a href="#/story">story</a>, or open Fire Harmony's <a href="#/">global context</a>.</p>
         </Callout>
       ) : null}
@@ -212,7 +211,15 @@ export function Record() {
         ) : null}
       </Section>
 
-      <Section id="calendar" title="Every month" subtitle="Colour is fire. Hatching is cloud: the months the satellites could not see the ground">
+      <Section id="sure" title="How sure" subtitle="Second Sight's validation: errors on years the fit never saw, and every pre-written test, failures included">
+        {validation.state === 'ok' ? <HowSure v={validation.data} /> : (
+          <ChartFrame title="Error on years the fit never saw" unit="Absolute percentage error of the yearly total, raw against harmonized." source="Source: Second Sight's validation run (validation_results.json).">
+            <State load={index.state !== 'ok' ? pending : validation} what="the validation results" height={230} retry={index.state === 'error' ? retryIndex : retryValidation} />
+          </ChartFrame>
+        )}
+      </Section>
+
+      <Section id="calendar" title="Every month" subtitle="Colour is fire. Hatching marks months with limited clear observations.">
         {rows ? (
           <RecordCalendar rows={rows} area={area} series={series} onSeries={(s) => set({ s })}
             selected={selected} onSelect={(m) => set({ m })} computed={computed} obsElsewhere={obsElsewhere}
@@ -232,17 +239,17 @@ export function Record() {
       </Section>
 
       {(aoi?.aoi_id ?? KALTENG) === KALTENG ? (
-        <Section id="zero" title="The zero, day by day" subtitle="Central Kalimantan, 1 August to 31 October: each day's NASA photo, its VIIRS hotspots, and the zeros Terra and Aqua could not see">
+        <Section id="zero" title="The zero, day by day" subtitle="Central Kalimantan, 1 August to 31 October: each day's NASA photo, its VIIRS hotspots, and where Terra and Aqua had no clear look">
           <div className="ka-rec-seasons">
             {SEASON_YEARS.map((y) => {
               const ok = seasons?.includes(y) ?? false;
-              // the season's months as the record classes them: seen clearly, partly or not, and how much cloud
+              // the season's months as the record classifies them: seen clearly, partly, or without a clear look
               const words = rows ? [8, 9, 10].flatMap((m) => {
                 const r = rows.find((x) => x.year === y && x.month === m);
                 const s = r ? obsState(r, computed) : null;
                 if (!r || !s || s === 'not-computed') return [];
                 const b = blindShare(r);
-                return [`${MONTHS_SHORT[m - 1]} ${s === 'good' ? 'seen clearly' : s === 'partial' ? 'partly seen' : 'not seen'}${b != null ? `, ${pct1(b)} blind` : ''}`];
+                return [`${MONTHS_SHORT[m - 1]} ${s === 'good' ? 'seen clearly' : s === 'partial' ? 'partly seen' : 'no clear look'}${b != null ? `, ${pct1(b)} with no clear look` : ''}`];
               }) : [];
               const body = (
                 <>
@@ -259,16 +266,22 @@ export function Record() {
             })}
           </div>
           {rows ? <MonthVsDay rows={rows} computed={computed} /> : null}
+          <Card title="Visibility is not a hidden-fire estimate" subtitle="A gap in observations does not tell us whether a fire was there">
+            <p className="ka-rec-note">
+              This calendar shows where satellites had no clear look; it does not estimate how many fires were missed.
+              KalenderApi v1.1 registered a separate artificial-cloud test for Pulang Pisau, August to October 2019.
+              This integrated build does not include that test's results or a hidden-fire estimate.
+            </p>
+            <p className="ka-rec-note">
+              <a href="https://github.com/13222093/kalendarapiv2/releases/tag/prereg-v1" target="_blank" rel="noreferrer">
+                Read the timestamped preregistration and its pass rules
+              </a>
+            </p>
+          </Card>
         </Section>
       ) : null}
 
-      <Section id="sure" title="How sure" subtitle="Second Sight's validation: errors on years the fit never saw, and every pre-written test, failures included">
-        {validation.state === 'ok' ? <HowSure v={validation.data} /> : (
-          <ChartFrame title="Error on years the fit never saw" unit="Absolute percentage error of the yearly total, raw against harmonized." source="Source: Second Sight's validation run (validation_results.json).">
-            <State load={index.state !== 'ok' ? pending : validation} what="the validation results" height={230} retry={index.state === 'error' ? retryIndex : retryValidation} />
-          </ChartFrame>
-        )}
-      </Section>
+
     </Page>
   );
 }
@@ -296,10 +309,9 @@ function MonthVsDay({ rows, computed }: { rows: MonthRow[]; computed: Set<string
   const allGood = obs.every((r) => r.obs_class === 'good');
   return (
     <p className="ka-rec-note">
-      {allGood ? 'Month by month, Terra and Aqua saw these seasons clearly' : 'Month by month, these seasons range from seen clearly to not seen'}
+      {allGood ? 'Month by month, Terra and Aqua had a clear monthly observation' : 'Month by month, these seasons range from a clear observation to no clear look'}
       {' '}(O from {Math.min(...os).toFixed(2)} to {Math.max(...os).toFixed(2)}), yet {pct1(Math.min(...cs))} to {pct1(Math.max(...cs))} of
-      each month's no-fire cell-days were blind zeros, seen only under cloud. A month's average also hides its worst days:
-      on a single cloudy day a large share of the zeros can be blind, which is why the season plays one day at a time.
+      each month's no-fire cell-days were classified as unobserved (U), when cloud or smoke may have prevented a clear look. A month's average also hides its worst days: on an unobserved day, a large share of no-fire cell-days can be blind, which is why the season plays one day at a time.
     </p>
   );
 }

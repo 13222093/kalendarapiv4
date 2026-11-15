@@ -1,6 +1,6 @@
 // Project 4 (new file): "This month", one sentence for the month picked in the record's calendar, with Second Sight's
 // numbers (vendor/second-sight/app/src/bulan.ts: the harmonized count, its ratio to the median of the same calendar
-// month, its rank) and, for months whose observability was computed, how much of the ground cloud hid (the blind zero
+// month, its rank) and, for months whose observability was computed, how much of the ground had no clear observation (the blind-zero share
 // at the scale of a month). For Central Kalimantan, Aug to Oct of a built season year links to Play the season.
 import { Card } from '../ui';
 import {
@@ -41,19 +41,19 @@ export function ThisMonth({ rows, selected, aoiId, computed, seasons }: {
       )}
       {row && obs ? (
         obs === 'not-computed' ? (
-          <p className="ka-rec-note">Observability for this month is not computed: the record does not say whether cloud hid the ground.</p>
+          <p className="ka-rec-note">Observability for this month is not computed: the record does not say whether the ground had a clear observation.</p>
         ) : (
           <p className="ka-rec-note" data-obs={obs}>
-            <span className="ka-rec-obs-word">{obs === 'good' ? 'Seen clearly' : obs === 'partial' ? 'Partly seen' : 'Not seen'}</span>
+            <span className="ka-rec-obs-word">{obs === 'good' ? 'Seen clearly' : obs === 'partial' ? 'Partly seen' : 'No clear look'}</span>
             {row.O != null ? <> (O = {row.O.toFixed(2)})</> : null}.
-            {row.f_cloud != null ? <>{obs === 'good' ? ' Still, ' : ' '}<strong className="ka-rec-num">{pct1(row.f_cloud)}</strong> of the no-fire cell-days were blind zeros: Terra and Aqua saw only cloud there</> : null}
+            {row.f_cloud != null ? <>{obs === 'good' ? ' Still, ' : ' '}<strong className="ka-rec-num">{pct1(row.f_cloud)}</strong> of the no-fire cell-days were unobserved (state U: no clear look; cloud or smoke may have obscured the ground)</> : null}
             {row.f_missing != null ? <>{row.f_cloud != null ? ', and' : ''} {pct1(row.f_missing)} of land cell-days had no usable look</> : null}
             {row.f_cloud != null || row.f_missing != null ? ' (NASA MODIS Terra and Aqua daily FireMask).' : ''}
           </p>
         )
       ) : null}
       {row && isProvisional(row) ? <p className="ka-rec-note">Provisional: near-real-time data, which may change.</p> : null}
-      {seasonLink ? <p className="ka-rec-note"><a href={seasonLink}>Play this month day by day</a> (that day's NASA photo, its hotspots and its blind zeros).</p> : null}
+      {seasonLink ? <p className="ka-rec-note"><a href={seasonLink}>Play this month day by day</a> (that day's NASA photo, its hotspots and its no-clear-view days).</p> : null}
     </Card>
   );
 }
