@@ -2,14 +2,16 @@
 // The record is the harmonized fire cell-days of public/ss-data/ (the team's own pipeline and validation); the
 // cloud layer is monthly visibility from the NASA MODIS FireMask and the day-by-day season playback.
 // Told as INTEGRATION.md's thesis: the jump (2012, MODIS to VIIRS) -> the fix (one scale, 90% range) -> the zero.
-// Link: #/record?aoi=<aoi_id>&m=<YYYY-MM>&s=raw|harm&from=<YYYY-MM>&to=<YYYY-MM>. Every number is computed from the
-// bundle (lib/record.ts); until public/ss-data/index.json exists every section says "not built yet".
+// Link: #/record?aoi=<aoi_id>&m=<YYYY-MM>&s=raw|harm&from=<YYYY-MM>&to=<YYYY-MM>&y=<YYYY>&sec=<section id>. Every number
+// is computed from the bundle (lib/record.ts); until public/ss-data/index.json exists every section says "not built yet".
+// "Every day" (sec=days, y=<year>) reads the days of the same record from public/ka-data/daily/ (lib/everyday.ts).
 // The page is in English, with Bahasa Indonesia as a switch (lib/lang.ts): every text is written in both, side by side.
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Callout, Card, Page, Section, Skeleton } from '../components/ui';
 import { IconPlay } from '../components/icons';
 import { BeforeAfterFigure } from '../components/record/BeforeAfter';
 import { RecordCalendar } from '../components/record/RecordCalendar';
+import { EveryDay } from '../components/record/EveryDay';
 import { ThisMonth } from '../components/record/ThisMonth';
 import { HowSure } from '../components/record/HowSure';
 import { RangePanel } from '../components/record/RangePanel';
@@ -30,30 +32,34 @@ import {
 } from '../lib/record';
 import '../styles/record.css';
 
-// from and to (YYYY-MM) are the picked date range; without them the whole record is shown
-interface Query { aoi: string | null; m: string | null; s: Series; from: string | null; to: string | null }
+// from and to (YYYY-MM) are the picked date range; without them the whole record is shown.
+// y is the year of the "Every day" calendar (sec=days); without it the latest year of the record is shown
+interface Query { aoi: string | null; m: string | null; s: Series; from: string | null; to: string | null; y: number | null }
 
 function readQuery(): Query {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-  const m = q.get('m'), from = q.get('from'), to = q.get('to');
+  const m = q.get('m'), from = q.get('from'), to = q.get('to'), y = q.get('y');
   const both = isYm(from) && isYm(to);
   return {
     aoi: q.get('aoi'), m: m && /^\d{4}-\d{2}$/.test(m) ? m : null, s: q.get('s') === 'raw' ? 'raw' : 'harm',
-    from: both ? from : null, to: both ? to : null,
+    from: both ? from : null, to: both ? to : null, y: y && /^\d{4}$/.test(y) ? Number(y) : null,
   };
 }
 const onRecord = () => /^#\/record(\?|$)/.test(window.location.hash);
 
-/** The view in the address (replaceState: no new history entry, no hashchange). Other parameters (lang) are kept. */
-function writeQuery(q: { aoi: string; m: string | null; s: Series; from: string | null; to: string | null }) {
+/** The view in the address (replaceState: no new history entry, no hashchange). Other parameters (lang) are kept.
+ *  `sec` names a section to open the page at: when given, it replaces the one in the address. */
+function writeQuery(q: { aoi: string; m: string | null; s: Series; from: string | null; to: string | null; y: number | null; sec?: string | null }) {
   if (!onRecord()) return;
   const p = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
-  for (const k of ['aoi', 'm', 's', 'from', 'to']) p.delete(k);
+  for (const k of ['aoi', 'm', 's', 'from', 'to', 'y']) p.delete(k);
+  if (q.sec) p.set('sec', q.sec);
   const out = new URLSearchParams();
   out.set('aoi', q.aoi);
   if (q.m) out.set('m', q.m);
   if (q.s === 'raw') out.set('s', 'raw');
   if (q.from && q.to) { out.set('from', q.from); out.set('to', q.to); }
+  if (q.y != null) out.set('y', String(q.y));
   p.forEach((v, k) => out.set(k, v));
   const want = `#/record?${out.toString()}`;
   if (window.location.hash !== want) window.history.replaceState(window.history.state, '', want);
@@ -205,13 +211,17 @@ export function Record() {
   const held = !!aoi && !!shown && heldRange(aoi, shown);
 
   // keep the address in step with the view (the range as asked until the record is in, then as kept inside it)
+  const secWanted = useRef<string | null>(null);
   useEffect(() => {
     if (!aoi) return;
     const r = rows ? range : query.from && query.to ? { from: query.from, to: query.to } : null;
-    writeQuery({ aoi: aoi.aoi_id, m: query.m, s: series, from: r?.from ?? null, to: r?.to ?? null });
-  }, [aoi, query.m, series, rows, range, query.from, query.to]);
+    writeQuery({ aoi: aoi.aoi_id, m: query.m, s: series, from: r?.from ?? null, to: r?.to ?? null, y: query.y, sec: secWanted.current });
+    secWanted.current = null;
+  }, [aoi, query.m, series, rows, range, query.from, query.to, query.y]);
   const set = (patch: Partial<Query>) => setQuery((q) => ({ ...q, ...patch }));
   const setRange = (r: MonthRange | null) => set({ from: r?.from ?? null, to: r?.to ?? null });
+  // a year picked in "Every day": the address then opens the page at that section (sec=days) and that year (y=)
+  const setYear = (y: number) => { secWanted.current = 'days'; set({ y }); };
 
   const built = dateOnly(idx?.generated_at, lang);
   const version = shortVersion(idx?.data_version);
@@ -415,6 +425,21 @@ export function Record() {
           </p>
         ) : null}
       </div>
+
+      {/* the same record day by day, one year at a time (public/ka-data/daily/, components/record/EveryDay.tsx) */}
+      <Section id="days" title={tr('Every day', 'Setiap hari')}
+        subtitle={tr('One year at a time, one square a day. The days of a month add up to the month above.', 'Tampil satu tahun, satu kotak untuk satu hari. Jumlah hari-hari dalam sebulan sama dengan bulan itu pada kalender di atas.')}>
+        {aoi ? (
+          <EveryDay key={aoi.aoi_id} aoi={aoi} area={area} rows={rows} series={series} onSeries={(s) => set({ s })}
+            year={query.y} onYear={setYear} seasons={seasons} source={source}
+            meta={{ area: aoiName(aoi), aoiId: aoi.aoi_id, dataVersion: idx?.data_version ?? null, notes: fileNotes }} />
+        ) : (
+          <ChartFrame title={tr(`${area}: every day`, `${area}: setiap hari`)}
+            unit={tr('Fire cell-days a day, on the Aqua MODIS scale.', 'Sel-hari api per hari, pada skala Aqua MODIS.')} source={source}>
+            <State load={pending} what={tr('the days', 'hari-harinya')} height={300} retry={retryIndex} />
+          </ChartFrame>
+        )}
+      </Section>
 
       <Section id="range" title={tr('Pick a period', 'Pilih periode')}
         subtitle={tr('Pick the months, read the totals, download the numbers and the pictures.', 'Pilih bulannya, baca totalnya, unduh angka dan gambarnya.')}>
