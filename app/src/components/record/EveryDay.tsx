@@ -283,7 +283,8 @@ function DaysFigure({ aoi, area, rows, series, onSeries, year, onYear, seasons, 
       </ul>
       <p className="ka-rec-note">
         {tr('The number beside each month is that month of the calendar above; its days add up to it.', 'Angka di samping setiap bulan adalah bulan itu pada kalender di atas; jumlah hari-harinya sama dengan angka itu.')}
-        {playable ? tr(` Pick a day from 1 August to 31 October ${shown} to open it in Play the season.`, ` Pilih satu hari dari 1 Agustus sampai 31 Oktober ${shown} untuk membukanya di Putar musim.`) : ''}
+        {playable ? tr(` Pick a day from 1 August to 31 October ${shown} to open it in Play the season, which shows VIIRS hotspots by UTC date (this calendar counts cell-days by local date).`,
+          ` Pilih satu hari dari 1 Agustus sampai 31 Oktober ${shown} untuk membukanya di Putar musim, yang menampilkan titik panas VIIRS menurut tanggal UTC (kalender ini menghitung sel-hari menurut tanggal setempat).`) : ''}
       </p>
       <div className="ui-figure-foot">
         <p className="ui-figure-source">{source}</p>
