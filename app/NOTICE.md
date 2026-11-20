@@ -142,6 +142,24 @@ Live at https://kalenderapi.vercel.app (Vercel, static files plus two serverless
 - `src/styles/brand.css`: the "peat night" palette (warm near-black, bone text, one ember accent; MODIS blue, VIIRS
   gold), replacing the two themes named above.
 
+### The command view of "Today in my district" (21 November 2026, after the submission)
+
+- **PeatForge** (as above: another team's project, used with its authors' permission given on 15 November 2026). The
+  command view (`#/command`) follows the composition of PeatForge's command centre: a status strip with three
+  counters, a decision queue on the left with a five-step chain above it, the map in the centre with a strip of days
+  under it, tabs on the right with a timestamped message thread, and a status bar. All code and styles are our own,
+  with no lines copied. Three short labels are the same words PeatForge uses in Indonesian ("Antrean keputusan",
+  "menunggu keputusan", "Cara pakai"). What the view shows is ours: NASA FIRMS hotspots, our own level rule, our
+  template messages; the strip of days counts past detections and is not a forecast.
+- `src/pages/CommandConsole.tsx`, `src/components/now/DecisionQueue.tsx`, `VillageThread.tsx`, `EvidenceList.tsx`,
+  `src/lib/nowconsole.ts` (+ tests), `src/lib/todayview.ts`, `src/styles/nowconsole.css` (all new): the command view.
+  It reads the same data as the classic page through one hook and loads none of its own. The queue's state is kept in
+  the browser (localStorage, by district and day). The village thread is a demo and sends nothing.
+- `src/pages/Now.tsx`: its data logic is now the hook `useNowModel`, shared by both views; the map takes an optional
+  point to show; the resident's report takes an optional layout. The classic page (`#/now`) is unchanged but for a
+  "Command view" link. `src/components/now/AskAssistant.tsx`: an optional layout for the command view's tab.
+  `src/App.tsx`: the route `#/command`; which view `#/now` opens is one value in `src/lib/todayview.ts`.
+
 ### The demo video
 
 The picture is a frame-by-frame render of the Story on the live site (headless Chrome, 1920 x 1080, 30 frames a

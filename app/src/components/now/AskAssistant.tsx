@@ -18,7 +18,9 @@ export type AskFacts = Record<string, unknown>;
 interface Turn { role: 'user' | 'assistant'; text: string }
 type Status = 'idle' | 'working' | 'failed' | 'busy' | 'off' | 'unavailable';
 
-export function AskAssistant({ facts, lang, place, hasPeat }: { facts: AskFacts; lang: Lang; place: string; hasPeat: boolean }) {
+/** `variant`: 'card' is the classic page's card; 'panel' is the same conversation without the card frame, fitted to the
+ *  command view's Assistant tab (styles/nowconsole.css). */
+export function AskAssistant({ facts, lang, place, hasPeat, variant = 'card' }: { facts: AskFacts; lang: Lang; place: string; hasPeat: boolean; variant?: 'card' | 'panel' }) {
   const tr = useTr();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [text, setText] = useState('');
@@ -70,7 +72,7 @@ export function AskAssistant({ facts, lang, place, hasPeat }: { facts: AskFacts;
   ];
 
   return (
-    <section className="now-card ka-ask" id="now-ask" aria-labelledby="now-h-ask">
+    <section className={variant === 'panel' ? 'ka-ask ka-ask-panel' : 'now-card ka-ask'} id="now-ask" aria-labelledby="now-h-ask">
       <p className="now-kicker">{tr('AI assistant', 'Asisten AI')}</p>
       <h2 id="now-h-ask">{tr('Ask about this district', 'Tanya tentang kabupaten ini')}</h2>
       <p>

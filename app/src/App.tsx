@@ -17,6 +17,7 @@ import { PALETTE_EVENT, panelSearchBox, useCommand } from './lib/commands.ts';
 import { LangToggle } from './components/LangToggle.tsx';
 import { useTr } from './lib/lang.ts';
 import { toggleTheme, useTheme } from './lib/theme.ts';
+import { todayViewOf } from './lib/todayview.ts';
 import { RESIZE_FROM, clampPanel, savedPanelWidth } from './components/explorer/panelSize.ts';
 
 // The loading outline uses the classes of the shared building blocks (ui.css) directly: importing ui.tsx here would
@@ -173,6 +174,8 @@ function readHash(): string {
 
 // The home page, the page of the condition right now and the cinematic story are outside the shared app shell.
 const NowPage = lazy(() => import('./pages/Now.tsx').then((m) => ({ default: m.Now })));
+// The same page as a three-panel command view (#/command). Which of the two '#/now' opens is one value in lib/todayview.ts.
+const CommandPage = lazy(() => import('./pages/CommandConsole.tsx').then((m) => ({ default: m.CommandConsole })));
 const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
@@ -190,10 +193,12 @@ function seasonYearOf(hash: string): number {
 
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, readHash);
-  if (hash === '#/now' || hash.startsWith('#/now?')) {
+  // "Today in my district": '#/now' (the classic page unless lib/todayview.ts says otherwise) and '#/command'
+  const today = todayViewOf(hash);
+  if (today) {
     return (
       <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
-        <NowPage />
+        {today === 'console' ? <CommandPage /> : <NowPage />}
       </Suspense>
     );
   }

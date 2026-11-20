@@ -5,6 +5,9 @@
 // to re-check; a level from stated rules; and three ready-to-send messages. The page sends nothing by itself.
 // Every number comes from /api/live, the district's monthly record, blind_rule_kalteng.json or
 // peat_persistence_kalteng.json. Nothing is forecast. No statistic is made for the months a registered test covers.
+// Two views draw this page from one model (useNowModel, below): the classic page here (Now), and the three-panel
+// command view (#/command, pages/CommandConsole.tsx), which also uses the map, the AI draft and the resident's report
+// exported from this file. Which view '#/now' opens is one value in lib/todayview.ts.
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -25,6 +28,7 @@ import { MIN_EARLIER_YEARS, STATUS_CUTS, monthStatus } from '../lib/robust.ts';
 import { SiteHeader } from '../components/SiteHeader.tsx';
 import { AlertLoop } from '../components/now/AlertLoop.tsx';
 import { AskAssistant, type AskFacts } from '../components/now/AskAssistant.tsx';
+import { classicHref, consoleHref } from '../lib/todayview.ts';
 import '../styles/now.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -33,15 +37,15 @@ const DEFAULT_AOI = 'kab-pulang-pisau';
 const BASE = import.meta.env.BASE_URL;
 const KALTENG_PROVINCE = 'Kalimantan Tengah';
 const MAP_PAD = 0.25;            // degrees of neighbouring land the map and the live request include
-const TABLE_ROWS = 8;            // newest hotspots listed under the map
-const SITE_ROWS = 10;            // peat sites listed (the CSV has all of them)
+export const TABLE_ROWS = 8;     // newest hotspots listed under the map
+export const SITE_ROWS = 10;     // peat sites listed (the CSV has all of them)
 const PHOTO_LAYER = 'VIIRS_NOAA20_CorrectedReflectance_TrueColor';
 const photoTiles = (date: string) =>
   `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${PHOTO_LAYER}/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
 
-type Box = [number, number, number, number];
+export type Box = [number, number, number, number];
 type Geometry = DistrictShapes['features'][number]['geometry'];
-type LiveState = { state: 'loading' } | { state: 'ok'; data: LiveReply } | { state: 'unavailable'; why: 'no-function' | 'failed'; detail: string };
+export type LiveState = { state: 'loading' } | { state: 'ok'; data: LiveReply } | { state: 'unavailable'; why: 'no-function' | 'failed'; detail: string };
 type BlindFile = BlindRule & { districts?: { name: string; district_days_above: number; district_days: number; share_pct: number }[] };
 
 function subscribeHash(fn: () => void): () => void {
@@ -100,7 +104,7 @@ async function newestPhotoDate(lon: number, lat: number, nowMs: number): Promise
   return null;
 }
 
-async function copyText(text: string): Promise<boolean> {
+export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
     return true;
@@ -122,7 +126,7 @@ async function copyText(text: string): Promise<boolean> {
 // already shows. The three template messages stay the default and the fallback.
 
 const AI_NAME = /^[\p{L}\p{M} .,'()-]{1,60}$/u;
-interface AiFacts {
+export interface AiFacts {
   district: string; province: string; as_of: string | null;
   hotspots_24h: number | null; hotspots_7d: number | null; viirs_24h: number | null; modis_24h: number | null;
   month: string; month_count: number | null; month_median: number | null; month_ratio: number | null; month_provisional: boolean;
@@ -130,7 +134,7 @@ interface AiFacts {
 }
 type AiState = { s: 'idle' | 'working' | 'failed' | 'busy' | 'off' | 'unavailable' } | { s: 'ok'; text: string; model: string | null; at: string | null; truncated: boolean };
 
-function AiDraft({ facts, lang }: { facts: AiFacts; lang: Lang }) {
+export function AiDraft({ facts, lang }: { facts: AiFacts; lang: Lang }) {
   const tr = useTr();
   const [st, setSt] = useState<AiState>({ s: 'idle' });
   const [copied, setCopied] = useState<boolean | null>(null);
@@ -204,15 +208,21 @@ const token = (el: Element, name: string) => getComputedStyle(el).getPropertyVal
 
 type GeoData = maplibregl.GeoJSONSourceSpecification['data'];
 const fc = (features: unknown[]): GeoData => ({ type: 'FeatureCollection', features } as unknown as GeoData);
-const LAYERS = ['hot', 'sites', 'district-line', 'district-case', 'peat-line', 'photo'];
-const SOURCES = ['hot', 'sites', 'district', 'peat', 'photo'];
+const LAYERS = ['focus', 'focus-case', 'hot', 'sites', 'district-line', 'district-case', 'peat-line', 'photo'];
+const SOURCES = ['focus', 'hot', 'sites', 'district', 'peat', 'photo'];
+
+/** A point the command view asks the map to show ("Show on map" in a queue row): the map moves there and rings it.
+ *  A new object on every ask, so asking for the same point twice moves the map twice. */
+export interface MapFocus { lon: number; lat: number }
 
 interface MapProps {
   box: Box; outline: Geometry; points: { p: LivePoint; inside: boolean }[] | null;
   photoDate: string | null; sites: PeatSite[]; peat: unknown; label: string;
+  /** the command view only: the point to show, and whether the wheel zooms the map (its panels scroll, not the page) */
+  focus?: MapFocus | null; freeWheel?: boolean;
 }
 
-function NowMap({ box, outline, points, photoDate, sites, peat, label }: MapProps) {
+export function NowMap({ box, outline, points, photoDate, sites, peat, label, focus, freeWheel }: MapProps) {
   const tr = useTr();
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -291,7 +301,30 @@ function NowMap({ box, outline, points, photoDate, sites, peat, label }: MapProp
         'circle-stroke-color': css('--bg'), 'circle-stroke-width': 1, 'circle-stroke-opacity': ['case', ['==', ['get', 'i'], 1], 0.9, 0.4],
       } });
     }
-  }, [ready, photoDate, peat, outline, sites, points]);
+    if (focus) {
+      // the point a queue row asked for: a wide ring in the text colour over a dark one, so it reads on cloud and on land
+      map.addSource('focus', { type: 'geojson', data: fc([{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [focus.lon, focus.lat] } }]) });
+      map.addLayer({ id: 'focus-case', type: 'circle', source: 'focus', paint: { 'circle-radius': 15, 'circle-color': css('--bg'), 'circle-opacity': 0, 'circle-stroke-color': css('--bg'), 'circle-stroke-width': 6, 'circle-stroke-opacity': 0.7 } });
+      map.addLayer({ id: 'focus', type: 'circle', source: 'focus', paint: { 'circle-radius': 15, 'circle-color': css('--text'), 'circle-opacity': 0, 'circle-stroke-color': css('--text'), 'circle-stroke-width': 2.5 } });
+    }
+  }, [ready, photoDate, peat, outline, sites, points, focus]);
+
+  // the command view: move to the asked point (at once when the reader asked for less motion)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !focus) return;
+    const to = { center: [focus.lon, focus.lat] as [number, number], zoom: Math.max(map.getZoom(), 9.5) };
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) map.jumpTo(to);
+    else map.easeTo({ ...to, duration: 700 });
+  }, [ready, focus]);
+
+  // the command view: the wheel zooms the map where the page itself does not scroll (the map starts as on the classic
+  // page, where the wheel scrolls the page, and is switched once it has loaded)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || freeWheel === undefined) return;
+    if (freeWheel) map.cooperativeGestures.disable(); else map.cooperativeGestures.enable();
+  }, [ready, freeWheel]);
 
   if (failed) {
     return (
@@ -319,7 +352,7 @@ function useLoad<T>(make: (() => Promise<T>) | null, key: string): Load<T> {
 }
 
 /** A phone number as wa.me wants it: digits only, an Indonesian leading 0 written as 62. Empty when too short. */
-function waNumber(raw: string): string {
+export function waNumber(raw: string): string {
   let d = raw.replace(/\D/g, '');
   if (d.startsWith('0')) d = `62${d.slice(1)}`;
   return d.length >= 9 && d.length <= 15 ? d : '';
@@ -329,8 +362,10 @@ type LocState = { s: 'idle' | 'asking' | 'denied' | 'unavailable' } | { s: 'ok';
 
 /** The way back from a resident to the disaster office: a report written for WhatsApp. No backend: this composes a
  *  text and a wa.me link, nothing more. The location is asked for only on the button, lives only in this component's
- *  state, and goes nowhere but into the text the resident sees before sending. */
-function ReportBack({ place, msgLang, phone }: { place: string; msgLang: Lang; phone: string }) {
+ *  state, and goes nowhere but into the text the resident sees before sending.
+ *  `variant`: 'card' is the classic page's card; 'console' is the same report without the card frame, for the command
+ *  view's village panel (styles/nowconsole.css). */
+export function ReportBack({ place, msgLang, phone, variant = 'card' }: { place: string; msgLang: Lang; phone: string; variant?: 'card' | 'console' }) {
   const tr = useTr();
   const [kind, setKind] = useState<'fire' | 'smoke'>('fire');
   const [loc, setLoc] = useState<LocState>({ s: 'idle' });
@@ -359,7 +394,7 @@ function ReportBack({ place, msgLang, phone }: { place: string; msgLang: Lang; p
   const number = waNumber(phone);
   const href = number ? `https://wa.me/${number}?text=${encodeURIComponent(text)}` : waLink(text);
   return (
-    <section className="now-card now-report" aria-labelledby="now-h-report">
+    <section className={variant === 'console' ? 'cmd-report' : 'now-card now-report'} aria-labelledby="now-h-report">
       <p className="now-kicker">{tr('For residents', 'Untuk warga')}</p>
       <h2 id="now-h-report">{tr('Seen fire or smoke? Report it', 'Melihat api atau asap? Laporkan')}</h2>
       <p>{tr('This opens WhatsApp with a report already written. Nothing is sent until you press send in WhatsApp.',
@@ -385,7 +420,9 @@ function ReportBack({ place, msgLang, phone }: { place: string; msgLang: Lang; p
         <span className="now-small" role="status">{copied === true ? tr('Copied.', 'Tersalin.') : copied === false ? tr('Could not copy; select the text instead.', 'Tidak dapat menyalin; pilih teksnya secara manual.') : ''}</span>
       </div>
       <p className="now-small">
-        {number ? tr('It opens a chat with the local post number typed in the message cards above.', 'Ini membuka percakapan dengan nomor posko setempat yang diketik pada kartu pesan di atas.')
+        {number ? (variant === 'console'
+          ? tr('It opens a chat with the local post number typed with the messages above.', 'Ini membuka percakapan dengan nomor posko setempat yang diketik bersama pesan di atas.')
+          : tr('It opens a chat with the local post number typed in the message cards above.', 'Ini membuka percakapan dengan nomor posko setempat yang diketik pada kartu pesan di atas.'))
           : tr('No local post number is typed above, so WhatsApp asks you to pick the contact.', 'Belum ada nomor posko setempat yang diketik di atas, sehingga WhatsApp meminta Anda memilih kontak.')}
         {' '}{tr('This is not an emergency line. In danger, call your local emergency number.', 'Ini bukan saluran darurat. Dalam bahaya, hubungi nomor darurat setempat.')}
       </p>
@@ -404,7 +441,11 @@ function NowIcon({ kind }: { kind: 'bpbd' | 'residents' | 'crew' }) {
   );
 }
 
-export function Now() {
+/** Everything "Today in my district" knows about the district named in the address: the files it loads, the live
+ *  hotspots, the level, the three messages, the district picker and the page's own sentences. Two views draw it and
+ *  neither loads data of its own: the classic page (Now, below) and the command view (pages/CommandConsole.tsx).
+ *  `hrefFor`: the address a view goes to when another district is picked. */
+export function useNowModel(view: { hrefFor: (aoiId: string) => string }) {
   const tr = useTr();
   const lang = useLang();
   const hash = useSyncExternalStore(subscribeHash, readHash);
@@ -548,7 +589,7 @@ export function Now() {
   const [lon, setLon] = useState('');
   const [coordNote, setCoordNote] = useState<string | null>(null);
   const groups = useMemo(() => (list && q.trim().length >= 2 ? searchDistricts(list, q, 12) : []), [list, q]);
-  const go = (id: string) => { setQ(''); setCoordNote(null); window.location.hash = `#/now?aoi=${encodeURIComponent(id)}`; };
+  const go = (id: string) => { setQ(''); setCoordNote(null); window.location.hash = view.hrefFor(id); };
   const findByCoord = (ev: FormEvent) => {
     ev.preventDefault();
     const la = Number(lat.replace(',', '.')), lo = Number(lon.replace(',', '.'));
@@ -567,8 +608,6 @@ export function Now() {
   }, [name, tr]);
 
   const num = (v: number, digits = 0) => fmtNumber(v, lang, digits);
-  // in-page jumps scroll; a "#id" link would change the hash this app routes on
-  const jumpTo = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const place = aoi ? districtTitle(name, lang) : '';
   const levelName = (l: Level) => LEVEL_NAME[l][lang];
   const cut = (i: 0 | 1 | 2) => num(STATUS_CUTS[i] * 100);
@@ -597,6 +636,30 @@ export function Now() {
     { kind: 'crew', title: tr('For the Manggala Agni crew', 'Untuk regu Manggala Agni') },
   ];
 
+  return {
+    tr, lang, hash, asked, districts, aoi, unknownAsked, aoiId, name, box, outline, rows,
+    setTick, liveState, liveData, nowMs, marked, counts, updatedMs, byBox, photoKnown, photoDate, photoDay,
+    monthRow, earlierYears, mf, recordDate, baseline, blindRow, blindSeasons, peat, sites, peatOutline,
+    result, msgLang, setMsgLang, phones, setPhones, copied, setCopied, message, aiFacts, askFacts,
+    q, setQ, lat, setLat, lon, setLon, coordNote, groups, go, findByCoord,
+    num, place, levelName, cut, whyText, rules, liveSource, cards,
+  };
+}
+export type NowModel = ReturnType<typeof useNowModel>;
+
+/** The classic page: one long page of cards (the address '#/now', lib/todayview.ts). */
+export function Now() {
+  const {
+    tr, lang, asked, districts, aoi, unknownAsked, aoiId, name, box, outline, rows,
+    setTick, liveState, liveData, nowMs, marked, counts, updatedMs, byBox, photoKnown, photoDate, photoDay,
+    monthRow, earlierYears, mf, recordDate, baseline, blindRow, blindSeasons, peat, sites, peatOutline,
+    result, msgLang, setMsgLang, phones, setPhones, copied, setCopied, message, aiFacts, askFacts,
+    q, setQ, lat, setLat, lon, setLon, coordNote, groups, go, findByCoord,
+    num, place, levelName, cut, whyText, rules, liveSource, cards,
+  } = useNowModel({ hrefFor: classicHref });
+  // in-page jumps scroll; a "#id" link would change the hash this app routes on
+  const jumpTo = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+
   return (
     <div className="now-page">
       {/* the same top bar as the home sections and the record (components/SiteHeader.tsx) */}
@@ -616,7 +679,11 @@ export function Now() {
                 </button>
               ) : null}
             </div>
-            {aoi ? <p className="now-sub">{aoi.province}{' · '}{tr('where the hotspots are, how many, and who to tell', 'di mana titik panasnya, berapa banyak, dan siapa yang dikabari')}</p> : null}
+            {aoi ? (
+              <p className="now-sub">{aoi.province}{' · '}{tr('where the hotspots are, how many, and who to tell', 'di mana titik panasnya, berapa banyak, dan siapa yang dikabari')}
+                {/* the same district in the three-panel command view (pages/CommandConsole.tsx) */}
+                {' · '}<a className="now-viewlink" href={consoleHref(aoiId)}>{tr('Command view', 'Tampilan komando')}</a></p>
+            ) : null}
           </div>
           <div className="now-find" role="search" aria-label={tr('Pick the district', 'Pilih kabupaten')}>
             <label htmlFor="now-q">{tr('Change district (514 districts and cities)', 'Ganti kabupaten (514 kabupaten dan kota)')}</label>

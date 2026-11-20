@@ -1,0 +1,368 @@
+/* KalenderApi (new file): the command view of "Today in my district" (#/command: pages/CommandConsole.tsx and
+   components/now/DecisionQueue.tsx, VillageThread.tsx, EvidenceList.tsx). Design tokens only (styles/brand.css).
+   A working console, not a stack of cards: one shell, hairlines between its panels, rows, tabs, a stepper, a
+   timestamped thread and a status bar. No shadows. Corners are rounded on controls and chips only (6 px or less).
+   The ember accent marks two things: the one action that waits for the office, and the step the alert has reached.
+   States are small chips, told apart by border and fill, never by colour alone.
+   Widths: under 760 px one column (strip, queue, map, tabs) and the page scrolls; from 760 px the map on top with the
+   queue and the tabs side by side; from 1100 px one screen, three panels, each scrolling on its own. */
+.cmd-page {
+  --cmd-pad: 16px;
+  --cmd-r: 6px;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  overflow-x: clip;
+}
+.cmd-page :where(p, h1, h2, h3, h4, ol, ul, dl, dd, figure) { margin: 0; }
+.cmd-page :where(ol, ul) { padding: 0; list-style: none; }
+.cmd-page :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.cmd-page [tabindex="-1"]:focus-visible { outline-offset: -2px; }
+.cmd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---- words: small mono capitals for labels, mono for facts, quiet notes */
+.cmd-label { font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-small { font-size: 13px; line-height: 1.45; color: var(--text-3); }
+.cmd-text { margin-top: 6px; font-size: 13.5px; color: var(--text-2); }
+.cmd-text b { color: var(--text); }
+.cmd-pad { padding: 14px var(--cmd-pad); }
+.cmd-alert { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--ka-up); border-radius: var(--cmd-r); font-size: 13.5px; color: var(--text); }
+.cmd-alert p + p { margin-top: 6px; }
+
+/* ---- controls */
+.cmd-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--cmd-r); background: transparent; color: var(--text);
+  font: 600 13px/1.2 var(--font-sans); text-decoration: none; text-align: center; cursor: pointer;
+}
+.cmd-btn:hover:not(:disabled) { border-color: var(--text); background: var(--surface-2); }
+.cmd-btn:disabled { opacity: 0.5; cursor: default; }
+.cmd-btn-strong { border-color: var(--text-2); background: var(--surface-2); }
+.cmd-btn-strong:hover:not(:disabled) { background: var(--surface-3); }
+.cmd-btn-accent { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.cmd-btn-accent:hover:not(:disabled) { border-color: var(--accent-strong); background: var(--accent-strong); }
+.cmd-btn-icon { width: 40px; padding: 0; flex: none; }
+.cmd-link {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 2px; border: 0; background: none; color: var(--text-2);
+  font: 600 13px/1.2 var(--font-sans); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; cursor: pointer;
+}
+.cmd-link:hover:not(:disabled) { color: var(--text); text-decoration-color: var(--text); }
+.cmd-link:disabled { opacity: 0.6; cursor: default; }
+.cmd-page label { display: block; margin: 10px 0 4px; font-size: 13px; color: var(--text-2); }
+.cmd-page input[type="search"], .cmd-page input[type="tel"], .cmd-page input[type="text"], .cmd-coord input {
+  width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--cmd-r);
+  background: var(--surface-2); color: var(--text); font: inherit;
+}
+.cmd-page input::placeholder { color: var(--text-3); opacity: 0.8; }
+.cmd-seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--cmd-r); overflow: hidden; }
+.cmd-seg button { min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-2); font: 600 12.5px var(--font-sans); cursor: pointer; }
+.cmd-seg button[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
+.cmd-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 8px; }
+.cmd-row .cmd-row-actions .cmd-btn { padding: 0 10px; }
+
+/* ---- chips: a state in a few letters */
+.cmd-chip {
+  display: inline-flex; align-items: center; flex: none; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 4px;
+  font: 500 10.5px/1.5 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); white-space: nowrap;
+}
+.cmd-chip.is-waiting { border-color: var(--text-2); color: var(--text); }
+.cmd-chip.is-held { border-style: dashed; }
+.cmd-chip.is-approved { border-color: transparent; background: var(--surface-3); color: var(--text); }
+.cmd-chip.is-done { border-color: var(--border); color: var(--text-3); }
+/* a chip the office ticks itself (a queue row marked done): a small box in it says so; the target around it is 40 px */
+.cmd-chip-tick { position: relative; gap: 5px; background: transparent; cursor: pointer; }
+.cmd-chip-tick::after { content: ""; position: absolute; inset: -11px -6px; }
+.cmd-chip-tick i { display: grid; place-items: center; width: 10px; height: 10px; border: 1px solid currentColor; border-radius: 2px; }
+.cmd-chip-tick svg { width: 8px; height: 8px; }
+.cmd-chip-tick:hover { border-color: var(--text); color: var(--text); }
+/* this month against the usual month: the same meaning as the classic page's chips */
+.cmd-chip-below { border-color: var(--ka-down); }
+.cmd-chip-above { border-color: var(--accent-strong); }
+.cmd-chip-far-above { border-color: var(--ka-up); background: var(--accent-soft); }
+
+/* ---- disclosures */
+.cmd-more > summary { display: inline-flex; align-items: center; min-height: 40px; cursor: pointer; font: 600 13px/1.2 var(--font-sans); color: var(--text-2); }
+.cmd-more > summary:hover { color: var(--text); }
+.cmd-more[open] > summary { color: var(--text); }
+.cmd-more > p + p { margin-top: 8px; }
+
+/* ---- the status strip */
+.cmd-strip {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
+  padding: 12px var(--cmd-pad); border-bottom: 1px solid var(--border); background: var(--surface);
+}
+.cmd-title { margin-top: 2px; font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+.cmd-title-why { font-family: var(--font-sans); font-variation-settings: normal; font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--text-2); }
+.cmd-next { margin-top: 4px; font-size: 14px; color: var(--text); }
+.cmd-next .cmd-label { margin-right: 6px; }
+.cmd-next-go { min-height: 0; padding: 2px 0; color: var(--text); font-size: 14px; text-align: left; }
+.cmd-limits { margin-top: 8px; }
+.cmd-strip .cmd-small { margin-top: 4px; }
+.cmd-counters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 20px; }
+.cmd-counters dt { font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.cmd-counters dd { margin-top: 2px; font: 500 26px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
+.cmd-strip-pick { justify-self: start; }
+
+/* ---- the shell */
+.cmd-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.cmd-grid-empty { min-height: 40vh; }
+.cmd-queue, .cmd-centre, .cmd-side { min-width: 0; border-bottom: 1px solid var(--border); }
+.cmd-side { border-bottom: 0; }
+
+/* ---- left: the decision queue */
+.cmd-head { padding: 12px var(--cmd-pad) 8px; }
+.cmd-head h2 { margin-top: 2px; font-family: var(--font-display); font-size: 21px; line-height: 1.2; color: var(--text); }
+.cmd-steps-block { padding: 0 var(--cmd-pad) 10px; border-bottom: 1px solid var(--border); }
+.cmd-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 8px; }
+.cmd-steps li { position: relative; display: grid; justify-items: center; align-content: start; gap: 3px; text-align: center; color: var(--text-3); }
+.cmd-steps li::before { content: ""; position: absolute; top: 12px; right: 50%; width: 100%; height: 1px; background: var(--border-strong); }
+.cmd-steps li:first-child::before { display: none; }
+.cmd-step-dot {
+  position: relative; z-index: 1; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--text-3); font: 500 11.5px/1 var(--font-mono);
+}
+.cmd-step-name { font-size: 12px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.cmd-step-time { font: 500 11px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; }
+.cmd-steps li.is-done { color: var(--text-2); }
+.cmd-steps li.is-done .cmd-step-dot { border-color: var(--text-2); color: var(--text); }
+.cmd-steps li.is-done::before, .cmd-steps li.is-current::before { background: var(--text-2); }
+.cmd-steps li.is-current { color: var(--text); }
+.cmd-steps li.is-current .cmd-step-dot { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.cmd-steps-status { margin-top: 8px; font-size: 13px; color: var(--text-2); }
+
+.cmd-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 0 6px; padding: 11px var(--cmd-pad) 9px; border-bottom: 1px solid var(--border); }
+.cmd-row-n { display: flex; align-items: center; height: 19px; font: 500 12px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-3); }
+.cmd-row-main { min-width: 0; }
+.cmd-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cmd-row-title { font: 600 14.5px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
+.cmd-row-top .cmd-chip { margin-top: 1px; }
+.cmd-fact { margin-top: 4px; font: 400 12.5px/1.45 var(--font-mono); color: var(--text-2); overflow-wrap: anywhere; }
+.cmd-why-btn { margin-left: auto; }
+.cmd-why { margin-top: 2px; padding-left: 10px; border-left: 2px solid var(--border-strong); font-size: 13px; line-height: 1.45; color: var(--text-2); }
+.cmd-row.is-done .cmd-row-title, .cmd-row.is-done .cmd-fact { color: var(--text-3); }
+.cmd-row.is-new { background: var(--surface); }
+.cmd-queue-foot { display: grid; gap: 4px; padding: 12px var(--cmd-pad) 16px; }
+.cmd-rules { display: grid; gap: 0; margin-top: 6px; }
+.cmd-rules li { padding: 8px 0 8px 10px; border-top: 1px solid var(--border); border-left: 2px solid transparent; font-size: 13px; color: var(--text-2); }
+.cmd-rules li b { color: var(--text); }
+.cmd-rules li.is-on { border-left-color: var(--text); color: var(--text); }
+.cmd-guide { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.cmd-guide-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cmd-guide ol { display: grid; gap: 4px; padding-left: 20px; list-style: decimal; font-size: 13px; color: var(--text-2); }
+.cmd-queue-end { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: 8px; }
+
+/* ---- centre: the map, then the last seven days and the newest hotspots */
+.cmd-centre { display: flex; flex-direction: column; min-height: 0; }
+.cmd-map { position: relative; flex: none; height: 62vh; min-height: 320px; max-height: 560px; background: var(--surface-2); }
+.cmd-map .now-map { height: 100%; border: 0; border-radius: 0; }
+.cmd-map:has(> .now-note) { height: auto; min-height: 0; }
+.cmd-map .now-note { margin: var(--cmd-pad); padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--cmd-r); background: var(--surface); font-size: 13.5px; color: var(--text-2); }
+.cmd-map-flag {
+  position: absolute; left: 10px; right: 56px; bottom: 10px; padding: 8px 10px; border: 1px solid var(--ka-up); border-radius: var(--cmd-r);
+  background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; pointer-events: none;
+}
+.cmd-under { padding: 8px var(--cmd-pad) 10px; border-top: 1px solid var(--border); background: var(--surface); }
+.cmd-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: 12.5px; color: var(--text-2); }
+.cmd-legend-photo { margin-left: auto; font: 500 12px/1.4 var(--font-mono); color: var(--text-3); }
+.cmd-week { margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--border); }
+.cmd-week-cap { font-size: 12.5px; color: var(--text-3); }
+.cmd-week-cap b { font-weight: 600; color: var(--text-2); }
+.cmd-week-cells { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 6px; }
+.cmd-week-cells li { position: relative; display: grid; gap: 5px; min-width: 0; padding: 5px 6px 6px; background: var(--surface-2); }
+.cmd-week-n { font: 500 15px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-3); }
+.cmd-week-cells li.has .cmd-week-n { color: var(--text); }
+.cmd-week-bar { display: flex; height: 4px; background: var(--surface-3); }
+.cmd-week-bar .is-viirs { background: var(--ka-viirs); }
+.cmd-week-bar .is-modis { background: var(--ka-modis); }
+.cmd-week-ticks { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font: 500 11px/1.4 var(--font-mono); color: var(--text-3); }
+.cmd-scroll-x { overflow-x: auto; }
+.cmd-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cmd-table th, .cmd-table td { padding: 0 7px; height: 40px; border-top: 1px solid var(--border); color: var(--text-2); text-align: left; white-space: nowrap; }
+.cmd-table th { position: relative; height: 30px; font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+.cmd-table .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---- right: three tabs */
+.cmd-side { display: flex; flex-direction: column; min-height: 0; }
+.cmd-tabs { display: flex; flex: none; padding: 0 calc(var(--cmd-pad) - 10px); border-bottom: 1px solid var(--border); }
+.cmd-tabs button {
+  min-height: 44px; margin-bottom: -1px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none;
+  color: var(--text-2); font: 600 14px/1.2 var(--font-sans); cursor: pointer;
+}
+.cmd-tabs button:hover { color: var(--text); }
+.cmd-tabs button[aria-selected="true"] { border-bottom-color: var(--text); color: var(--text); }
+.cmd-tabpanel { flex: 1 1 auto; min-height: 0; }
+.cmd-tabpanel[hidden] { display: none; }
+.cmd-sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+
+/* the village thread: time, who, the text */
+.cmd-thread-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 12px var(--cmd-pad) 10px; }
+.cmd-thread-name { font: 600 11px/1.4 var(--font-mono); font-variation-settings: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
+.cmd-thread-sub { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+.cmd-lines { padding: 0 var(--cmd-pad); }
+.cmd-line { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.cmd-line-time { font: 500 12.5px/1.5 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); }
+.cmd-line-time small { display: block; font-size: 10px; letter-spacing: 0.06em; color: var(--text-3); }
+.cmd-line-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 600 11px/1.6 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-line.is-resident .cmd-line-who { color: var(--text); }
+.cmd-line-text { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; color: var(--text); }
+.cmd-line.is-draft .cmd-line-text { color: var(--text-2); }
+.cmd-thread-note { padding: 2px var(--cmd-pad) 8px; font-size: 13px; color: var(--text-2); }
+.cmd-thread-note .cmd-row-actions { margin-top: 6px; }
+.cmd-replies { padding: 10px var(--cmd-pad) 14px; border-top: 1px solid var(--border); }
+.cmd-send, .cmd-others, .cmd-report { padding: 12px var(--cmd-pad); border-top: 1px solid var(--border); }
+.cmd-send .cmd-small { margin-top: 4px; }
+.cmd-msg-title { margin-top: 10px; font: 600 14px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
+.cmd-msg { padding: 2px 0 12px; border-top: 1px solid var(--border); }
+.cmd-msg-text, .cmd-page .now-msg-text {
+  margin: 6px 0 0; padding: 0 0 0 10px; border: 0; border-left: 2px solid var(--border-strong); border-radius: 0; background: none;
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; line-height: 1.5; color: var(--text-2);
+}
+.cmd-others > summary { min-height: 40px; }
+
+/* the classic page's own parts inside the console (the AI draft, the resident's report, the assistant): the same
+   markup and words, drawn without card frames */
+.cmd-page .now-btn { min-height: 40px; padding: 0 12px; border-radius: var(--cmd-r); background: transparent; font-size: 13px; }
+.cmd-page .now-btn:hover:not(:disabled) { border-color: var(--text); background: var(--surface-2); }
+.cmd-page .now-btn-primary, .cmd-page .now-btn-primary:hover:not(:disabled) { border-color: var(--text-2); background: var(--surface-2); color: var(--text); }
+.cmd-page .now-small { margin: 6px 0 0; font-size: 13px; color: var(--text-3); }
+.cmd-page .now-note { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--cmd-r); background: transparent; font-size: 13px; color: var(--text-2); }
+.cmd-page .now-kicker { margin: 0; font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-page .now-seg { border-radius: var(--cmd-r); }
+.cmd-page .now-seg button { min-height: 40px; }
+.cmd-page .now-seg button[aria-pressed="true"] { background: var(--surface-3); text-decoration: none; }
+.cmd-page .now-msg-actions, .cmd-page .now-report-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 0 0; }
+.cmd-page .now-ai { margin-top: 0; padding-top: 12px; border-top: 1px solid var(--border); }
+.cmd-page .now-ai-card { display: grid; gap: 2px; margin-top: 8px; padding: 0; border: 0; border-radius: 0; background: none; }
+.cmd-page .now-ai-label { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.cmd-report h2 { margin: 2px 0 4px; font: 600 14.5px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
+.cmd-report > p { font-size: 13px; color: var(--text-2); }
+
+.cmd-page .ka-ask { margin: 0; padding: 12px var(--cmd-pad) 16px; }
+.cmd-page .ka-ask h2 { margin: 2px 0 6px; font: 600 15px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
+.cmd-page .ka-ask > p { font-size: 13px; color: var(--text-2); }
+.cmd-page .ka-ask-chips { gap: 6px; margin: 10px 0; }
+.cmd-page .ka-ask-chip { min-height: 40px; padding: 6px 10px; border-radius: var(--cmd-r); font-size: 13px; }
+.cmd-page .ka-ask-chip:hover:not(:disabled) { border-color: var(--text); background: var(--surface-2); }
+.cmd-page .ka-ask-chip:focus-visible, .cmd-page .ka-ask-input:focus-visible, .cmd-page .ka-ask-log:focus-visible { outline-color: var(--focus); }
+.cmd-page .ka-ask-log { gap: 0; min-height: 96px; max-height: none; padding: 0; border: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; background: none; }
+.cmd-page .ka-ask-empty { padding: 20px 0; }
+.cmd-page .ka-ask-bubble { align-self: stretch; max-width: none; padding: 10px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; font-size: 14px; }
+.cmd-page .ka-ask-bubble:first-child { border-top: 0; }
+.cmd-page .ka-ask-bubble.is-mine { align-self: stretch; border-radius: 0; background: none; color: var(--text-2); }
+.cmd-page .ka-ask-who { letter-spacing: 0.08em; }
+.cmd-page .ka-ask-input { min-height: 40px; border-radius: var(--cmd-r); font-size: 14px; }
+.cmd-page .ka-ask-form .now-btn { min-height: 40px; padding-inline: 16px; }
+
+/* the evidence: a ledger, the word on the left and its number on the right */
+.cmd-ev { padding: 12px var(--cmd-pad); border-top: 1px solid var(--border); }
+.cmd-ev:first-child { border-top: 0; }
+.cmd-ev > .cmd-label + p, .cmd-ev > .cmd-sec-head + p { margin-top: 6px; }
+.cmd-ev > .cmd-small + .cmd-text { margin-top: 8px; }
+.cmd-facts { margin-top: 4px; }
+.cmd-facts > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); }
+.cmd-facts > div:first-child { border-top: 0; }
+.cmd-facts dt { font-size: 13.5px; color: var(--text-2); }
+.cmd-num { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font: 500 20px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
+.cmd-val { font: 500 12.5px/1.4 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); text-align: right; }
+.cmd-facts-sub { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 2px; font-size: 12.5px; color: var(--text-3); }
+.cmd-facts-sub b { font-family: var(--font-mono); font-weight: 500; color: var(--text-2); }
+.cmd-facts-sub em { color: var(--ka-up); font-style: normal; }
+.cmd-sites { margin-top: 4px; }
+.cmd-sites li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 0 8px; align-items: start; padding: 6px 0; border-top: 1px solid var(--border); }
+.cmd-sites-n { font: 500 12px/1.6 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-3); }
+.cmd-sites-at { font: 500 12.5px/1.5 var(--font-mono); color: var(--text); }
+.cmd-sites-facts { font-size: 12.5px; color: var(--text-3); }
+.cmd-links a {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; border-top: 1px solid var(--border);
+  color: var(--text); font-size: 13.5px; font-weight: 600; text-decoration: none;
+}
+.cmd-links a:first-of-type { margin-top: 4px; }
+.cmd-links a::after { content: "\203A"; color: var(--text-3); }
+.cmd-links a:hover { color: var(--accent-strong); }
+
+/* ---- the status bar */
+.cmd-bar {
+  display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 0 18px; min-height: 41px; padding: 0 var(--cmd-pad);
+  border-top: 1px solid var(--border); background: var(--surface); font: 400 12px/1.4 var(--font-mono); color: var(--text-3);
+}
+.cmd-bar-item { padding: 6px 0; }
+.cmd-bar-item.is-warn { color: var(--ka-up); }
+.cmd-bar-dot { display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; border: 1px solid var(--text-3); }
+.cmd-bar-dot.is-on { border-color: var(--text); background: var(--text); }
+.cmd-bar .cmd-link { font: inherit; font-weight: 500; }
+.cmd-bar-end { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+
+/* ---- the two sheets (the district picker, the fine print) */
+.cmd-dialog {
+  width: min(480px, calc(100vw - 32px)); max-height: min(640px, calc(100dvh - 32px)); padding: 0;
+  border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text);
+}
+.cmd-dialog::backdrop { background: color-mix(in srgb, var(--bg) 76%, transparent); }
+.cmd-dialog-in { padding: 12px 16px 16px; }
+.cmd-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cmd-dialog-head h2 { font-family: var(--font-display); font-size: 19px; line-height: 1.2; color: var(--text); }
+.cmd-results { max-height: 260px; margin-top: 6px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--cmd-r); }
+.cmd-results button {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px;
+  border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.cmd-results li:first-child button { border-top: 0; }
+.cmd-results button:hover { background: var(--surface-2); }
+.cmd-results small { color: var(--text-3); text-align: right; }
+.cmd-coord { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.cmd-coord .cmd-label, .cmd-coord .cmd-btn, .cmd-coord-note { grid-column: 1 / -1; }
+.cmd-coord .cmd-btn { margin-top: 10px; }
+.cmd-coord-note { margin-top: 8px; }
+.cmd-fine { display: grid; gap: 8px; margin-top: 8px; padding-left: 18px; list-style: disc; font-size: 13.5px; color: var(--text-2); }
+
+@media (min-width: 760px) {
+  .cmd-strip { grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px 28px; }
+  .cmd-counters { display: flex; gap: 28px; }
+  .cmd-counters dt { white-space: nowrap; }
+  .cmd-strip-pick { justify-self: end; }
+  .cmd-grid { grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); grid-template-areas: "map map" "queue side"; }
+  .cmd-centre { grid-area: map; }
+  .cmd-queue { grid-area: queue; border-right: 1px solid var(--border); border-bottom: 0; }
+  .cmd-side { grid-area: side; }
+}
+@media (min-width: 1100px) {
+  .cmd-page { height: 100vh; height: 100dvh; min-height: 600px; }
+  .cmd-grid { grid-template-columns: clamp(320px, 25vw, 360px) minmax(0, 1fr) clamp(340px, 28vw, 400px); grid-template-areas: "queue map side"; }
+  .cmd-queue, .cmd-under, .cmd-tabpanel { overflow-y: auto; }
+  .cmd-narrow-only { display: none; }
+  .cmd-centre { border-right: 1px solid var(--border); border-bottom: 0; }
+  .cmd-map { flex: 1 1 auto; height: auto; min-height: 220px; max-height: none; }
+  .cmd-under { flex: 0 1 auto; max-height: 48%; }
+  /* no map (WebGL is missing): its note takes one line and the numbers under it take the room */
+  .cmd-map:has(> .now-note) { flex: none; min-height: 0; }
+  .cmd-map:has(> .now-note) + .cmd-under { flex: 1 1 auto; max-height: none; }
+}
+/* one screen on a low laptop (1366 x 768): tighter, so the third row's buttons are in view without scrolling the queue */
+@media (min-width: 1100px) and (max-height: 820px) {
+  .cmd-strip { padding-top: 8px; padding-bottom: 8px; }
+  .cmd-head { padding: 8px var(--cmd-pad) 4px; }
+  .cmd-head h2 { font-size: 19px; }
+  .cmd-steps, .cmd-steps-status { margin-top: 6px; }
+  .cmd-row { padding-top: 8px; padding-bottom: 6px; }
+  .cmd-row .cmd-row-actions { margin-top: 6px; }
+}
+/* where the page scrolls, a jump (to the map, a row, the thread, the peat list) stops below the sticky top bar */
+@media (max-width: 1099px) {
+  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, #cmd-peat { scroll-margin-top: 68px; }
+}
+@media (max-width: 759px) {
+  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, #cmd-peat { scroll-margin-top: 140px; }
+  .cmd-map { height: 56vh; }
+  .cmd-legend-photo { margin-left: 0; }
+  .cmd-bar { padding-top: 4px; padding-bottom: 4px; }
+  .cmd-bar-end { margin-left: 0; }
+}
+/* on paper: no map and no controls (as the classic page), one column, and all three tabs one after the other */
+@media print {
+  .cmd-page { display: block; height: auto; min-height: 0; background: none; }
+  .cmd-grid { display: block; }
+  .cmd-queue, .cmd-under, .cmd-tabpanel { overflow: visible; }
+  .cmd-map, .cmd-btn, .cmd-link, .cmd-tabs, .cmd-seg, .cmd-bar-end, .cmd-page .now-btn, .cmd-page .now-seg { display: none; }
+  .cmd-tabpanel[hidden] { display: block; }
+}
