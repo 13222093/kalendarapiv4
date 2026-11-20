@@ -842,3 +842,99 @@ No existing season or visibility file was modified.
 - Seen while reading, not changed: `build_visibility.py` places a VIIRS hotspot with `int((lon - W) / STEP)` in floating
   point, which puts a hotspot lying exactly on a cell edge one cell off (113.42 gives column 271, not 272). It only
   decides which of two neighbouring cells is marked fire in the visibility layer; the peat index does not use that mark.
+
+## 16. The days of the record (the "Every day" calendar), added 21 November 2026
+
+The monthly record counted per local date instead of per month, for the same 554 areas (Indonesia, 5 island regions,
+34 provinces, 514 districts), written to `app/public/ka-data/daily/`. No new source and no new method: the same rows
+the monthly record counts, and the month's own conversion. The format is documented in the header of the export script
+and again in `index.json` (`notes`, `file_format`).
+
+### 16.1 Commands and run time (21 November, local time; no network)
+
+```
+python pipeline/daily/build_everyday_days.py --data-raw <path to data-raw>      (26.6 s)
+python pipeline/daily/check_everyday_days.py                                      (8.7 s, exit 0)
+```
+
+Run with Python 3.12.8, numpy 2.2.6 and pyarrow 21.0.0 (the two packages the export needs; the check needs none).
+`--data-raw` defaults to `data-raw/` in the project root; it is only read. The export deletes and rewrites the `*.json`
+of its own folder and writes `index.json` last.
+
+### 16.2 Inputs and checksums
+
+| Input | sha256 |
+|---|---|
+| `data-raw/ss/derived/daily_cell_labeled.parquet` (4,203,025 rows, the archive to 2025; same row count as `daily_cell.parquet`) | `646e1747394d616502989af4521670b61e380f5a6e786675cc01acf56a2016dd` |
+| `data-raw/ss/derived/daily_cell_labeled_2026nrt.parquet` (1,242,009 rows, 2026) | `6f25537adae047de56bb4f18a6fb657cb2dd11a313d4dd34e183be0ccf1fc1ed` |
+| `app/public/ss-data/index.json` and the 40 `monthly_*.json` it lists (months, `H`, raw columns, `sensor_used`, flags) | `70a2db763c4ba3634d8c42e76bbfc1e763fddb06196c0248dd29d79bd9f67ff8` (index, the value of 14.4) |
+| `app/public/ss-data/districts/index.json` and the 514 `monthly_kab-*.json` (the same fields; `locked`) | `b303bfbe7644a69e9ab552df24808a585263629e6c184764269b06fb2dc4d6ba` (index, the value of 13.5) |
+| `app/public/ss-data/districts/cells.json` (0.05 degree cell to district) | `e69e6e9946066034c63d6d36bb8859cb8ee79f332e5f95980f534742da39932d` (the value of 13.5) |
+
+### 16.3 Method
+
+- **Rows.** One row of the labelled table is one fire cell-day (0.01 degree cell x local date x satellite x day or night
+  pass). As in the bundle (`bundle.with_nrt`), archive rows at or after the first month of the 2026 table are dropped
+  (2 rows), and NOAA-21 has no column (378,439 rows left out). 5,066,593 rows are counted; none lies outside the 313
+  months of the record.
+- **Areas.** Indonesia: every row. Region: `island_region`. Province: the row's `province` label (22,514 rows have none
+  and are in no province, as in the monthly record). District: the row's 0.05 degree cell (`grid.py`, the same EPS) looked
+  up in `districts/cells.json` (1,554 rows have no district, the 0.031% of 13.2).
+- **One scale.** A day's value = the day's cell-days of the month's `sensor_used` x (the month's `H` / the month's raw
+  count of that sensor), both from the same area's monthly row; rounded to 3 decimals. The factor is 1 from July 2002 to
+  December 2021 (Aqua's own count). From 2022 (VIIRS) and before July 2002 (Terra) it is one factor for the whole month,
+  so those days are **approximate**; no finer factor was fitted. District days inherit the district month, which is
+  itself the province's conversion (13.2).
+- **No value is not zero.** A day is a zero only when the month's sensor has data and recorded nothing in the area. It
+  has no value outside the sensor's first and last local date in the files (Aqua 2002-07-04, Terra 2000-11-01, S-NPP
+  2012-01-20, NOAA-20 2018-04-01; last 2026-11-13, S-NPP 2026-11-02), in a month the monthly record has no value for
+  (704 area-months: 702 province and 2 region months in which no sensor saw fire), and on the dates on which the sensor
+  recorded nothing anywhere in Indonesia (`silent_days`: Aqua 375, Terra 767, S-NPP 53, NOAA-20 6). The files cannot tell
+  a sensor that was off from a true nationwide zero, so those dates are not called zero. The long runs match known
+  outages (Aqua 17 August to 2 September 2020 and Terra 11 to 23 October 2022, the days without a FireMask file in 14.2;
+  S-NPP 27 July to 10 August 2022); most single MODIS dates are wet-season days.
+- **Flags.** Provisional and partial are the month's `flag_nrt` and `flag_partial` (2026-01 to 2026-11; 2026-11).
+
+### 16.4 The 2019 lock
+
+The rows of 1 January to 31 October 2019 are dropped for the 14 districts of Central Kalimantan **and for the province
+itself** before anything is counted; no file holds a day of theirs, the scripts print nothing about them, and the check
+skips those 150 area-months (140 district, 10 province). The scope was read from `ss-data/districts/index.json` `locked`
+(the district export, 13.2 and 14.8) and, for the province, from `app/src/lib/record.ts` (`HELD`, `lockedMonths`: "this
+app adds no new statistic for those months"): the province's months stay in the monthly record as before, but a day's
+value would be a new statistic, so the days are withheld (`WITHHOLD_PROVINCE_DAYS` in the export). Indonesia and the
+Kalimantan region keep those days, as they keep those months. The page shows the days as withheld, never as zero.
+
+### 16.5 Check: the days add up to the months
+
+`check_everyday_days.py` reads the written files back (plain json, apart from the export) for every area and month.
+
+| Measure | Result |
+|---|---|
+| area-months | 173,402 (554 areas x 313 months); 150 withheld and not compared; 172,548 with a monthly value; 704 without |
+| each sensor's days summed against the month's raw column | 693,008 sums compared, **0 different** |
+| the days' one-scale values summed against the month's `H` | largest difference **0.008** (`kab-sumbawa-barat` 2026-08); by level: national 0.0059, regions 0.0068, provinces 0.0079, districts 0.008. Rounding of the days to 3 decimals only (31 days x 0.0005 = 0.0155 at most) |
+| a withheld month has no day in any file; `h` is null exactly where the rules give no value; month codes equal the monthly record | all hold |
+
+### 16.6 Output
+
+| Files | Content | Bytes |
+|---|---|---:|
+| `daily/index.json` | notes, format, sensors' first and last day and silent days, the withheld scope, the check, `areas` | 44,854 |
+| `daily/IDN.json` | 9,386 listed days | 155,736 |
+| `daily/region-*.json` (5) | 39,286 listed days | 576,410 |
+| `daily/prov-*.json` (34) | 150,780 listed days | 2,114,091 |
+| `daily/kab-*.json` (514) | 593,518 listed days | 8,540,910 |
+
+555 files, 11,432,001 bytes. A file lists only the dates with at least one cell-day. sha256 of `index.json`:
+`421927155379f20995fecb84852629f4f71d98814e4f582fe51d598e277263e3` (it carries the run time, so it changes with a
+re-run); sha256 of the sorted list of `<name> <sha256>` lines of the 554 area files (the same on a re-run):
+`ec44c9b8f592993bbe85a6e26932252dc252a4316175849362146c41b11f2eb7`.
+
+### 16.7 What was not done
+
+- No day-level uncertainty: the 90% range of a month is not shared out to its days.
+- No cloud view per day outside the Central Kalimantan seasons (sections 7 and 14); a zero is not proof that nothing burned.
+- The sensors' outage days were not looked up in NASA's own records; `silent_days` is derived from the files alone.
+- App: `app/src/lib/everyday.ts`, `components/record/EveryDay.tsx` (section "Every day" of `#/record`, `sec=days`, `y=`),
+  36 unit tests in `everyday.test.ts`.
