@@ -22,7 +22,7 @@
 .cmd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ---- words: small mono capitals for labels, mono for facts, quiet notes */
-.cmd-label { font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-label { font: 500 11.5px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
 .cmd-small { font-size: 13px; line-height: 1.45; color: var(--text-3); }
 .cmd-text { margin-top: 6px; font-size: 13.5px; color: var(--text-2); }
 .cmd-text b { color: var(--text); }
@@ -59,12 +59,13 @@
 .cmd-seg button { min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-2); font: 600 12.5px var(--font-sans); cursor: pointer; }
 .cmd-seg button[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
 .cmd-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 8px; }
-.cmd-row .cmd-row-actions .cmd-btn { padding: 0 10px; }
+.cmd-row .cmd-row-actions { gap: 4px 6px; }
+.cmd-row .cmd-row-actions .cmd-btn { padding: 0 8px; }
 
 /* ---- chips: a state in a few letters */
 .cmd-chip {
   display: inline-flex; align-items: center; flex: none; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 4px;
-  font: 500 10.5px/1.5 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); white-space: nowrap;
+  font: 500 11.5px/1.45 var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-2); white-space: nowrap;
 }
 .cmd-chip.is-waiting { border-color: var(--text-2); color: var(--text); }
 .cmd-chip.is-held { border-style: dashed; }
@@ -92,6 +93,20 @@
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
   padding: 12px var(--cmd-pad); border-bottom: 1px solid var(--border); background: var(--surface);
 }
+.cmd-strip-lead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; min-width: 0; }
+.cmd-strip-main { flex: 1 1 280px; min-width: 0; }
+/* The level: the first thing in the strip, with the classic page's treatment by level (styles/now.css .now-badge and
+   .now-level: a stronger border for Watch, the "up" colour and a tint for High, plain for Calm and for "Not set"). */
+.cmd-level {
+  flex: none; display: grid; align-content: center; gap: 1px; min-width: 104px; min-height: 60px; padding: 6px 16px 7px;
+  border: 2px solid var(--border-strong); border-radius: var(--cmd-r); background: var(--surface-2); color: var(--text);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.cmd-level span { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-level b { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+.cmd-level-watch { border-color: var(--accent-strong); }
+.cmd-level-high { border-color: var(--ka-up); background: var(--accent-soft); }
+.cmd-level:hover { border-color: var(--text); }
 .cmd-title { margin-top: 2px; font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
 .cmd-title-why { font-family: var(--font-sans); font-variation-settings: normal; font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--text-2); }
 .cmd-next { margin-top: 4px; font-size: 14px; color: var(--text); }
@@ -100,7 +115,7 @@
 .cmd-limits { margin-top: 8px; }
 .cmd-strip .cmd-small { margin-top: 4px; }
 .cmd-counters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 20px; }
-.cmd-counters dt { font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.cmd-counters dt { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .cmd-counters dd { margin-top: 2px; font: 500 26px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
 .cmd-strip-pick { justify-self: start; }
 
@@ -113,6 +128,8 @@
 /* ---- left: the decision queue */
 .cmd-head { padding: 12px var(--cmd-pad) 8px; }
 .cmd-head h2 { margin-top: 2px; font-family: var(--font-display); font-size: 21px; line-height: 1.2; color: var(--text); }
+.cmd-head-count { margin-top: 1px; font-size: 13.5px; color: var(--text-2); }
+.cmd-queue:focus-visible { outline-offset: -2px; }
 .cmd-steps-block { padding: 0 var(--cmd-pad) 10px; border-bottom: 1px solid var(--border); }
 .cmd-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 8px; }
 .cmd-steps li { position: relative; display: grid; justify-items: center; align-content: start; gap: 3px; text-align: center; color: var(--text-3); }
@@ -123,7 +140,7 @@
   border: 1px solid var(--border-strong); background: var(--bg); color: var(--text-3); font: 500 11.5px/1 var(--font-mono);
 }
 .cmd-step-name { font-size: 12px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
-.cmd-step-time { font: 500 11px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; }
+.cmd-step-time { font: 500 11.5px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; }
 .cmd-steps li.is-done { color: var(--text-2); }
 .cmd-steps li.is-done .cmd-step-dot { border-color: var(--text-2); color: var(--text); }
 .cmd-steps li.is-done::before, .cmd-steps li.is-current::before { background: var(--text-2); }
@@ -138,7 +155,9 @@
 .cmd-row-title { font: 600 14.5px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
 .cmd-row-top .cmd-chip { margin-top: 1px; }
 .cmd-fact { margin-top: 4px; font: 400 12.5px/1.45 var(--font-mono); color: var(--text-2); overflow-wrap: anywhere; }
-.cmd-why-btn { margin-left: auto; }
+/* a row's buttons wrap among themselves; "Why" keeps its place on their first line, at the right */
+.cmd-row-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; align-items: start; margin-top: 8px; }
+.cmd-row-foot .cmd-row-actions { margin-top: 0; }
 .cmd-why { margin-top: 2px; padding-left: 10px; border-left: 2px solid var(--border-strong); font-size: 13px; line-height: 1.45; color: var(--text-2); }
 .cmd-row.is-done .cmd-row-title, .cmd-row.is-done .cmd-fact { color: var(--text-3); }
 .cmd-row.is-new { background: var(--surface); }
@@ -175,11 +194,11 @@
 .cmd-week-bar { display: flex; height: 4px; background: var(--surface-3); }
 .cmd-week-bar .is-viirs { background: var(--ka-viirs); }
 .cmd-week-bar .is-modis { background: var(--ka-modis); }
-.cmd-week-ticks { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font: 500 11px/1.4 var(--font-mono); color: var(--text-3); }
+.cmd-week-ticks { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font: 500 11.5px/1.4 var(--font-mono); color: var(--text-3); }
 .cmd-scroll-x { overflow-x: auto; }
 .cmd-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .cmd-table th, .cmd-table td { padding: 0 7px; height: 40px; border-top: 1px solid var(--border); color: var(--text-2); text-align: left; white-space: nowrap; }
-.cmd-table th { position: relative; height: 30px; font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+.cmd-table th { position: relative; height: 30px; font: 500 11.5px/1.3 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
 .cmd-table .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 /* ---- right: three tabs */
@@ -192,26 +211,41 @@
 .cmd-tabs button:hover { color: var(--text); }
 .cmd-tabs button[aria-selected="true"] { border-bottom-color: var(--text); color: var(--text); }
 .cmd-tabpanel { flex: 1 1 auto; min-height: 0; }
-.cmd-tabpanel[hidden] { display: none; }
+/* a tab that is not open (a class, not the hidden attribute, so that paper can show all three) */
+.cmd-tabpanel.is-off { display: none; }
 .cmd-sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
 
 /* the village thread: time, who, the text */
-.cmd-thread-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 12px var(--cmd-pad) 10px; }
-.cmd-thread-name { font: 600 11px/1.4 var(--font-mono); font-variation-settings: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
-.cmd-thread-sub { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+.cmd-thread-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; padding: 10px var(--cmd-pad) 8px; }
+.cmd-thread-name { font: 600 11.5px/1.4 var(--font-mono); font-variation-settings: normal; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text); }
+.cmd-thread-sub { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); }
 .cmd-lines { padding: 0 var(--cmd-pad); }
 .cmd-line { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 10px; padding: 10px 0; border-top: 1px solid var(--border); }
 .cmd-line-time { font: 500 12.5px/1.5 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); }
-.cmd-line-time small { display: block; font-size: 10px; letter-spacing: 0.06em; color: var(--text-3); }
-.cmd-line-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 600 11px/1.6 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-line-time small { display: block; font-size: 11.5px; letter-spacing: 0.04em; color: var(--text-3); }
+.cmd-line-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 600 11.5px/1.6 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
 .cmd-line.is-resident .cmd-line-who { color: var(--text); }
 .cmd-line-text { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; color: var(--text); }
 .cmd-line.is-draft .cmd-line-text { color: var(--text-2); }
 .cmd-thread-note { padding: 2px var(--cmd-pad) 8px; font-size: 13px; color: var(--text-2); }
 .cmd-thread-note .cmd-row-actions { margin-top: 6px; }
-.cmd-replies { padding: 10px var(--cmd-pad) 14px; border-top: 1px solid var(--border); }
-.cmd-send, .cmd-others, .cmd-report { padding: 12px var(--cmd-pad); border-top: 1px solid var(--border); }
+.cmd-replies { padding: 8px var(--cmd-pad) 12px; border-top: 1px solid var(--border); }
+.cmd-replies .cmd-row-actions { margin-top: 6px; }
+.cmd-village-what { padding: 8px var(--cmd-pad) 0; }
+.cmd-send, .cmd-report { padding: 12px var(--cmd-pad); border-top: 1px solid var(--border); }
+.cmd-send { padding-bottom: 4px; }
 .cmd-send .cmd-small { margin-top: 4px; }
+/* the send row of the residents' message, and the phone field under it */
+.cmd-sendbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 8px var(--cmd-pad); background: var(--bg); }
+.cmd-sendbar .cmd-label { flex: 1 1 110px; min-width: 0; color: var(--text-2); }
+.cmd-sendbar .cmd-row-actions { flex: none; margin-top: 0; }
+.cmd-sendphone { padding: 0 var(--cmd-pad) 14px; }
+.cmd-sendphone label { margin-top: 2px; }
+/* two folds, one under the other: the other two messages, and the draft by AI */
+.cmd-others, .cmd-ai { padding: 4px var(--cmd-pad); border-top: 1px solid var(--border); }
+.cmd-others[open], .cmd-ai[open] { padding-bottom: 12px; }
+.cmd-ai:not(:has(.now-ai)) { display: none; }
+.cmd-page .cmd-ai .now-ai { padding-top: 0; border-top: 0; }
 .cmd-msg-title { margin-top: 10px; font: 600 14px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
 .cmd-msg { padding: 2px 0 12px; border-top: 1px solid var(--border); }
 .cmd-msg-text, .cmd-page .now-msg-text {
@@ -227,7 +261,7 @@
 .cmd-page .now-btn-primary, .cmd-page .now-btn-primary:hover:not(:disabled) { border-color: var(--text-2); background: var(--surface-2); color: var(--text); }
 .cmd-page .now-small { margin: 6px 0 0; font-size: 13px; color: var(--text-3); }
 .cmd-page .now-note { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--cmd-r); background: transparent; font-size: 13px; color: var(--text-2); }
-.cmd-page .now-kicker { margin: 0; font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.cmd-page .now-kicker { margin: 0; font: 500 11.5px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
 .cmd-page .now-seg { border-radius: var(--cmd-r); }
 .cmd-page .now-seg button { min-height: 40px; }
 .cmd-page .now-seg button[aria-pressed="true"] { background: var(--surface-3); text-decoration: none; }
@@ -250,7 +284,7 @@
 .cmd-page .ka-ask-bubble { align-self: stretch; max-width: none; padding: 10px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; font-size: 14px; }
 .cmd-page .ka-ask-bubble:first-child { border-top: 0; }
 .cmd-page .ka-ask-bubble.is-mine { align-self: stretch; border-radius: 0; background: none; color: var(--text-2); }
-.cmd-page .ka-ask-who { letter-spacing: 0.08em; }
+.cmd-page .ka-ask-who, .cmd-page .ka-ask-label { font-size: 11.5px; letter-spacing: 0.08em; }
 .cmd-page .ka-ask-input { min-height: 40px; border-radius: var(--cmd-r); font-size: 14px; }
 .cmd-page .ka-ask-form .now-btn { min-height: 40px; padding-inline: 16px; }
 
@@ -328,9 +362,13 @@
 }
 @media (min-width: 1100px) {
   .cmd-page { height: 100vh; height: 100dvh; min-height: 600px; }
-  .cmd-grid { grid-template-columns: clamp(320px, 25vw, 360px) minmax(0, 1fr) clamp(340px, 28vw, 400px); grid-template-areas: "queue map side"; }
+  .cmd-grid { grid-template-columns: clamp(328px, 27vw, 376px) minmax(0, 1fr) clamp(340px, 28vw, 400px); grid-template-areas: "queue map side"; }
   .cmd-queue, .cmd-under, .cmd-tabpanel { overflow-y: auto; }
   .cmd-narrow-only { display: none; }
+  /* the real way to send stays in view at the bottom of the Village panel while the thread above it is read; a jump
+     inside the panel (to the two answers, to a message) stops above it */
+  .cmd-sendbar { position: sticky; bottom: 0; z-index: 1; border-top: 1px solid var(--border); }
+  .cmd-tabpanel { scroll-padding-bottom: 64px; }
   .cmd-centre { border-right: 1px solid var(--border); border-bottom: 0; }
   .cmd-map { flex: 1 1 auto; height: auto; min-height: 220px; max-height: none; }
   .cmd-under { flex: 0 1 auto; max-height: 48%; }
@@ -341,11 +379,22 @@
 /* one screen on a low laptop (1366 x 768): tighter, so the third row's buttons are in view without scrolling the queue */
 @media (min-width: 1100px) and (max-height: 820px) {
   .cmd-strip { padding-top: 8px; padding-bottom: 8px; }
-  .cmd-head { padding: 8px var(--cmd-pad) 4px; }
-  .cmd-head h2 { font-size: 19px; }
-  .cmd-steps, .cmd-steps-status { margin-top: 6px; }
-  .cmd-row { padding-top: 8px; padding-bottom: 6px; }
-  .cmd-row .cmd-row-actions { margin-top: 6px; }
+  .cmd-head { padding: 6px var(--cmd-pad) 2px; }
+  /* the count sits beside the heading when both fit on a line, and under it when they do not */
+  .cmd-head-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
+  .cmd-head h2 { font-size: 17.5px; white-space: nowrap; }
+  .cmd-head-count { font-size: 13px; white-space: nowrap; }
+  .cmd-steps-block { padding-bottom: 4px; }
+  .cmd-steps { margin-top: 5px; }
+  .cmd-steps-status { margin-top: 4px; }
+  .cmd-step-dot { width: 22px; height: 22px; }
+  .cmd-steps li::before { top: 11px; }
+  .cmd-row { padding-top: 6px; padding-bottom: 4px; }
+  .cmd-row-title { line-height: 1.25; }
+  .cmd-fact { margin-top: 2px; line-height: 1.35; }
+  .cmd-row-foot { margin-top: 4px; }
+  .cmd-level { min-height: 52px; padding-top: 4px; padding-bottom: 5px; }
+  .cmd-level b { font-size: 23px; }
 }
 /* where the page scrolls, a jump (to the map, a row, the thread, the peat list) stops below the sticky top bar */
 @media (max-width: 1099px) {
@@ -358,11 +407,24 @@
   .cmd-bar { padding-top: 4px; padding-bottom: 4px; }
   .cmd-bar-end { margin-left: 0; }
 }
-/* on paper: no map and no controls (as the classic page), one column, and all three tabs one after the other */
+/* On paper: no map and no controls (as the classic page), one column, and all three tabs one after the other. What
+   means nothing without its control goes too: "Next" (its link is gone), "Answer as a resident" (its two buttons), the
+   phone fields and their labels, the question field, and the folds' own summaries stay as plain lines. */
 @media print {
   .cmd-page { display: block; height: auto; min-height: 0; background: none; }
-  .cmd-grid { display: block; }
+  .cmd-grid, .cmd-centre, .cmd-side, .cmd-strip-lead { display: block; }
   .cmd-queue, .cmd-under, .cmd-tabpanel { overflow: visible; }
-  .cmd-map, .cmd-btn, .cmd-link, .cmd-tabs, .cmd-seg, .cmd-bar-end, .cmd-page .now-btn, .cmd-page .now-seg { display: none; }
-  .cmd-tabpanel[hidden] { display: block; }
+  .cmd-tabpanel.is-off { display: block; }
+  .cmd-sendbar { position: static; }
+  .cmd-map, .cmd-btn, .cmd-link, .cmd-tabs, .cmd-seg, .cmd-bar-end, .cmd-chip-tick i, .cmd-page .now-btn, .cmd-page .now-seg,
+  .cmd-next, .cmd-replies, .cmd-sendbar, .cmd-sendphone, .cmd-guide, .cmd-queue-end, .cmd-links, .cmd-legend, .cmd-about-map,
+  .cmd-page label, .cmd-page input, .cmd-page .ka-ask-chips, .cmd-page .ka-ask-form, .cmd-page .ka-ask-empty, .cmd-dialog { display: none; }
+  /* the AI fold prints only when it holds a draft; the other folds print open where the browser allows it (their
+     summaries stay as headings); elsewhere they print closed, as the classic page's folds do */
+  .cmd-ai:not(:has(.now-ai-card)) { display: none; }
+  .cmd-page details::details-content { content-visibility: visible; }
+  .cmd-page .ka-ask-log { min-height: 0; border: 0; }
+  .cmd-level { border-width: 1px; background: none; }
+  .cmd-queue, .cmd-centre, .cmd-side, .cmd-tabpanel { border: 0; break-inside: auto; }
+  .cmd-tabpanel + .cmd-tabpanel { border-top: 1px solid var(--border); }
 }

@@ -11,7 +11,8 @@ import { dateOnly } from '../../lib/record.ts';
 import { MIN_EARLIER_YEARS } from '../../lib/robust.ts';
 import { SITE_ROWS, type NowModel } from '../../pages/Now.tsx';
 
-export function EvidenceList({ m, onShow }: { m: NowModel; onShow: (lon: number, lat: number) => void }) {
+/** `onShow`: "Show on map" for a peat site; null when the map could not start (no WebGL), and the buttons are left out. */
+export function EvidenceList({ m, onShow }: { m: NowModel; onShow: ((lon: number, lat: number) => void) | null }) {
   const {
     tr, lang, aoi, aoiId, rows, setTick, liveState, liveData, nowMs, counts, updatedMs, byBox, photoDay,
     monthRow, earlierYears, mf, recordDate, baseline, blindRow, blindSeasons, peat, num, place, cut, liveSource,
@@ -212,8 +213,10 @@ export function EvidenceList({ m, onShow }: { m: NowModel; onShow: (lon: number,
                     {' · '}{tr(`at night ${x.nightShare != null ? `${num(x.nightShare * 100)}%` : '–'}`, `malam hari ${x.nightShare != null ? `${num(x.nightShare * 100)}%` : '–'}`)}
                   </p>
                 </div>
-                <button type="button" className="cmd-link" onClick={() => onShow(x.lon, x.lat)}
-                  aria-label={tr(`Show peat site ${i + 1} on the map`, `Lihat lokasi gambut ${i + 1} di peta`)}>{tr('Show on map', 'Lihat di peta')}</button>
+                {onShow ? (
+                  <button type="button" className="cmd-link" onClick={() => onShow(x.lon, x.lat)}
+                    aria-label={tr(`Show peat site ${i + 1} on the map`, `Lihat lokasi gambut ${i + 1} di peta`)}>{tr('Show on map', 'Lihat di peta')}</button>
+                ) : null}
               </li>
             ))}
           </ol>

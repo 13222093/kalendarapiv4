@@ -101,7 +101,8 @@ describe('the decision queue', () => {
     const rows = queueRows(watch, fire);
     expect(rows.map((r) => r.kind)).toEqual(['resident', 'newest', 'peat', 'village', 'cloud']);
     expect(rows[0]).toEqual({ id: `resident:${NOW + 7}`, kind: 'resident', state: 'waiting' });
-    expect(accentRow(rows)).toBe(rows[0]!.id);
+    expect(nextRow(rows)?.kind).toBe('resident');
+    expect(accentRow(rows)).toBeNull();                      // the alert is approved: the accent is on the real way to send
     const checked = queueRows(watch, setRowDone(fire, rows[0]!.id, true));
     expect(checked[0]!.state).toBe('done');
     expect(accentRow(checked)).toBeNull();
@@ -117,9 +118,10 @@ describe('the decision queue', () => {
     expect(queueRows(watch, s)[0]!.state).toBe('waiting');
     expect(setRowDone(s, watch.newestId!, false)).toBe(s);
   });
-  it('gives the accent to the village alert while it waits, and to nothing after', () => {
+  it('gives the accent to the village alert while it waits, and to no row after', () => {
     const s = newConsoleState(NOW);
     expect(accentRow(queueRows(watch, s))).toBe('village');
+    expect(accentRow(queueRows({ ...watch, liveFailed: true }, s))).toBe('reread');   // reading again comes first
     expect(accentRow(queueRows(watch, holdAlert(s)))).toBeNull();
     expect(accentRow(queueRows(watch, approveAlert(s, NOW)))).toBeNull();
     expect(accentRow(queueRows({ ...watch, level: 'calm' }, s))).toBeNull();

@@ -220,9 +220,12 @@ interface MapProps {
   photoDate: string | null; sites: PeatSite[]; peat: unknown; label: string;
   /** the command view only: the point to show, and whether the wheel zooms the map (its panels scroll, not the page) */
   focus?: MapFocus | null; freeWheel?: boolean;
+  /** the command view only: its own sentence for a browser without WebGL (its numbers are not "below"), and a call
+   *  when the map could not start, so the view can take its "Show on map" buttons away */
+  failText?: string; onFail?: () => void;
 }
 
-export function NowMap({ box, outline, points, photoDate, sites, peat, label, focus, freeWheel }: MapProps) {
+export function NowMap({ box, outline, points, photoDate, sites, peat, label, focus, freeWheel, failText, onFail }: MapProps) {
   const tr = useTr();
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -318,6 +321,9 @@ export function NowMap({ box, outline, points, photoDate, sites, peat, label, fo
     else map.easeTo({ ...to, duration: 700 });
   }, [ready, focus]);
 
+  // the command view: say so when the map could not start
+  useEffect(() => { if (failed) onFail?.(); }, [failed, onFail]);
+
   // the command view: the wheel zooms the map where the page itself does not scroll (the map starts as on the classic
   // page, where the wheel scrolls the page, and is switched once it has loaded)
   useEffect(() => {
@@ -329,7 +335,7 @@ export function NowMap({ box, outline, points, photoDate, sites, peat, label, fo
   if (failed) {
     return (
       <p className="now-note" role="note">
-        {tr('The interactive map could not start in this browser (WebGL is not available). The numbers and the table below are the same data.',
+        {failText ?? tr('The interactive map could not start in this browser (WebGL is not available). The numbers and the table below are the same data.',
           'Peta interaktif tidak dapat dijalankan di peramban ini (WebGL tidak tersedia). Angka dan tabel di bawah memuat data yang sama.')}
       </p>
     );

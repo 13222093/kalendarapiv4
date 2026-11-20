@@ -26,7 +26,7 @@ interface QueueProps {
   onApprove: () => void; onHold: () => void;
   onDone: (id: string, done: boolean) => void;
   onRestart: () => void; onGuide: (hidden: boolean) => void;
-  onShow: (lon: number, lat: number) => void;          // "Show on map"
+  onShow: ((lon: number, lat: number) => void) | null; // "Show on map"; null when the map could not start (no WebGL)
   onPeat: () => void; onCrew: () => void; onThread: () => void;
 }
 
@@ -65,7 +65,7 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
         fact: `${alert.times.replied != null ? clockWib(alert.times.replied) : '–'} WIB · ${tr('reply in the village thread', 'balasan di utas grup desa')}`,
         actions: (
           <>
-            <button type="button" className={lead} aria-pressed={done} onClick={() => onDone(row.id, !done)}>{done ? tr('Reopen', 'Buka lagi') : tr('Mark checked', 'Tandai sudah dicek')}</button>
+            <button type="button" className="cmd-btn cmd-btn-strong" aria-pressed={done} onClick={() => onDone(row.id, !done)}>{done ? tr('Reopen', 'Buka lagi') : tr('Mark checked', 'Tandai sudah dicek')}</button>
             <button type="button" className="cmd-btn" onClick={onCrew}>{tr('Crew message', 'Pesan regu')}</button>
           </>
         ),
@@ -90,7 +90,7 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
           fact: `${n[1].toFixed(4)}, ${n[0].toFixed(4)} · ${wib(pointMs(n), lang)} · ${SENSOR_LABEL[n[4]]}`,
           actions: (
             <>
-              <button type="button" className={lead} onClick={() => onShow(n[0], n[1])}>{tr('Show on map', 'Lihat di peta')}</button>
+              {onShow ? <button type="button" className={lead} onClick={() => onShow(n[0], n[1])}>{tr('Show on map', 'Lihat di peta')}</button> : null}
               <button type="button" className="cmd-btn"
                 onClick={() => { void copyText(`${n[1].toFixed(4)}, ${n[0].toFixed(4)}`).then((ok) => setCopied(ok ? 'coord' : 'fail-coord')); }}>
                 {copied === 'coord' ? tr('Copied', 'Tersalin') : tr('Copy coordinates', 'Salin koordinat')}
@@ -109,7 +109,7 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
           fact: `${s0.lat.toFixed(3)}, ${s0.lon.toFixed(3)} · ${tr(`detected on ${num(s0.days)} days, came back ${num(s0.comeBacks)} time${s0.comeBacks === 1 ? '' : 's'}`, `terdeteksi ${num(s0.days)} hari, muncul lagi ${num(s0.comeBacks)} kali`)}`,
           actions: (
             <>
-              <button type="button" className={lead} onClick={() => onShow(s0.lon, s0.lat)}>{tr('Show on map', 'Lihat di peta')}</button>
+              {onShow ? <button type="button" className={lead} onClick={() => onShow(s0.lon, s0.lat)}>{tr('Show on map', 'Lihat di peta')}</button> : null}
               <button type="button" className="cmd-btn" onClick={onPeat}>{tr('See the peat list', 'Lihat daftar gambut')}</button>
             </>
           ),
@@ -154,10 +154,14 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
   };
 
   return (
-    <section className="cmd-queue" aria-labelledby="cmd-h-queue">
+    <section className="cmd-queue" id="cmd-queue" tabIndex={-1} aria-labelledby="cmd-h-queue">
+      {/* the heading keeps the classic page's words: the assistant (public/api/ask.js) sends people to "What to do now" */}
       <header className="cmd-head">
         <p className="cmd-label">{tr('Decision queue', 'Antrean keputusan')} · {tr('disaster office (BPBD)', 'BPBD kabupaten')}</p>
-        <h2 id="cmd-h-queue">{waiting ? tr(`${num(waiting)} waiting for a decision`, `${num(waiting)} menunggu keputusan`) : tr('Nothing is waiting', 'Tidak ada yang menunggu')}</h2>
+        <div className="cmd-head-line">
+          <h2 id="cmd-h-queue">{tr('What to do now', 'Yang dilakukan sekarang')}</h2>
+          <p className="cmd-head-count">{waiting ? tr(`${num(waiting)} waiting for a decision`, `${num(waiting)} menunggu keputusan`) : tr('Nothing is waiting', 'Tidak ada yang menunggu')}</p>
+        </div>
       </header>
 
       {/* the village alert: five steps, each with the time it happened */}
@@ -178,7 +182,7 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
         <p className="cmd-steps-status" aria-live="polite">{statusText[alertStatus(alert)]}</p>
       </div>
 
-      <ol className="cmd-rows" aria-label={tr('What to do now', 'Yang dilakukan sekarang')}>
+      <ol className="cmd-rows" aria-labelledby="cmd-h-queue">
         {rows.map((row, i) => {
           const b = body(row);
           if (!b) return null;
@@ -201,8 +205,9 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
                   ) : <span className={`cmd-chip is-${row.state}`}>{stateName[row.state]}</span>}
                 </div>
                 {b.fact ? <p className="cmd-fact">{b.fact}</p> : null}
-                <div className="cmd-row-actions">
-                  {b.actions}
+                {/* the buttons wrap among themselves on the left; "Why" keeps its place on their first line, on the right */}
+                <div className="cmd-row-foot">
+                  <div className="cmd-row-actions">{b.actions}</div>
                   <button type="button" className="cmd-link cmd-why-btn" aria-expanded={why.includes(row.id)} aria-controls={`cmd-why-${row.kind}`}
                     onClick={() => setWhy((w) => (w.includes(row.id) ? w.filter((x) => x !== row.id) : [...w, row.id]))}>{tr('Why', 'Mengapa')}</button>
                 </div>

@@ -5,6 +5,7 @@
 // Village group"), and the lines live in the browser only (lib/nowconsole.ts). Under it, the real way to send: the
 // same message opened in WhatsApp or copied, by the reader's own hand; then the two other template messages, the
 // optional AI draft, and a resident's own report. All texts and numbers are the classic page's.
+import { useEffect, useRef } from 'react';
 import { districtTitle, waLink } from '../../lib/now.ts';
 import { alertStatus, clockWib, threadOf, type ConsoleState, type Reply, type ThreadLine } from '../../lib/nowconsole.ts';
 import { aoiName } from '../../lib/record.ts';
@@ -14,16 +15,26 @@ interface ThreadProps {
   m: NowModel; state: ConsoleState;
   hasVillageRow: boolean;                      // the queue holds "Tell the village" (the level is Watch or High)
   othersOpen: boolean; onOthers: (open: boolean) => void;
+  primarySend: boolean;                        // the alert is approved: "Open in WhatsApp" is now the one accented action
   onApprove: () => void; onHold: () => void; onReply: (r: Reply) => void;
   onQueue: () => void;                         // go to the queue row that approves the alert
 }
 
-export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, onApprove, onHold, onReply, onQueue }: ThreadProps) {
+export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, primarySend, onApprove, onHold, onReply, onQueue }: ThreadProps) {
   const { tr, lang, aoi, aoiId, liveData, result, levelName, msgLang, setMsgLang, phones, setPhones, copied, setCopied, message, cards, aiFacts } = m;
-  if (!aoi) return null;
   const alert = state.alert;
   const status = alertStatus(alert);
   const sent = alert.times.sent != null, approved = alert.times.approved != null;
+  // When the alert has just been sent, the two answers are what comes next: on the one-screen layout the panel scrolls
+  // just enough to show them above the send row that stays at its bottom. Not on load, and not where the page scrolls.
+  const wasSent = useRef(sent);
+  useEffect(() => {
+    if (sent && !wasSent.current && window.matchMedia('(min-width: 1100px)').matches) {
+      document.getElementById('cmd-replies')?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+    wasSent.current = sent;
+  }, [sent]);
+  if (!aoi) return null;
   const lines = threadOf(alert);
   const residents = message('residents');
 
@@ -54,6 +65,12 @@ export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, o
 
   return (
     <div className="cmd-village">
+      {/* what this tab holds, in one line (the classic page's "What to do, and who to tell") */}
+      <p className="cmd-small cmd-village-what">
+        {tr('Who to tell: the alert to the village, three messages ready to send, and a resident\'s report.',
+          'Siapa yang dikabari: peringatan untuk desa, tiga pesan siap dikirim, dan laporan warga.')}
+      </p>
+
       {/* ---- the thread */}
       <section className="cmd-thread" id="cmd-thread" tabIndex={-1} aria-labelledby="cmd-h-thread">
         <header className="cmd-thread-head">
@@ -84,7 +101,11 @@ export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, o
           ) : (
             <div className="cmd-thread-note">
               <p>{status === 'held' ? tr('On hold: nothing leaves the office.', 'Ditahan: tidak ada yang keluar dari kantor.')
-                : tr('The queue does not ask for this alert today. The office can still approve it here.', 'Antrean tidak meminta peringatan ini hari ini. Kantor tetap dapat menyetujuinya di sini.')}</p>
+                : result.level
+                  ? tr('The queue does not ask for this alert today. The office can still approve it here.', 'Antrean tidak meminta peringatan ini hari ini. Kantor tetap dapat menyetujuinya di sini.')
+                  // no level (today's hotspots could not be read): that, not a quiet day, is why no row asks for it
+                  : tr('No level is set, because today\'s hotspots could not be read, so the queue has no row for this alert. The office can still approve it here.',
+                    'Tingkat belum ditentukan karena titik panas hari ini tidak dapat dibaca, sehingga antrean tidak memuat baris untuk peringatan ini. Kantor tetap dapat menyetujuinya di sini.')}</p>
               <div className="cmd-row-actions">
                 <button type="button" className="cmd-btn" onClick={onApprove}>{tr('Approve and send', 'Setujui dan kirim')}</button>
                 <button type="button" className="cmd-btn" onClick={onHold} disabled={alert.held}>{tr('Hold', 'Tahan')}</button>
@@ -93,7 +114,7 @@ export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, o
           )
         ) : null}
 
-        <div className="cmd-replies" role="group" aria-labelledby="cmd-h-replies">
+        <div className="cmd-replies" id="cmd-replies" role="group" aria-labelledby="cmd-h-replies">
           <p className="cmd-label" id="cmd-h-replies">{tr('Answer as a resident', 'Jawab sebagai warga')}</p>
           <div className="cmd-row-actions">
             <button type="button" className="cmd-btn" onClick={() => onReply('read')} disabled={!sent || !!alert.reply}>{tr('I have read it', 'Sudah saya baca')}</button>
@@ -112,16 +133,21 @@ export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, o
           </div>
         </div>
         <p className="cmd-small">{tr('Each text is a fixed template filled with the numbers on this page. Nothing is sent until you send it yourself.', 'Setiap teks adalah templat tetap yang diisi angka dari halaman ini. Tidak ada yang terkirim sampai Anda sendiri mengirimnya.')}</p>
-        <p className="cmd-msg-title">{cards.find((c) => c.kind === 'residents')?.title}</p>
+      </section>
+      {/* The send row of the residents' message (the text is the thread's first line). On the one-screen layout it stays
+          at the bottom of the panel while the thread is read (styles/nowconsole.css); once the alert is approved its
+          WhatsApp button is the one accented action. */}
+      <div className="cmd-sendbar" role="group" aria-labelledby="cmd-h-sendbar">
+        <p className="cmd-label" id="cmd-h-sendbar">{cards.find((c) => c.kind === 'residents')?.title}</p>
         <div className="cmd-row-actions">
-          <a className="cmd-btn cmd-btn-strong" href={waLink(residents)} target="_blank" rel="noopener noreferrer">{tr('Open in WhatsApp', 'Buka di WhatsApp')}</a>
+          <a className={`cmd-btn ${primarySend ? 'cmd-btn-accent' : 'cmd-btn-strong'}`} href={waLink(residents)} target="_blank" rel="noopener noreferrer">{tr('Open in WhatsApp', 'Buka di WhatsApp')}</a>
           <button type="button" className="cmd-btn" onClick={() => { void copyText(residents).then((ok) => setCopied(ok ? 'residents' : 'fail-residents')); }}>{tr('Copy', 'Salin')}</button>
           {copyNote('residents')}
         </div>
-        {phoneField('residents')}
-      </section>
+      </div>
+      <div className="cmd-sendphone">{phoneField('residents')}</div>
 
-      {/* ---- the two other template messages and the optional AI draft */}
+      {/* ---- the two other template messages */}
       <details className="cmd-more cmd-others" open={othersOpen} onToggle={(ev) => onOthers(ev.currentTarget.open)}>
         <summary>{tr('The other two: for the disaster office and the fire crew', 'Dua lainnya: untuk BPBD dan regu pemadam')}</summary>
         {cards.filter((c) => c.kind !== 'residents').map(({ kind, title }) => {
@@ -139,8 +165,16 @@ export function VillageThread({ m, state, hasVillageRow, othersOpen, onOthers, o
             </article>
           );
         })}
-        {aiFacts ? <AiDraft key={`${aoiId}:${lang}:${liveData?.fetched_at ?? ''}`} facts={aiFacts} lang={lang} /> : null}
       </details>
+
+      {/* ---- the optional AI draft, in a fold of its own that says what it is. When the site has no AI key the draft
+           removes itself on the first press, and the fold goes with it (styles/nowconsole.css). */}
+      {aiFacts ? (
+        <details className="cmd-more cmd-ai">
+          <summary>{tr('Draft advice with AI', 'Susun saran dengan AI')}</summary>
+          <AiDraft key={`${aoiId}:${lang}:${liveData?.fetched_at ?? ''}`} facts={aiFacts} lang={lang} />
+        </details>
+      ) : null}
 
       {/* ---- the way back: a resident's own report, written for WhatsApp */}
       <ReportBack variant="console" place={districtTitle(aoiName(aoi, msgLang), msgLang)} msgLang={msgLang} phone={phones.residents || phones.bpbd || phones.crew} />

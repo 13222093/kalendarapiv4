@@ -70,6 +70,8 @@ function useMedia(query: string): boolean {
 }
 
 const lessMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+/** "1 day ago", "2 days ago" / "1 hari lalu" (Indonesian has one form). */
+const daysAgo = (n: number, lang: 'en' | 'id') => (lang === 'id' ? `${n} hari lalu` : `${n} day${n === 1 ? '' : 's'} ago`);
 
 // ------------------------------------------------------------------------------------------------ small parts
 
@@ -142,6 +144,7 @@ export function CommandConsole() {
   }, state);
   const waiting = waitingCount(rows);
   const next = nextRow(rows);
+  const accent = accentRow(rows);
   const hasVillageRow = rows.some((r) => r.kind === 'village');
 
   // ---- the tab, kept in the address (tab=); a change of tab does not add a step to the browser's history
@@ -173,6 +176,9 @@ export function CommandConsole() {
   };
   const [focus, setFocus] = useState<{ key: string; at: MapFocus } | null>(null);
   const showOnMap = (lo: number, la: number) => { setFocus({ key: aoiId, at: { lon: lo, lat: la } }); reveal('cmd-map'); };
+  // a browser without WebGL has no map: its "Show on map" buttons are taken away, and the note names where the numbers are
+  const [noMap, setNoMap] = useState(false);
+  const mapFailed = useCallback(() => setNoMap(true), []);
   const [othersOpen, setOthersOpen] = useState(false);
   const openCrew = () => { setOthersOpen(true); setTab('village'); reveal('cmd-m-crew', true); };
   const openPeat = () => { setTab('evidence'); reveal('cmd-peat', true); };
@@ -206,6 +212,15 @@ export function CommandConsole() {
 
       {/* ---- the status strip: where, the level and its reason, the next step, three counters */}
       <section className="cmd-strip" aria-label={tr('Status', 'Status')}>
+        <div className="cmd-strip-lead">
+        {/* the level, as on the classic page: its own badge, bordered by level (Watch, High), and a jump to the actions */}
+        {aoi ? (
+          <button type="button" className={`cmd-level cmd-level-${result.level ?? 'none'}`} onClick={() => reveal('cmd-queue', true)}
+            title={tr('Go to "What to do now"', 'Ke "Yang dilakukan sekarang"')}>
+            <span>{tr('Level', 'Tingkat')}</span>
+            <b>{loading ? '…' : result.level ? levelName(result.level) : tr('Not set', 'Belum ditentukan')}</b>
+          </button>
+        ) : null}
         <div className="cmd-strip-main">
           <p className="cmd-label">{tr('Today in my district', 'Hari ini di daerah saya')}{aoi ? ` · ${aoi.province}` : ''}</p>
           <h1 className="cmd-title">
@@ -226,6 +241,7 @@ export function CommandConsole() {
           ) : null}
           {unknownAsked ? <p className="cmd-small" role="note">{tr(`No district "${asked}" in the record; showing ${name}.`, `Tidak ada kabupaten "${asked}" dalam catatan; menampilkan ${name}.`)}</p> : null}
         </div>
+        </div>
         <dl className="cmd-counters">
           <div><dt>{tr('waiting for a decision', 'menunggu keputusan')}</dt><dd>{aoi ? num(waiting) : '–'}</dd></div>
           <div><dt>{tr('hotspots, 24 hours', 'titik panas, 24 jam')}</dt><dd>{counts ? num(counts.total24) : <span title={tr('not read', 'tidak terbaca')}>–</span>}</dd></div>
@@ -237,15 +253,17 @@ export function CommandConsole() {
       {aoi && box ? (
         <div className="cmd-grid">
           {/* ---- left: the decision queue */}
-          <DecisionQueue m={m} state={state} rows={rows} accent={accentRow(rows)}
+          <DecisionQueue m={m} state={state} rows={rows} accent={accent}
             onApprove={approve} onHold={hold} onDone={(id, done) => update((s) => setRowDone(s, id, done))} onRestart={restart}
-            onGuide={(hidden) => update((s) => setGuideHidden(s, hidden))} onShow={showOnMap} onPeat={openPeat} onCrew={openCrew} onThread={openThread} />
+            onGuide={(hidden) => update((s) => setGuideHidden(s, hidden))} onShow={noMap ? null : showOnMap} onPeat={openPeat} onCrew={openCrew} onThread={openThread} />
 
           {/* ---- centre: the map, then the last seven days and the newest hotspots */}
           <section className="cmd-centre" aria-label={tr('Map and hotspots', 'Peta dan titik panas')}>
             <div className="cmd-map" id="cmd-map">
               <NowMap key={aoiId} box={box} outline={outline} points={marked} photoDate={photoDate} sites={sites} peat={peatOutline}
-                focus={focus && focus.key === aoiId ? focus.at : null} freeWheel={wide}
+                focus={focus && focus.key === aoiId ? focus.at : null} freeWheel={wide} onFail={mapFailed}
+                failText={tr('The interactive map could not start in this browser (WebGL is not available). The hotspot table below and the Evidence tab hold the same data.',
+                  'Peta interaktif tidak dapat dijalankan di peramban ini (WebGL tidak tersedia). Tabel titik panas di bawah dan tab Bukti memuat data yang sama.')}
                 label={tr(`Map of ${place}: hotspots of the last 7 days over NASA's newest photo`, `Peta ${place}: titik panas 7 hari terakhir di atas foto NASA terbaru`)} />
               {liveState.state === 'unavailable' ? (
                 <p className="cmd-map-flag">{tr('No live hotspot data: an empty map here does not mean no fire.', 'Tidak ada data titik panas langsung: peta kosong di sini tidak berarti tidak ada api.')}</p>
@@ -261,7 +279,7 @@ export function CommandConsole() {
                 {sites.length ? <li><i className="now-ring" aria-hidden="true" />{tr('peat site to re-check', 'lokasi gambut untuk dicek ulang')}</li> : null}
                 <li className="cmd-legend-photo">{!photoKnown ? tr('photo: looking…', 'foto: mencari…') : photoDay ? tr(`photo: ${photoDay}`, `foto: ${photoDay}`) : tr('photo: none', 'foto: tidak ada')}</li>
               </ul>
-              <details className="cmd-more">
+              <details className="cmd-more cmd-about-map">
                 <summary>{tr('About the photo and the map', 'Tentang foto dan peta')}</summary>
                 <p className="cmd-small">
                   {!photoKnown ? tr('Looking for NASA\'s newest photo…', 'Mencari foto NASA terbaru…')
@@ -291,7 +309,8 @@ export function CommandConsole() {
                             <i className="is-viirs" style={{ width: `${(b.viirs / weekMax) * 100}%` }} /><i className="is-modis" style={{ width: `${(b.modis / weekMax) * 100}%` }} />
                           </span>
                           <span className="cmd-sr">
-                            {i === 6 ? tr('hotspots in the last 24 hours', 'titik panas dalam 24 jam terakhir') : tr(`hotspots, ${6 - i + 1} days ago to ${6 - i} days ago`, `titik panas, ${6 - i + 1} hari lalu sampai ${6 - i} hari lalu`)}
+                            {i === 6 ? tr('hotspots in the last 24 hours', 'titik panas dalam 24 jam terakhir')
+                              : tr(`hotspots, ${daysAgo(7 - i, 'en')} to ${daysAgo(6 - i, 'en')}`, `titik panas, ${daysAgo(7 - i, 'id')} sampai ${daysAgo(6 - i, 'id')}`)}
                             {b.total ? tr(`: VIIRS ${num(b.viirs)}, MODIS ${num(b.modis)}`, `: VIIRS ${num(b.viirs)}, MODIS ${num(b.modis)}`) : ''}
                           </span>
                         </li>
@@ -314,7 +333,7 @@ export function CommandConsole() {
                         <th scope="col">{tr('Detected (WIB)', 'Terdeteksi (WIB)')}</th><th scope="col">{tr('Satellite', 'Satelit')}</th>
                         <th scope="col">{tr('Latitude', 'Lintang')}</th><th scope="col">{tr('Longitude', 'Bujur')}</th>
                         <th scope="col">{tr('Fire power (MW)', 'Daya api (MW)')}</th><th scope="col">{tr('Day or night', 'Siang atau malam')}</th>
-                        <th scope="col"><span className="cmd-sr">{tr('Map', 'Peta')}</span></th>
+                        {noMap ? null : <th scope="col"><span className="cmd-sr">{tr('Map', 'Peta')}</span></th>}
                       </tr></thead>
                       <tbody>
                         {counts.recent.slice(0, TABLE_ROWS).map((p, i) => (
@@ -322,8 +341,10 @@ export function CommandConsole() {
                             <td>{wib(pointMs(p), lang).replace(' WIB', '')}</td><td>{SENSOR_LABEL[p[4]]}</td>
                             <td className="num">{p[1].toFixed(4)}</td><td className="num">{p[0].toFixed(4)}</td>
                             <td className="num">{p[2] != null ? num(p[2], 1) : '–'}</td><td>{p[3] === 'N' ? tr('night', 'malam') : tr('day', 'siang')}</td>
-                            <td><button type="button" className="cmd-link" onClick={() => showOnMap(p[0], p[1])}
-                              aria-label={tr(`Show hotspot ${i + 1} on the map`, `Lihat titik panas ${i + 1} di peta`)}>{tr('Map', 'Peta')}</button></td>
+                            {noMap ? null : (
+                              <td><button type="button" className="cmd-link" onClick={() => showOnMap(p[0], p[1])}
+                                aria-label={tr(`Show hotspot ${i + 1} on the map`, `Lihat titik panas ${i + 1} di peta`)}>{tr('Map', 'Peta')}</button></td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -342,14 +363,21 @@ export function CommandConsole() {
                   onClick={() => setTab(t)} onKeyDown={onTabKey}>{tabName[t]}</button>
               ))}
             </div>
-            <div className="cmd-tabpanel" role="tabpanel" id="cmd-panel-village" aria-labelledby="cmd-tab-village" hidden={tab !== 'village'}>
+            {/* A tab that is not open is hidden by a class, not by the hidden attribute, so that paper can show all three
+                (styles/nowconsole.css, print); aria-hidden and inert keep it from screen readers and from the Tab key. */}
+            <div className={`cmd-tabpanel${tab !== 'village' ? ' is-off' : ''}`} role="tabpanel" id="cmd-panel-village" aria-labelledby="cmd-tab-village"
+              aria-hidden={tab !== 'village'} inert={tab !== 'village'}>
+              {/* the accent passes to the real way to send once the alert is approved and no queue row holds it */}
               <VillageThread m={m} state={state} hasVillageRow={hasVillageRow} othersOpen={othersOpen} onOthers={setOthersOpen}
+                primarySend={state.alert.times.approved != null && accent === null}
                 onApprove={approve} onHold={hold} onReply={reply} onQueue={openQueueRow} />
             </div>
-            <div className="cmd-tabpanel" role="tabpanel" id="cmd-panel-evidence" aria-labelledby="cmd-tab-evidence" hidden={tab !== 'evidence'}>
-              <EvidenceList m={m} onShow={showOnMap} />
+            <div className={`cmd-tabpanel${tab !== 'evidence' ? ' is-off' : ''}`} role="tabpanel" id="cmd-panel-evidence" aria-labelledby="cmd-tab-evidence"
+              aria-hidden={tab !== 'evidence'} inert={tab !== 'evidence'}>
+              <EvidenceList m={m} onShow={noMap ? null : showOnMap} />
             </div>
-            <div className="cmd-tabpanel" role="tabpanel" id="cmd-panel-assistant" aria-labelledby="cmd-tab-assistant" hidden={tab !== 'assistant'}>
+            <div className={`cmd-tabpanel${tab !== 'assistant' ? ' is-off' : ''}`} role="tabpanel" id="cmd-panel-assistant" aria-labelledby="cmd-tab-assistant"
+              aria-hidden={tab !== 'assistant'} inert={tab !== 'assistant'}>
               {shownAsk ? (
                 <AskAssistant key={`ask:${aoiId}`} variant="panel" facts={shownAsk} lang={lang} place={districtTitle(aoiName(aoi, lang), lang)} hasPeat={sites.length > 0} />
               ) : (

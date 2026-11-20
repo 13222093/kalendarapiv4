@@ -143,10 +143,12 @@ export function rowTitle(kind: RowKind, tr: (en: string, id: string) => string):
 export const waitingCount = (rows: QueueRow[]): number => rows.filter((r) => r.state === 'waiting').length;
 /** The next step: the first row still waiting, or null when none is. */
 export const nextRow = (rows: QueueRow[]): QueueRow | null => rows.find((r) => r.state === 'waiting') ?? null;
-/** The one row whose lead button takes the accent: the first waiting row that asks for a decision now (a resident's
- *  report, reading the hotspots again, the village alert). The check rows never take it. */
+/** The one row whose lead button takes the accent: the first waiting row that asks the office to press something now
+ *  (read the hotspots again, or approve the village alert). The other rows never take it. Once the alert is approved
+ *  and no row holds the accent, it passes to the real way to send ("Open in WhatsApp" in the Village tab), so there is
+ *  one accented action in view at a time. */
 export function accentRow(rows: QueueRow[]): string | null {
-  return rows.find((r) => r.state === 'waiting' && (r.kind === 'resident' || r.kind === 'reread' || r.kind === 'village'))?.id ?? null;
+  return rows.find((r) => r.state === 'waiting' && (r.kind === 'reread' || r.kind === 'village'))?.id ?? null;
 }
 
 // ------------------------------------------------------------------------------------------------ storage
