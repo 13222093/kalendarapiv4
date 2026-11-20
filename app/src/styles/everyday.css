@@ -1,0 +1,100 @@
+/* KalenderApi (new file): "Every day", the year-by-day calendar of the Harmonize page (components/record/EveryDay.tsx).
+   Theme tokens only (tokens.css, theme.css, brand.css): the heat ramp is --ember-100 to --ember-900, as in the
+   monthly calendar (record.css), whose legend classes (.ka-rec-cal-legend, .ka-rec-ramp) this figure reuses.
+   Motion uses --t-fast, which tokens.css sets to 0 ms under prefers-reduced-motion. */
+
+.ka-days {
+  gap: var(--sp-3); min-width: 0; padding: var(--sp-5);
+  border: 1px solid var(--card-border); border-radius: 16px; background: var(--card);
+}
+@media (max-width: 560px) { .ka-days { padding: var(--sp-4) var(--sp-3); } }
+
+/* the year, the series switch, the download */
+.ka-days-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); }
+.ka-days-year { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.ka-days-year .ka-rec-picker select { min-width: 5.5rem; }
+.ka-days-csv { margin-left: auto; }
+@media (max-width: 760px) { .ka-days-csv { margin-left: 0; } }
+
+/* twelve month blocks: six across on a wide screen, down to two on a phone */
+.ka-days-wrap { position: relative; min-width: 0; }
+.ka-days-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-5) var(--sp-4); min-width: 0; }
+@media (max-width: 1180px) { .ka-days-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 820px) { .ka-days-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .ka-days-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4) var(--sp-3); } }
+
+.ka-days-month { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.ka-days-mrow { display: block; margin-bottom: 2px; }
+.ka-days-mhead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); min-width: 0; }
+.ka-days-mname { min-width: 0; overflow: hidden; color: var(--text); font-size: var(--fs-13); font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
+.ka-days-ms { display: none; }                 /* the short month name, where the block is narrow */
+.ka-days-mtot { flex: none; color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-12); font-variant-numeric: tabular-nums; }
+@media (max-width: 1180px) and (min-width: 1001px), (max-width: 820px) and (min-width: 681px), (max-width: 420px) {
+  .ka-days-ml { display: none; }
+  .ka-days-ms { display: inline; }
+}
+
+.ka-days-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.ka-days-wd { color: var(--text-3); font-family: var(--font-mono); font-size: 10px; line-height: 14px; text-align: center; }
+.ka-days-blank { display: block; aspect-ratio: 1; }
+
+/* one day */
+.ka-day, .ka-days-lg {
+  --c: var(--surface-2);
+  position: relative; display: block; aspect-ratio: 1; min-width: 0; width: 100%; padding: 0; border: 0; border-radius: 3px; background: var(--c);
+}
+.ka-day { cursor: pointer; transition: box-shadow var(--t-fast) var(--ease-out); }
+:is(.ka-day, .ka-days-lg)[data-step="1"] { --c: var(--ember-100); } :is(.ka-day, .ka-days-lg)[data-step="2"] { --c: var(--ember-200); }
+:is(.ka-day, .ka-days-lg)[data-step="3"] { --c: var(--ember-300); } :is(.ka-day, .ka-days-lg)[data-step="4"] { --c: var(--ember-400); }
+:is(.ka-day, .ka-days-lg)[data-step="5"] { --c: var(--ember-500); } :is(.ka-day, .ka-days-lg)[data-step="6"] { --c: var(--ember-600); }
+:is(.ka-day, .ka-days-lg)[data-step="7"] { --c: var(--ember-700); } :is(.ka-day, .ka-days-lg)[data-step="8"] { --c: var(--ember-800); }
+:is(.ka-day, .ka-days-lg)[data-step="9"] { --c: var(--ember-900); }
+/* a zero: the quiet fill of the monthly calendar's zero, with a hairline so it reads as a square */
+:is(.ka-day, .ka-days-lg)[data-step="0"] { --c: var(--surface-2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 7%, transparent); }
+/* no value: hollow, with a short dash. Never the cloud hatching, never the zero's fill */
+:is(.ka-day, .ka-days-lg)[data-none] { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+:is(.ka-day, .ka-days-lg)[data-none]::after {
+  content: ""; position: absolute; left: 30%; right: 30%; top: calc(50% - 0.5px); height: 1px; background: var(--text-3);
+}
+/* withheld for a registered test: the fine upright lines of the monthly calendar's held months */
+:is(.ka-day, .ka-days-lg)[data-held] {
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--text) 22%, transparent) 0 1px, transparent 1px 4px);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.ka-day:hover { box-shadow: 0 0 0 1px var(--text-2); z-index: 1; }
+.ka-day:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; z-index: 2; }
+.ka-day[aria-selected="true"] { box-shadow: 0 0 0 2px var(--text); z-index: 1; }
+
+/* the readout of the day under the pointer, the keyboard focus or the finger */
+.ka-days-pop {
+  position: absolute; z-index: 6; display: grid; gap: var(--sp-1); width: min(304px, 100%); padding: var(--sp-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--elev-2);
+  color: var(--text-2); font-size: var(--fs-12); line-height: 1.45; pointer-events: none;
+}
+.ka-days-pop[data-live] { pointer-events: auto; padding-right: calc(var(--sp-3) + 24px); }
+.ka-days-pop p { margin: 0; }
+.ka-days-pop-date { color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-11); letter-spacing: 0.04em; text-transform: uppercase; }
+.ka-days-pop-main { color: var(--text); font-size: var(--fs-13); }
+.ka-days-pop-main b { font-family: var(--font-mono); font-size: var(--fs-15, 15px); font-variant-numeric: tabular-nums; }
+.ka-days-pop-raw { display: grid; grid-template-columns: 1fr auto; gap: 1px var(--sp-3); margin: 2px 0 0; padding-top: var(--sp-1); border-top: 1px solid var(--border); }
+.ka-days-pop-raw dt { grid-column: 1 / -1; color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-11); letter-spacing: 0.04em; text-transform: uppercase; }
+.ka-days-pop-raw dd { display: contents; }
+.ka-days-pop-raw dd b { color: var(--text); font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.ka-days-pop-link { display: inline-flex; align-items: center; gap: var(--sp-1); width: fit-content; margin-top: 2px; color: var(--accent); font-weight: 600; }
+:root[data-theme="light"] .ka-days-pop-link { color: var(--accent-strong); }
+.ka-days-pop-link:focus-visible, .ka-days-pop-close:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+.ka-days-pop-close {
+  position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
+  border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); cursor: pointer;
+}
+.ka-days-pop-close:hover { background: var(--surface-3); color: var(--text); }
+@media (pointer: coarse) {
+  .ka-days-pop-link { min-height: var(--ctl-touch); }
+  .ka-days-pop-close { width: var(--ctl-touch); height: var(--ctl-touch); top: 0; right: 0; }
+  .ka-days-pop[data-live] { padding-right: var(--ctl-touch); }
+}
+
+/* the legend's swatches */
+.ka-days-lg { flex: none; display: inline-block; width: 14px; height: 14px; }
+
+@media (prefers-reduced-motion: reduce) { .ka-day { transition: none; } }
