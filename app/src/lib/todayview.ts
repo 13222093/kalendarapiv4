@@ -5,9 +5,10 @@
 
 export type TodayView = 'classic' | 'console';
 
-/** The view '#/now' opens. Change this one value to 'console' to make the command view the default: the classic page
- *  then stays at '#/now?view=classic', and '#/command' opens the command view either way. */
-export const TODAY_DEFAULT_VIEW = 'classic' as TodayView;
+/** The view '#/now' opens. Since 21 November 2026 it is the command view; the classic page stays at
+ *  '#/now?view=classic', and '#/command' opens the command view either way. Set this one value back to 'classic' to
+ *  make the classic page the default again. */
+export const TODAY_DEFAULT_VIEW = 'console' as TodayView;
 
 const enc = encodeURIComponent;
 

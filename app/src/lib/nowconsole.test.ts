@@ -210,8 +210,8 @@ describe('the tab in the address', () => {
     expect(hashWith('#/command?aoi=x&tab=evidence', { tab: null })).toBe('#/command?aoi=x');
     expect(hashWith('#/command', { aoi: 'kota-palangka-raya' })).toBe('#/command?aoi=kota-palangka-raya');
   });
-  it('opens the classic page at #/now and the command view at #/command (lib/todayview.ts)', () => {
-    expect(TODAY_DEFAULT_VIEW).toBe('classic');                       // the one value that would make the console the default
+  it('opens the command view at #/now and #/command, and the classic page at #/now?view=classic (lib/todayview.ts)', () => {
+    expect(TODAY_DEFAULT_VIEW).toBe('console');                       // the one value that says which view '#/now' opens
     expect(todayViewOf('#/now')).toBe(TODAY_DEFAULT_VIEW);
     expect(todayViewOf('#/now?aoi=kab-pulang-pisau')).toBe(TODAY_DEFAULT_VIEW);
     expect(todayViewOf('#/command')).toBe('console');
@@ -219,7 +219,7 @@ describe('the tab in the address', () => {
     expect(todayViewOf('#/now?view=console&aoi=kab-kapuas')).toBe('console');
     expect(todayViewOf('#/now?view=classic')).toBe('classic');
     for (const other of ['', '#/', '#/nowhere', '#/commander', '#/record?aoi=IDN', '#/home']) expect(todayViewOf(other)).toBeNull();
-    expect(classicHref('kab-pulang-pisau')).toBe('#/now?aoi=kab-pulang-pisau');
+    expect(classicHref('kab-pulang-pisau')).toBe('#/now?view=classic&aoi=kab-pulang-pisau');
     expect(consoleHref('kab-pulang-pisau')).toBe('#/command?aoi=kab-pulang-pisau');
     expect(todayViewOf(classicHref('kab-kapuas'))).toBe('classic');
     expect(todayViewOf(consoleHref('kab-kapuas'))).toBe('console');
