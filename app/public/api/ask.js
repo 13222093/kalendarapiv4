@@ -3,18 +3,23 @@
 // district's facts, the question and the last few turns; an OpenAI model answers from those facts only. The model
 // never produces numbers of its own: everything it may cite arrives in `facts`, validated below. The API key is read
 // from the Vercel project's environment (OPENAI_API_KEY); nothing secret is in this file.
+// Since 21 November 2026 the two papers of #/report (pages/FieldReport.tsx) may send `task` instead of a question: one
+// optional paragraph for the daily report or for the field check plan. The instruction of a task is fixed in this
+// file, so in that mode no text typed on the page reaches the model: only the validated facts do.
 
-const SYSTEM = `You answer questions from residents and district fire officers in Indonesia, inside the KalenderApi app. Each conversation starts with facts about one district as JSON: NASA satellite hotspot counts read a few minutes ago, the newest detection, how this month compares with the usual month, how often cloud hid the district in past seasons, and peat sites where fire came back in an earlier season.
+const SYSTEM = `You answer questions from residents and district fire officers in Indonesia, inside the KalenderApi app. Each conversation starts with facts about one district as JSON: NASA satellite hotspot counts read a few minutes ago, the newest detection, how this month compares with the usual month, how often cloud hid the district in past seasons, peat sites where fire came back in an earlier season, and places where fire was detected again in the last 7 days.
 
 People may act on what you say: stand a crew down, light a field, stay at home or leave. A wrong number, or an answer that sounds more certain than the data is, can put someone in danger. So:
 
 - Answer only from the facts in the JSON. Add no numbers, places, names, phone numbers, dates, regulations or official statuses that are not in it. When the facts do not hold the answer, say so plainly, then say what the page does show.
 - Satellites detect heat only at the times they pass, and cloud and thick smoke hide fires. Never say there is no fire, that a fire is out, or that it is safe. Say what was detected and when. A zero means nothing was detected, not that nothing is burning. Equally, do not say that a fire is still burning: when asked whether a fire is out, do not answer yes or no; say that satellite data cannot tell, then what was last detected and when.
 - On peat, fire that looks out can be detected again days later at the same place. When "peat_sites_to_recheck" lists sites, say that only a check on the ground can tell, and name the listed sites as places to start. They are places where fire came back in a past season, not places burning now.
+- "places_detected_again" lists places where the satellites detected fire on more than one day in the last 7 days, within about 1 km of each other. Say "detected again". Never say that the fire kept burning in between, or that it is the same fire: the satellites detected heat at the same place at different times, and only a check on the ground can tell. An entry whose "status" is "detected on one day only" was not detected again; it is listed because it was detected in the last 24 hours. "places_detected_again_total" counts every such place; the list may hold only the first ones.
+- "on_mapped_peat" true means the place lies on the national peat map (1:250,000, 2011). It does not mean that a peat fire or an underground fire was detected. On peat, fire that looks out can be detected again later, so such a place is one to check on the ground first.
 - Give no forecast, no cause and no blame. This is not an official warning. "level" is KalenderApi's own rule; when you name it, use the word in "level_name" and say it is the app's own level.
 - The level comes from this rule, and "why_the_level_was_set" says which line applied. High: 5 or more hotspots in the last 24 hours, or a month far above the usual month. Watch: at least one hotspot in the last 24 hours or in the last 7 days, or a month above the usual month. Calm: none of these. When asked what the level means, explain it from this rule and that line.
 - The page itself lists steps under "What to do now" (in Indonesian, "Yang dilakukan sekarang"): check the newest hotspot on the ground, check again the listed peat sites, tell the village with the ready message, and on a day when cloud hid the district report "not observed" rather than "no hotspots". They are the app's suggestions, not an official procedure. When asked what to do, give the steps that fit the facts and point to that list; a resident is told to follow the village head and the district disaster office. Do not say the page lacks something unless the facts are null.
-- Give coordinates exactly as written in the facts (latitude, then longitude), and only for the newest hotspot or the listed peat sites.
+- Give coordinates exactly as written in the facts (latitude, then longitude), and only for the newest hotspot, the listed peat sites or the listed places detected again.
 - Times in the facts are in Western Indonesia Time and end in "WIB". Give a time exactly as written, with "WIB"; do not convert it.
 - If the person describes fire or thick smoke near them, or people in danger: tell them first to move away from the fire and the smoke, then to tell the village head or the district disaster office (BPBD), and that the page has a button to report fire or smoke. Give a phone number only if one is in the facts.
 - If the question is not about fire, smoke, haze, hotspots, peat, this district or how to read this page, say in one sentence that you only help with those.
@@ -40,6 +45,23 @@ const MAX_QUESTION = 400;     // characters of one question
 const MAX_TURN = 700;         // characters kept of an earlier turn
 const MAX_HISTORY = 6;        // earlier turns sent with a question
 const MAX_SITES = 5;          // peat sites the answer may name
+const MAX_PLACES = 8;         // places detected again the answer may name (the papers list as many)
+// How a place of the last 7 days was detected (lib/burnsites.ts), in words the model can repeat.
+const PLACE_STATUS = {
+  returned: 'came back: detected, then 36 hours or more with no detection, then detected again',
+  persisting: 'detected again on following days',
+  single: 'detected on one day only',
+};
+
+// The two writing tasks the papers of #/report may send in place of a question. A task's instruction is fixed here
+// and only its language is chosen by the request, so nothing typed on the page reaches the model in this mode.
+const TASK_LANG = { id: 'Write in Bahasa Indonesia.', en: 'Write in English.' };
+const TASKS = {
+  daily_summary: (lang) => `Task set by the app, not a question from a person: write the situation paragraph of today's daily fire report, for the head of the district disaster office (BPBD). Use only the facts above. Three to five sentences, in this order: the level, named as the app's own level, with the hotspot counts of the last 24 hours and the last 7 days; then the places detected again, how many there are and what was detected at the first of them (when there are none, say so, and that this is not proof that every fire is out); then what the satellites cannot tell. Say nothing about burned area, crews, aircraft, weather or air quality: the facts hold none of these. ${TASK_LANG[lang]} One paragraph, 120 words at most.`,
+  plan_summary: (lang) => `Task set by the app, not a question from a person: write a short briefing for the crew that will check the places in "places_detected_again". Use only the facts above. Take the places in the order of "visit_order", one sentence each: the coordinates exactly as written, why the place is on the list (its "status", and that it lies on mapped peat when "on_mapped_peat" is true), and the straight-line distance from the stop before when the facts give one. Add no routes, roads, travel times, equipment, water sources, crew sizes or instructions that are not in the facts. End with one sentence: these are satellite detections of heat, to be checked on the ground. When "places_detected_again" is null, say in two sentences that the satellites give no place to check today and that this is not proof that nothing burns. ${TASK_LANG[lang]} 150 words at most.`,
+};
+// Added to the system prompt in task mode only: the question mode keeps the prompt above as it is.
+const TASK_NOTE = `In this conversation the app itself sets a writing task in place of a person's question. Every rule above still holds. Write in the language the task names and at the length the task gives, as plain text: no heading, no list, no Markdown symbols.`;
 
 function count(value, max = 10000000) {
   if (value === null || value === undefined) return null;
@@ -60,6 +82,41 @@ function wibTime(value) {
   if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) return null;
   const t = new Date(Date.parse(value) + 7 * 3600 * 1000).toISOString();
   return `${t.slice(0, 10)} ${t.slice(11, 16)} WIB`;
+}
+
+/** A whole number from `min` to `max`, or null. */
+function whole(value, min, max) {
+  return Number.isInteger(value) && value >= min && value <= max ? value : null;
+}
+
+/** A place of "places_detected_again", checked: where, when it was first and last detected and how it is listed are
+ *  needed, the rest is null when it cannot be read. `order` and `leg_km` come with the field check plan's targets. */
+function place(s) {
+  if (!s || typeof s !== 'object') return null;
+  const at = coord(s.lat, s.lon);
+  const first = wibTime(s.first);
+  const last = wibTime(s.last);
+  const status = typeof s.kind === 'string' && Object.prototype.hasOwnProperty.call(PLACE_STATUS, s.kind) ? PLACE_STATUS[s.kind] : null;
+  if (!at || !first || !last || !status) return null;
+  const detections = count(s.detections, 100000);
+  const night = count(s.night, 100000);
+  const out = {
+    ...at,
+    first_detected: first,
+    last_detected: last,
+    days_with_a_detection_of_7: whole(s.days_seen, 1, 7),
+    detections,
+    night_detections: night !== null && detections !== null && night > detections ? null : night,
+    status,
+    detected_in_last_24_hours: s.seen_in_last_24h === true,
+    on_mapped_peat: typeof s.on_peat === 'boolean' ? s.on_peat : null,
+  };
+  const order = whole(s.order, 1, MAX_PLACES);
+  if (order !== null) {
+    out.visit_order = order;
+    out.straight_line_km_from_previous_stop = typeof s.leg_km === 'number' && Number.isFinite(s.leg_km) && s.leg_km >= 0 && s.leg_km <= 2000 ? Number(s.leg_km.toFixed(1)) : null;
+  }
+  return out;
 }
 
 /** Text typed by a person: control characters out, runs of white space to one space, cut to `max`. */
@@ -84,9 +141,11 @@ function clean(body) {
   if (typeof f.district !== 'string' || !NAME.test(f.district)) return null;
   if (typeof f.province !== 'string' || !NAME.test(f.province)) return null;
   if (!LEVELS.has(f.level)) return null;
-  const question = line(body.question, MAX_QUESTION);
-  if (question.length < 2) return null;
   const lang = body.lang === 'en' ? 'en' : 'id';
+  // a task of the papers: the instruction is this file's own, and what the page sent as question or history is not used
+  const task = typeof body.task === 'string' && Object.prototype.hasOwnProperty.call(TASKS, body.task) ? body.task : null;
+  const question = task ? TASKS[task](lang) : line(body.question, MAX_QUESTION);
+  if (question.length < 2) return null;
   const month = typeof f.month === 'string' && /^\d{4}-\d{2}$/.test(f.month) ? f.month : null;
 
   let newest = null;
@@ -103,9 +162,16 @@ function clean(body) {
     }
   }
   const season = Number.isInteger(f.peat_season) && f.peat_season >= 2000 && f.peat_season <= 2100 ? f.peat_season : null;
+  const places = [];
+  if (Array.isArray(f.again_list)) {
+    for (const s of f.again_list.slice(0, MAX_PLACES)) {
+      const p = place(s);
+      if (p) places.push(p);
+    }
+  }
 
   const history = [];
-  if (Array.isArray(body.history)) {
+  if (!task && Array.isArray(body.history)) {
     for (const turn of body.history.slice(-MAX_HISTORY)) {
       const text = turn && typeof turn === 'object' ? line(turn.text, MAX_TURN) : '';
       if (text && (turn.role === 'user' || turn.role === 'assistant')) history.push({ role: turn.role, content: text });
@@ -115,6 +181,7 @@ function clean(body) {
   return {
     question,
     history,
+    task,
     facts: {
       lang,
       district: f.district,
@@ -137,6 +204,8 @@ function clean(body) {
       peat_cells_where_fire_came_back_in_past_seasons: count(f.peat_sites, 100000),
       peat_sites_to_recheck: sites.length ? sites : null,
       peat_sites_season: sites.length ? season : null,
+      places_detected_again: places.length ? places : null,
+      places_detected_again_total: count(f.again_total, 100000),
     },
   };
 }
@@ -150,7 +219,7 @@ async function ask(model, key, input) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: SYSTEM },
+          { role: 'system', content: input.task ? `${SYSTEM}\n\n${TASK_NOTE}` : SYSTEM },
           { role: 'user', content: `Facts for this district (JSON):\n${JSON.stringify(input.facts)}` },
           { role: 'assistant', content: input.facts.lang === 'en' ? 'I have the facts for this district. What is the question?' : 'Saya sudah menerima data kabupaten ini. Apa pertanyaannya?' },
           ...input.history,
@@ -240,4 +309,5 @@ module.exports = async (req, res) => {
 
 // The pure parts, for a test that calls them without a network.
 module.exports.clean = clean;
+module.exports.TASKS = TASKS;
 module.exports.fromAnotherSite = fromAnotherSite;

@@ -11,7 +11,10 @@ import { TODAY_DEFAULT_VIEW, classicHref, consoleHref, todayViewOf } from './tod
 const NOW = Date.UTC(2026, 10, 21, 2, 42);   // 21 Nov 2026 02:42 UTC = 09:42 WIB
 const pt = (date: string, time: string, sensor: 'N20' | 'N21' | 'MODIS' = 'N20'): LivePoint => [113.9216, -3.3715, 4.6, 'D', sensor, date, time];
 const NEWEST = pt('2026-11-17', '0624', 'N21');
-const watch: QueueInput = { liveFailed: false, newestId: hotspotId(NEWEST), peatId: peatSiteId({ lat: -2.845, lon: 113.785 }), level: 'watch' };
+const watch: QueueInput = { liveFailed: false, newestId: hotspotId(NEWEST), againId: null, peatId: peatSiteId({ lat: -2.845, lon: 113.785 }), level: 'watch' };
+// a place detected again, named as lib/burnsites.ts names a site: where, and when it was last detected
+const AGAIN = 'site:-3.372,113.922:2026-11-20T1812';
+const AGAIN_LATER = 'site:-3.372,113.922:2026-11-21T0130';
 
 describe('the village alert', () => {
   it('starts as a draft with one time', () => {
@@ -77,13 +80,44 @@ describe('the decision queue', () => {
     expect(nextRow(rows)?.kind).toBe('newest');
   });
   it('has no hotspot row without a hotspot and no peat row without peat data', () => {
-    const rows = queueRows({ liveFailed: false, newestId: null, peatId: null, level: 'calm' }, newConsoleState(NOW));
+    const rows = queueRows({ liveFailed: false, newestId: null, againId: null, peatId: null, level: 'calm' }, newConsoleState(NOW));
     expect(rows.map((r) => r.kind)).toEqual(['calm', 'cloud']);
   });
   it('asks to read again when live data failed, and offers no village row without a level', () => {
-    const rows = queueRows({ liveFailed: true, newestId: null, peatId: watch.peatId, level: null }, newConsoleState(NOW));
+    const rows = queueRows({ liveFailed: true, newestId: null, againId: null, peatId: watch.peatId, level: null }, newConsoleState(NOW));
     expect(rows.map((r) => r.kind)).toEqual(['reread', 'peat', 'cloud']);
     expect(accentRow(rows)).toBe('reread');
+  });
+  it('puts the places detected again after the newest hotspot and before the peat sites', () => {
+    const again = { ...watch, againId: AGAIN };
+    const rows = queueRows(again, newConsoleState(NOW));
+    expect(rows.map((r) => r.kind)).toEqual(['newest', 'again', 'peat', 'village', 'cloud']);
+    expect(rows[1]).toEqual({ id: AGAIN, kind: 'again', state: 'waiting' });
+    expect(waitingCount(rows)).toBe(5);
+    // without a newest hotspot row it is still above the peat row, and a fire report still comes first
+    expect(queueRows({ ...again, newestId: null }, newConsoleState(NOW)).map((r) => r.kind)).toEqual(['again', 'peat', 'village', 'cloud']);
+    const fire = answerAlert(markSent(approveAlert(newConsoleState(NOW), NOW), NOW), 'fire', NOW + 7);
+    expect(queueRows(again, fire).map((r) => r.kind)).toEqual(['resident', 'newest', 'again', 'peat', 'village', 'cloud']);
+    expect(queueRows(watch, newConsoleState(NOW)).some((r) => r.kind === 'again')).toBe(false);   // no such place: no row
+  });
+  it('marks the places detected again done and reopens them; a later detection there is a new row', () => {
+    const again = { ...watch, againId: AGAIN };
+    const row = (i: QueueInput, s: ReturnType<typeof newConsoleState>) => queueRows(i, s).find((r) => r.kind === 'again')!;
+    let s = setRowDone(newConsoleState(NOW), AGAIN, true);
+    expect(row(again, s).state).toBe('done');
+    expect(waitingCount(queueRows(again, s))).toBe(4);
+    expect(nextRow(queueRows(again, setRowDone(s, watch.newestId!, true)))?.kind).toBe('peat');
+    expect(row({ ...again, againId: AGAIN_LATER }, s)).toEqual({ id: AGAIN_LATER, kind: 'again', state: 'waiting' });
+    s = setRowDone(s, AGAIN, false);
+    expect(row(again, s).state).toBe('waiting');
+  });
+  it('never gives the accent to the places detected again', () => {
+    const again = { ...watch, againId: AGAIN };
+    const s = newConsoleState(NOW);
+    expect(accentRow(queueRows(again, s))).toBe('village');                             // unchanged by the new row
+    expect(accentRow(queueRows(again, approveAlert(s, NOW)))).toBeNull();
+    expect(accentRow(queueRows({ ...again, level: 'calm' }, s))).toBeNull();
+    expect(accentRow(queueRows({ ...again, newestId: null, peatId: null, level: null }, s))).toBeNull();   // even as the first waiting row
   });
   it('follows the alert: waiting, held, approved, then done once a resident replied', () => {
     const village = (s: ReturnType<typeof newConsoleState>) => queueRows(watch, s).find((r) => r.kind === 'village')!.state;
@@ -226,10 +260,12 @@ describe('the tab in the address', () => {
   });
   it('names every row in both languages', () => {
     const en = (a: string) => a, id = (_a: string, b: string) => b;
-    for (const kind of ['resident', 'reread', 'newest', 'peat', 'village', 'calm', 'cloud'] as const) {
+    for (const kind of ['resident', 'reread', 'newest', 'again', 'peat', 'village', 'calm', 'cloud'] as const) {
       expect(rowTitle(kind, en).length).toBeGreaterThan(5);
       expect(rowTitle(kind, id)).not.toBe(rowTitle(kind, en));
     }
+    expect(rowTitle('again', en)).toBe('Re-check the places detected again');
+    expect(rowTitle('again', id)).toBe('Cek ulang lokasi yang terdeteksi lagi');
     expect(rowTitle('village', en)).toBe('Tell the village');
     expect(rowTitle('resident', id)).toBe('Seorang warga melaporkan api: cek di lapangan');
   });

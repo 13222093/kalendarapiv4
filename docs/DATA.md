@@ -938,3 +938,129 @@ re-run); sha256 of the sorted list of `<name> <sha256>` lines of the 554 area fi
 - The sensors' outage days were not looked up in NASA's own records; `silent_days` is derived from the files alone.
 - App: `app/src/lib/everyday.ts`, `components/record/EveryDay.tsx` (section "Every day" of `#/record`, `sec=days`, `y=`),
   36 unit tests in `everyday.test.ts`.
+
+## 17. Places detected again, the daily report and the field check plan, added 21 November 2026
+
+No pipeline run and no new record: the list "Still burning?" of the command view and the two papers of `#/report` are
+computed in the browser, from the reply of `/api/live` that "Today in my district" already holds (NASA FIRMS
+near-real-time detections of the last 7 days from VIIRS NOAA-20, VIIRS NOAA-21 and MODIS, inside the district
+outline). Nothing is stored on a server. Asked for by a team member on 21 November 2026, after talking that day with a
+practitioner in disaster management: a disaster office works from a daily fire report and a field plan.
+
+### 17.1 The rule behind "detected again" (`app/src/lib/burnsites.ts`)
+
+- **A site.** Detections within 1 km of each other (`SITE_JOIN_KM`; a chain of close detections is one site) in the
+  168 hours before the read time (`SITE_WINDOW_HOURS`). Its coordinates are the mean of its detections; "detections
+  within N km" is the farthest detection from that centre.
+- **Detected again.** The site's first and last detection are 18 hours or more apart (`AGAIN_HOURS`). The satellites
+  pass about every 12 hours, so that is a later day's pass. **Came back:** 36 hours or more with no detection at the
+  site, then a detection again (`RETURN_GAP_HOURS`). Any other site detected again is listed as detected on N of 7
+  days, where a day is 24 hours counted back from the read time (the seven bins of the week strip), not a calendar day.
+- **Order.** Sites detected again and seen in the last 24 hours first, then the other sites detected again; within
+  each, more days seen, then the newest, then the most detections.
+- **What it does not say.** That a fire burned between two detections, that two detections are the same fire, or that a
+  place not on the list is free of fire: cloud, thick smoke and a fire too small or too cool are not detected. These
+  are our own rules, not an official status. No threshold was fitted or tested against ground data; none is at hand.
+
+### 17.2 The two papers (`app/src/lib/fieldreport.ts`, `app/src/pages/FieldReport.tsx`)
+
+- **Daily report.** The Today page's level and hotspot counts, the seven 24-hour counts, up to 8 sites detected again
+  (with "8 of N" when there are more), the past-season peat sites of section 15 where the district has them, the
+  decisions recorded in the command view (read from the browser's own storage; its village thread is a demo that sends
+  nothing), and blanks for burned area, crews, air operations, weather and air quality. The app has no data for those:
+  it prints a ruled line, or what the officer typed (kept in that browser only).
+- **Field check plan.** Targets: the sites detected again, then the sites detected only in the last 24 hours, at most
+  8. Visiting order: start at the first target of the list, then always the nearest one not yet visited. Distances are
+  great-circle straight lines (`distanceKm`), not roads, and the order is not an optimised route. The sketch map is a
+  flat grid with longitude scaled by the cosine of the middle latitude, with no base map; its scale bar comes from the
+  same distance function.
+- **Text.** The text for WhatsApp is written from the same paper object as the page, so its numbers are the page's
+  numbers (`fieldreport.test.ts`, with the "not read" and the empty case). Times are WIB (UTC+7) for every district.
+- **AI.** One optional paragraph per paper, from the validated facts only (`app/public/api/ask.js`, task mode;
+  `AI_USE.md`). No number on a paper comes from it.
+
+### 17.3 Mapped peat
+
+A site whose centre lies on mapped peat is marked "on mapped peat" on both papers, with one footnote that names the
+map. The mark is of the map, not of a detected peat fire.
+
+**The mask (`app/public/ka-data/peat_mask_idn.json`).** The file (86,160 bytes, about 30 KB gzipped) lists every 0.01
+degree cell of Indonesia whose centre lies inside a polygon of the peat map: 121,781 cells in 15,805 runs, about 15.0
+million ha (the published total of the map is 14.9 million ha). The page uses it to tag a live hot spot as "on mapped
+peat"; it is a mask of the map, not a fire statistic, and no hot spot or date is read to build it. Built by
+`pipeline/peat/build_peat_mask_idn.py` (about 10 s, no network):
+
+```
+.venv/Scripts/python.exe -I pipeline/peat/build_peat_mask_idn.py
+```
+
+Rule: a cell is in the mask when its centre lies inside a peat polygon (`make_valid` applied), the same rule and the
+same polygons as the Central Kalimantan peat index of section 15. The grid is that of
+`vendor/second-sight/pipeline/data/grid.py`: row = floor((lat + 90) / 0.01 + 1e-7), column = floor((lon + 180) / 0.01 +
+1e-7), cell = row × 36000 + column. `runs` is a flat list of pairs: the first cell of a run minus the first cell of the
+run before, then the number of cells. The script stops unless: the polygon file has the sha256 of its `.source.json`;
+its cell arithmetic agrees with `grid.py`; all 367 peat sites listed in `peat_persistence_kalteng.json` are in the mask;
+a recount by the other method (a tree of all 6,016,560 cell centres of the box, queried by each polygon) gives the same
+cells; and the written file decodes to the same cells. The runs are the same on every run (`runs_sha256`
+`c6c49f480dfabeb010505672a73c46a8b33abf03cc96a441eab5084259536913`); only `generated_at` changes. The app reads the file
+with `app/src/lib/peatmask.ts` (tests: `app/src/lib/peatmask.test.ts`, 21 pass).
+
+Source: national peat map of Indonesia, 1:250,000 (Peta Lahan Gambut Indonesia; Ritung et al. 2011, BBSDLP, Ministry of
+Agriculture), as republished by Global Forest Watch as "Indonesia peat lands" (2012):
+`data-raw/ss/support/peat/gfw_indonesia_peat_lands.geojson`, 1,524 polygons, sha256
+`007628883194fcaac9f6ec4fc62c621a56da01e87699d8fd77817499f5ebca17`, downloaded 14 November 2026 with a generalisation of
+0.002 degree. Licence: none is stated for the Global Forest Watch copy (the licence field of its metadata and of the
+ArcGIS item is empty, checked 21 November 2026). The same national map is included in PEATMAP (Xu et al. 2018,
+University of Leeds, doi:10.5518/252), which is CC BY 4.0. The mask was built from the Global Forest Watch file, not
+from PEATMAP.
+
+Limitation: the test is made at the centre of a 0.01 degree cell (about 1.1 km) on a map drawn at 1:250,000 and
+generalised by about 220 m, so a place near the edge of a peat area can be tagged wrongly; the map is from 2011 and says
+where peat was mapped, not its depth or state.
+
+### 17.4 Known fixed heat sources
+
+A site at a known fixed heat source (industry, a gas flare, a volcano) is left out of both lists and named in one line
+under them. The hotspot counts and the level of the Today page still include its detections, so the daily report also
+says how many of the counted hotspots lie at such a source.
+
+**The mask (`app/public/ka-data/fixed_heat_idn.json`).** NASA FIRMS near-real-time files carry no source type, so the
+list "Still burning?" cannot tell a refinery flare, a smelter or a volcano from a land fire that was detected again.
+The FIRMS standard-processing archive can: its attribute `type` is 0 for a presumed vegetation fire, 1 for an active
+volcano, 2 for another static land source and 3 for offshore. `pipeline/live/build_fixed_heat_idn.py` reads the
+Indonesia country files of the five newest full years on disk (2021 to 2025; MODIS on Terra and Aqua, `version` 6.03 and
+61.03; VIIRS 375 m on S-NPP and on NOAA-20, `version` 2; 15 files, the same downloads as section 4.1) and counts the
+detections of type 1, 2 and 3 per 0.01 degree cell of the Second Sight grid inside the box 95, -11, 141, 6. **Rule:** a
+cell is a known fixed heat source when it holds 3 or more such detections in that period; its kind is the type with the
+most detections there (a tie goes to static, then volcano, then offshore). Result: 145,859 detections in 4,660 cells, of
+which **1,160 cells** meet the rule (692 static, 119 volcano, 349 offshore); with 1, 2, 5 and 10 detections the count
+would be 4,660, 1,821, 760 and 493. Three was kept because 2,839 cells have a single detection and no repeat, while
+1,107 of the 1,160 cells were detected on two or more days. The app (`app/src/lib/fixedheat.ts`) asks for the cell a
+hot spot falls in or, failing that, the eight cells around it; a site is set aside when half or more of its detections
+lie at such a cell (`app/src/lib/burnsites.ts`). On the page the kinds static and offshore are both worded "industry or
+gas flare", because NASA types a source on the shore as offshore (the Balikpapan refinery flare is one).
+
+Checks made by the script, each of which stops the run: no file before 2021 is opened (2019 is locked by the registered
+test); every file has the row count that `data_manifest.json` records; the cell arithmetic equals `grid.py`; a recount
+with pyarrow and numpy gives the same cells and counts; the Balikpapan refinery flare, the Sorowako, Morosi and Obi
+nickel smelters and the Lewotolok volcano are in the mask; the written file decodes to the same cells. Command:
+`.venv/Scripts/python.exe -I pipeline/live/build_fixed_heat_idn.py` (about 1 s). File: 16,673 bytes (6,256 gzipped);
+`cells_sha256` `ce4052f51cc019fe28fb53e3f146270826a93edbbfbd80e5359b8d004b7254b7`; only `generated_at` changes between
+runs.
+
+Checked on the live data of 21 November 2026 (10,574 hot spots of the last 7 days): of the 64 cells with detections on 5
+or more of the 7 days, 38 are in or next to the mask. In Riau, Jambi, Sumatera Selatan, Kalimantan Barat, Kalimantan
+Tengah and Kalimantan Selatan the mask has 40, 26, 39, 5, 26 and 44 cells; 29 of all 1,160 cells lie on mapped peat.
+
+**Limits.** The type is NASA's presumption for each detection, not a ground check. Near-real-time data has no type, so a
+facility newer than the archive is not in the mask. Nor is a place outside the Indonesia country files, although the
+live box also covers parts of Malaysia, Brunei, Timor-Leste, Papua New Guinea and open sea. Nor is a fixed source whose
+detections NASA types as a presumed vegetation fire: on 21 November several places in East Kalimantan, seen at night in
+every archive year, were of that kind. A cell in the mask can still hold a land fire next to the source. The mask is a
+reason to set a place aside, not proof that nothing burns there, and a place outside it is not thereby a land fire.
+
+### 17.5 What was not done
+
+- No listed place was checked on the ground, and no list was compared with an official report.
+- No road, river or travel time is used: the visiting order is by straight-line distance only.
+- Nothing is forecast, and no cause is named.

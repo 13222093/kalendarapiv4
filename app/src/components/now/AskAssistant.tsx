@@ -68,6 +68,8 @@ export function AskAssistant({ facts, lang, place, hasPeat, variant = 'card' }: 
     tr('Where is the newest hotspot?', 'Titik panas terbaru di mana?'),
     tr('Today shows zero hotspots. Is the fire out?', 'Hari ini nol titik panas. Apakah apinya sudah padam?'),
     tr('What should I do now?', 'Apa yang harus saya lakukan sekarang?'),
+    // only when the page lists such places ("Still burning?"; pages/Now.tsx sends again_list and again_total)
+    ...(typeof facts.again_total === 'number' && facts.again_total > 0 ? [tr('Which places were detected again this week?', 'Lokasi mana yang terdeteksi lagi minggu ini?')] : []),
     ...(hasPeat ? [tr('Which peat sites should be checked again?', 'Lokasi gambut mana yang perlu dicek ulang?')] : []),
   ];
 

@@ -27,3 +27,14 @@ export const classicHref = (aoiId: string): string =>
 
 /** The command view of a district. */
 export const consoleHref = (aoiId: string): string => `#/command?aoi=${enc(aoiId)}`;
+
+/** The two papers of a district, drawn from the same data as the Today page (pages/FieldReport.tsx): the daily report
+ *  and the draft field check plan. Address: '#/report?aoi=<district aoi_id>&doc=daily|plan'. */
+export type ReportDoc = 'daily' | 'plan';
+export const reportHref = (aoiId: string, doc: ReportDoc = 'daily'): string => `#/report?aoi=${enc(aoiId)}&doc=${doc}`;
+/** The paper an address asks for ('daily' unless it names the plan), or null when it is not an address of that page. */
+export function reportDocOf(hash: string): ReportDoc | null {
+  const [path, query] = hash.split('?');
+  if (path !== '#/report') return null;
+  return new URLSearchParams(query ?? '').get('doc') === 'plan' ? 'plan' : 'daily';
+}

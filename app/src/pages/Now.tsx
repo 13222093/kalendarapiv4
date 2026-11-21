@@ -29,6 +29,9 @@ import { SiteHeader } from '../components/SiteHeader.tsx';
 import { AlertLoop } from '../components/now/AlertLoop.tsx';
 import { AskAssistant, type AskFacts } from '../components/now/AskAssistant.tsx';
 import { classicHref, consoleHref } from '../lib/todayview.ts';
+import { againSites, burnSites } from '../lib/burnsites.ts';
+import { PEAT_MASK_FILE, asPeatMask } from '../lib/peatmask.ts';
+import { FIXED_HEAT_FILE, asFixedHeat } from '../lib/fixedheat.ts';
 import '../styles/now.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -502,6 +505,20 @@ export function useNowModel(view: { hrefFor: (aoiId: string) => string }) {
   const counts = useMemo(() => (marked ? countLive(marked.filter((x) => x.inside).map((x) => x.p), nowMs) : null), [marked, nowMs]);
   const updatedMs = liveData ? filesUpdatedMs(liveData.sources) : null;
   const byBox = !!marked && !outline;
+  // ---- the places of those hotspots, the ones detected again first (lib/burnsites.ts): "Still burning?" in the
+  // command view, the daily report and the field check plan read this one list; null while the hotspots are not read
+  // The national peat map as a mask of 0.01 degree cells (lib/peatmask.ts) tags a site "on mapped peat". The list
+  // works without it: until the mask is loaded, or when it cannot be, the tag is not known (null), never "not peat".
+  const peatMaskFile = useLoad<unknown>(() => getJson<unknown>(`${BASE}${PEAT_MASK_FILE}`), 'peatmask');
+  const peatMask = useMemo(() => (peatMaskFile.state === 'ok' ? asPeatMask(peatMaskFile.data) : null), [peatMaskFile]);
+  // The places NASA's archive types as a volcano or a fixed industrial source (lib/fixedheat.ts): a refinery flare or
+  // a smelter is detected day after day and would lead the list, so such a site is set aside and named apart.
+  const fixedHeatFile = useLoad<unknown>(() => getJson<unknown>(`${BASE}${FIXED_HEAT_FILE}`), 'fixedheat');
+  const fixedHeat = useMemo(() => (fixedHeatFile.state === 'ok' ? asFixedHeat(fixedHeatFile.data) : null), [fixedHeatFile]);
+  const burn = useMemo(() => (marked ? burnSites(marked.filter((x) => x.inside).map((x) => x.p), nowMs, {
+    peat: peatMask ? (lo, la) => peatMask.has(lo, la) : undefined,
+    fixed: fixedHeat ? (lo, la) => fixedHeat.near(lo, la) : undefined,
+  }) : null), [marked, nowMs, peatMask, fixedHeat]);
 
   // ---- today's photo
   const [photo, setPhoto] = useState<{ key: string; date: string | null }>({ key: '', date: null });
@@ -587,6 +604,12 @@ export function useNowModel(view: { hrefFor: (aoiId: string) => string }) {
     peat_list: sites.slice(0, 5).map((s) => ({ lat: s.lat, lon: s.lon, days: s.days, come_backs: s.comeBacks })),
     peat_season: peat?.season ?? null,
     level_why: result.why,
+    // the sites detected again in the 7 days ("Still burning?"): the other places the assistant may name
+    again_list: againSites(burn ?? []).slice(0, 5).map((s) => ({
+      lat: s.lat, lon: s.lon, first: new Date(s.firstMs).toISOString(), last: new Date(s.lastMs).toISOString(),
+      days_seen: s.daysSeen, detections: s.detections, night: s.night, kind: s.kind, seen_in_last_24h: s.fresh, on_peat: s.onPeat,
+    })),
+    again_total: burn ? againSites(burn).length : null,
   } : null;
 
   // ---- the picker
@@ -644,7 +667,7 @@ export function useNowModel(view: { hrefFor: (aoiId: string) => string }) {
 
   return {
     tr, lang, hash, asked, districts, aoi, unknownAsked, aoiId, name, box, outline, rows,
-    setTick, liveState, liveData, nowMs, marked, counts, updatedMs, byBox, photoKnown, photoDate, photoDay,
+    setTick, liveState, liveData, nowMs, marked, counts, burn, updatedMs, byBox, photoKnown, photoDate, photoDay,
     monthRow, earlierYears, mf, recordDate, baseline, blindRow, blindSeasons, peat, sites, peatOutline,
     result, msgLang, setMsgLang, phones, setPhones, copied, setCopied, message, aiFacts, askFacts,
     q, setQ, lat, setLat, lon, setLon, coordNote, groups, go, findByCoord,

@@ -91,13 +91,16 @@ export function threadOf(a: AlertLoopState): ThreadLine[] {
 // ------------------------------------------------------------------------------------------------ the decision queue
 
 /** The rows the queue can hold. `resident`: a resident answered "I see fire". `reread`: live hotspots could not be read.
- *  `newest`, `peat`, `village` or `calm`, `cloud`: the four actions of the classic page, under the same conditions. */
-export type RowKind = 'resident' | 'reread' | 'newest' | 'peat' | 'village' | 'calm' | 'cloud';
+ *  `newest`, `peat`, `village` or `calm`, `cloud`: the four actions of the classic page, under the same conditions.
+ *  `again`: places the satellites detected again in the last seven days (lib/burnsites.ts, the list "Still burning?"). */
+export type RowKind = 'resident' | 'reread' | 'newest' | 'again' | 'peat' | 'village' | 'calm' | 'cloud';
 export type RowState = 'waiting' | 'approved' | 'held' | 'done';
 export interface QueueRow { id: string; kind: RowKind; state: RowState }
 export interface QueueInput {
   liveFailed: boolean;          // live hotspots could not be read (the classic page then asks to read again)
   newestId: string | null;      // the newest hotspot in the district, when there is one (hotspotId)
+  againId: string | null;       // the first place detected again, when there is one (its BurnSite id, which changes
+                                // when the place is detected once more: a new detection is a new row to check)
   peatId: string | null;        // the first peat site of the list, when the district has one (peatSiteId)
   level: Level | null;          // the page's own level; null when it is not set
 }
@@ -116,6 +119,7 @@ export function queueRows(i: QueueInput, s: ConsoleState): QueueRow[] {
   }
   if (i.liveFailed) rows.push({ id: 'reread', kind: 'reread', state: 'waiting' });
   if (i.newestId) rows.push({ id: i.newestId, kind: 'newest', state: mark(i.newestId) });
+  if (i.againId) rows.push({ id: i.againId, kind: 'again', state: mark(i.againId) });
   if (i.peatId) rows.push({ id: i.peatId, kind: 'peat', state: mark(i.peatId) });
   if (i.level === 'calm') rows.push({ id: 'calm', kind: 'calm', state: mark('calm') });
   else if (i.level) {
@@ -132,6 +136,7 @@ export function rowTitle(kind: RowKind, tr: (en: string, id: string) => string):
     case 'resident': return tr('A resident reports fire: check on the ground', 'Seorang warga melaporkan api: cek di lapangan');
     case 'reread': return tr('Read the hotspots again', 'Baca ulang titik panas');
     case 'newest': return tr('Check the newest hotspot on the ground', 'Cek titik panas terbaru di lapangan');
+    case 'again': return tr('Re-check the places detected again', 'Cek ulang lokasi yang terdeteksi lagi');
     case 'peat': return tr('Re-check peat where fire came back', 'Cek ulang gambut tempat api muncul lagi');
     case 'village': return tr('Tell the village', 'Kabari desa');
     case 'calm': return tr('No alert needed today; keep the routine patrol', 'Hari ini tidak perlu peringatan; lanjutkan patroli rutin');

@@ -17,7 +17,7 @@ import { PALETTE_EVENT, panelSearchBox, useCommand } from './lib/commands.ts';
 import { LangToggle } from './components/LangToggle.tsx';
 import { useTr } from './lib/lang.ts';
 import { toggleTheme, useTheme } from './lib/theme.ts';
-import { todayViewOf } from './lib/todayview.ts';
+import { reportDocOf, todayViewOf } from './lib/todayview.ts';
 import { RESIZE_FROM, clampPanel, savedPanelWidth } from './components/explorer/panelSize.ts';
 
 // The loading outline uses the classes of the shared building blocks (ui.css) directly: importing ui.tsx here would
@@ -176,7 +176,9 @@ function readHash(): string {
 const NowPage = lazy(() => import('./pages/Now.tsx').then((m) => ({ default: m.Now })));
 // The same page as a three-panel command view (#/command). Which of the two '#/now' opens is one value in lib/todayview.ts.
 const CommandPage = lazy(() => import('./pages/CommandConsole.tsx').then((m) => ({ default: m.CommandConsole })));
-const Story = lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
+// The same district as two printable papers (#/report?aoi=<id>&doc=daily|plan): the daily report and the field check plan.
+const ReportPage = lazy(() => import('./pages/FieldReport.tsx').then((m) => ({ default: m.FieldReport })));
+const Story =lazy(() => import('./pages/Story.tsx').then((m) => ({ default: m.Story })));
 // KalenderApi (modification): '#/season' plays Central Kalimantan, Aug to Oct 2019, one real day per frame.
 const Season = lazy(() => import('./pages/Season.tsx').then((m) => ({ default: m.Season })));
 // The printable brief (#/brief?aoi=<aoi_id>): one A4 page, with no header or menu.
@@ -199,6 +201,14 @@ export function App() {
     return (
       <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
         {today === 'console' ? <CommandPage /> : <NowPage />}
+      </Suspense>
+    );
+  }
+  // the two papers of the Today page: the daily report and the draft field check plan (pages/FieldReport.tsx)
+  if (reportDocOf(hash)) {
+    return (
+      <Suspense fallback={<div className="ka-story" aria-hidden="true" />}>
+        <ReportPage />
       </Suspense>
     );
   }

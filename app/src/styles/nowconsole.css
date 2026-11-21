@@ -114,10 +114,13 @@
 .cmd-next-go { min-height: 0; padding: 2px 0; color: var(--text); font-size: 14px; text-align: left; }
 .cmd-limits { margin-top: 8px; }
 .cmd-strip .cmd-small { margin-top: 4px; }
-.cmd-counters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 20px; }
+/* four counters: two by two on a phone, one line on a tablet and on a wide screen, two by two again between them
+   (the widths are in the media rules below) */
+.cmd-counters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; }
 .cmd-counters dt { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .cmd-counters dd { margin-top: 2px; font: 500 26px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
-.cmd-strip-pick { justify-self: start; }
+/* the daily report and the district picker, side by side */
+.cmd-strip-pick { display: flex; flex-wrap: wrap; gap: 6px 8px; justify-self: start; }
 
 /* ---- the shell */
 .cmd-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -195,6 +198,54 @@
 .cmd-week-bar .is-viirs { background: var(--ka-viirs); }
 .cmd-week-bar .is-modis { background: var(--ka-modis); }
 .cmd-week-ticks { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font: 500 11.5px/1.4 var(--font-mono); color: var(--text-3); }
+/* "Still burning?" (components/now/StillBurning.tsx): the places detected again, as a ledger under the week strip.
+   One row per place, parted by hairlines: a strip of seven boxes (the week strip's order), the status in words, quiet
+   tags, the facts in mono. A filled box is drawn with its border, so it is still filled on paper. No accent here. */
+.cmd-again { container: again / inline-size; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.cmd-again:focus-visible { outline-offset: -2px; }
+.cmd-again-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font: 600 14.5px/1.3 var(--font-sans); font-variation-settings: normal; letter-spacing: 0; color: var(--text); }
+.cmd-again-count { font: 500 12.5px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); }
+.cmd-again-what { margin-top: 2px; font-size: 12.5px; color: var(--text-3); }
+.cmd-again-state { margin-top: 8px; }
+.cmd-again-key { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin-top: 8px; font: 500 11.5px/1.5 var(--font-mono); color: var(--text-3); }
+.cmd-again-key span { display: inline-flex; align-items: center; gap: 6px; }
+.cmd-again-key i, .cmd-again-strip i { flex: none; box-sizing: border-box; width: 8px; height: 14px; border: 1px solid var(--border-strong); }
+.cmd-again-key i.has, .cmd-again-strip i.has { border-width: 7px 4px; border-color: var(--text-2); }
+.cmd-again-rows { margin-top: 6px; border-bottom: 1px solid var(--border); }
+/* a row on a narrow panel (a phone, the centre of a small laptop): the strip and the status on one line, then the
+   tags, the facts and the two links at full width; from 520 px of panel (the rule after these) they sit beside the strip */
+.cmd-again-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px;
+  grid-template-areas: "strip status" "tags tags" "facts facts" "acts acts";
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
+.cmd-again-row.is-more { display: none; }
+.cmd-again-strip { grid-area: strip; align-self: start; display: flex; gap: 2px; margin-top: 2px; }
+.cmd-again-status { grid-area: status; min-width: 0; font: 600 13.5px/1.35 var(--font-sans); color: var(--text); }
+.cmd-again-acts { grid-area: acts; display: flex; gap: 18px; }
+.cmd-again-tags { grid-area: tags; display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.cmd-again-tags li { padding: 1px 6px; border: 1px solid var(--border); border-radius: 4px; font: 500 11.5px/1.45 var(--font-mono); color: var(--text-2); }
+.cmd-again-tags li.is-fresh { border-color: var(--text-2); color: var(--text); }
+.cmd-again-facts { grid-area: facts; display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 6px; }
+@container again (min-width: 520px) {
+  .cmd-again-row {
+    grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "strip status acts" "strip tags tags" "strip facts facts";
+    padding: 0 0 9px;
+  }
+  .cmd-again-strip { margin-top: 13px; }
+  .cmd-again-status { align-self: center; padding: 6px 0; }
+  .cmd-again-tags { margin-top: 0; }
+}
+.cmd-again-facts > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; }
+.cmd-again-facts dt { font-size: 12px; color: var(--text-3); }
+.cmd-again-facts dd { font: 500 12.5px/1.5 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); overflow-wrap: anywhere; }
+.cmd-again-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 18px; }
+.cmd-again-papers { display: flex; flex-wrap: wrap; gap: 0 18px; margin-left: auto; }
+/* known fixed heat sources (industry, a gas flare, a volcano): left out of the rows, named in one quiet line */
+.cmd-again-fixed { padding-top: 6px; border-top: 1px solid var(--border); }
+.cmd-again-fixed-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 14px; min-height: 40px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-2); }
+.cmd-again-fixed-at { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.cmd-again-rules { display: grid; gap: 6px; padding: 0 0 8px 18px; list-style: disc; font-size: 13px; line-height: 1.45; color: var(--text-3); }
 .cmd-scroll-x { overflow-x: auto; }
 .cmd-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .cmd-table th, .cmd-table td { padding: 0 7px; height: 40px; border-top: 1px solid var(--border); color: var(--text-2); text-align: left; white-space: nowrap; }
@@ -351,10 +402,12 @@
 .cmd-fine { display: grid; gap: 8px; margin-top: 8px; padding-left: 18px; list-style: disc; font-size: 13.5px; color: var(--text-2); }
 
 @media (min-width: 760px) {
-  .cmd-strip { grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px 28px; }
-  .cmd-counters { display: flex; gap: 28px; }
+  /* a tablet: the level and the two controls on one line, the four counters in a line of their own under them */
+  .cmd-strip { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "lead pick" "counters counters"; gap: 10px 28px; }
+  .cmd-strip-lead { grid-area: lead; }
+  .cmd-counters { grid-area: counters; display: flex; gap: 28px; }
   .cmd-counters dt { white-space: nowrap; }
-  .cmd-strip-pick { justify-self: end; }
+  .cmd-strip-pick { grid-area: pick; justify-self: end; }
   .cmd-grid { grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); grid-template-areas: "map map" "queue side"; }
   .cmd-centre { grid-area: map; }
   .cmd-queue { grid-area: queue; border-right: 1px solid var(--border); border-bottom: 0; }
@@ -362,6 +415,12 @@
 }
 @media (min-width: 1100px) {
   .cmd-page { height: 100vh; height: 100dvh; min-height: 600px; }
+  /* one line again: the level and its reason, the counters two by two, the two controls one over the other, so the
+     reason keeps the room it had with three counters (a laptop of 1100 to 1499 px) */
+  .cmd-strip { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "lead counters pick"; gap: 10px 24px; }
+  .cmd-counters { display: grid; grid-template-columns: auto auto; gap: 6px 22px; }
+  .cmd-counters dd { margin-top: 1px; font-size: 22px; }
+  .cmd-strip-pick { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; }
   .cmd-grid { grid-template-columns: clamp(328px, 27vw, 376px) minmax(0, 1fr) clamp(340px, 28vw, 400px); grid-template-areas: "queue map side"; }
   .cmd-queue, .cmd-under, .cmd-tabpanel { overflow-y: auto; }
   .cmd-narrow-only { display: none; }
@@ -375,6 +434,13 @@
   /* no map (WebGL is missing): its note takes one line and the numbers under it take the room */
   .cmd-map:has(> .now-note) { flex: none; min-height: 0; }
   .cmd-map:has(> .now-note) + .cmd-under { flex: 1 1 auto; max-height: none; }
+}
+/* a wide screen: the four counters in one line and the two controls side by side */
+@media (min-width: 1500px) {
+  .cmd-strip { gap: 10px 28px; }
+  .cmd-counters { display: flex; gap: 28px; }
+  .cmd-counters dd { margin-top: 2px; font-size: 26px; }
+  .cmd-strip-pick { flex-direction: row; align-items: center; gap: 8px; }
 }
 /* one screen on a low laptop (1366 x 768): tighter, so the third row's buttons are in view without scrolling the queue */
 @media (min-width: 1100px) and (max-height: 820px) {
@@ -398,10 +464,10 @@
 }
 /* where the page scrolls, a jump (to the map, a row, the thread, the peat list) stops below the sticky top bar */
 @media (max-width: 1099px) {
-  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, #cmd-peat { scroll-margin-top: 68px; }
+  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, .cmd-again, #cmd-peat { scroll-margin-top: 68px; }
 }
 @media (max-width: 759px) {
-  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, #cmd-peat { scroll-margin-top: 140px; }
+  .cmd-map, .cmd-row, .cmd-thread, .cmd-msg, .cmd-again, #cmd-peat { scroll-margin-top: 140px; }
   .cmd-map { height: 56vh; }
   .cmd-legend-photo { margin-left: 0; }
   .cmd-bar { padding-top: 4px; padding-bottom: 4px; }
@@ -427,4 +493,15 @@
   .cmd-level { border-width: 1px; background: none; }
   .cmd-queue, .cmd-centre, .cmd-side, .cmd-tabpanel { border: 0; break-inside: auto; }
   .cmd-tabpanel + .cmd-tabpanel { border-top: 1px solid var(--border); }
+  /* "Still burning?": every row, also those behind "Show all"; a row is not cut in two by a page break. Its buttons
+     and links go with the others above (.cmd-link). */
+  .cmd-again-row.is-more { display: grid; }
+  .cmd-again-row { break-inside: avoid; }
+  .cmd-again-foot { display: none; }
+  /* paper is white: black words and grey lines, whatever the theme on screen (as styles/brief.css does) */
+  html, body { background: #fff !important; }
+  .cmd-page {
+    --bg: #fff; --surface: #fff; --surface-2: #fff; --surface-3: #fff; --text: #000; --text-2: #000; --text-3: #1a1a1a;
+    --border: #8a8a8a; --border-strong: #000; color: #000;
+  }
 }

@@ -5,7 +5,9 @@
 // in the village thread adds a row at the top. The rows and their states come from lib/nowconsole.ts; this file only
 // draws them. These are the app's suggestions from its own rule, not an official procedure.
 import { useState } from 'react';
+import { AGAIN_HOURS, SITE_WINDOW_HOURS, againSites } from '../../lib/burnsites.ts';
 import { SENSOR_LABEL, pointMs, wib } from '../../lib/now.ts';
+import { reportHref } from '../../lib/todayview.ts';
 import {
   ALERT_STEPS, activeStep, alertStatus, clockWib, rowTitle,
   type AlertStatus, type AlertStep, type ConsoleState, type QueueRow, type RowState,
@@ -28,10 +30,11 @@ interface QueueProps {
   onRestart: () => void; onGuide: (hidden: boolean) => void;
   onShow: ((lon: number, lat: number) => void) | null; // "Show on map"; null when the map could not start (no WebGL)
   onPeat: () => void; onCrew: () => void; onThread: () => void;
+  onAgain: () => void;                                 // to the list "Still burning?" under the map
 }
 
-export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDone, onRestart, onGuide, onShow, onPeat, onCrew, onThread }: QueueProps) {
-  const { tr, lang, counts, sites, peat, blindRow, result, liveState, whyText, rules, levelName, num, copied, setCopied, setTick } = m;
+export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDone, onRestart, onGuide, onShow, onPeat, onCrew, onThread, onAgain }: QueueProps) {
+  const { tr, lang, aoiId, counts, burn, sites, peat, blindRow, result, liveState, whyText, rules, levelName, num, copied, setCopied, setTick } = m;
   // (whyText: the page's own reason sentences; rules: its level rules, in both languages)
   const alert = state.alert;
   const at = activeStep(alert);
@@ -100,6 +103,32 @@ export function DecisionQueue({ m, state, rows, accent, onApprove, onHold, onDon
           ),
           why: tr('This is the newest detection of the last 7 days inside the district. A hotspot is a detection of heat: it is not a confirmed fire and not burned area. A satellite coordinate can be off by up to about 1 km, so verify on the ground.',
             'Ini deteksi terbaru dalam 7 hari terakhir di dalam kabupaten. Titik panas adalah deteksi panas: bukan kebakaran yang terkonfirmasi dan bukan luas terbakar. Koordinat satelit bisa meleset hingga sekitar 1 km, jadi verifikasi di lapangan.'),
+        };
+      }
+      case 'again': {
+        // the places of "Still burning?" (components/now/StillBurning.tsx): the same list, its first place named here.
+        // This row never takes the accent: its buttons are plain.
+        const list = burn ? againSites(burn) : [];
+        const a0 = list[0];
+        if (!a0) return null;
+        const n = list.length, days = SITE_WINDOW_HOURS / 24;
+        const at = `${a0.lat.toFixed(4)}, ${a0.lon.toFixed(4)}`;
+        const last = wib(a0.lastMs, lang);
+        const peatEn = a0.onPeat === true ? ', on mapped peat' : '', peatId = a0.onPeat === true ? ', di lahan gambut (peta)' : '';
+        return {
+          fact: tr(`${num(n)} place${n === 1 ? '' : 's'} · first: ${at}${peatEn} · last detected ${last}`,
+            `${num(n)} lokasi · pertama: ${at}${peatId} · terakhir terdeteksi ${last}`),
+          actions: (
+            <>
+              {onShow ? <button type="button" className="cmd-btn" onClick={() => onShow(a0.lon, a0.lat)}>{tr('Show on map', 'Lihat di peta')}</button> : null}
+              <button type="button" className="cmd-btn" onClick={onAgain}>{tr('See the list', 'Lihat daftarnya')}</button>
+              <a className="cmd-link" href={reportHref(aoiId, 'plan')}>{tr('Open the field check plan', 'Buka rencana cek lapangan')}</a>
+            </>
+          ),
+          why: `${tr(`${n === 1 ? '1 place in this district was' : `${num(n)} places in this district were`} detected again by the satellites in the last ${days} days: the first and the last detection there are ${AGAIN_HOURS} hours or more apart. The first of the list is at ${at}${peatEn}, last detected ${last}.`,
+            `${num(n)} lokasi di kabupaten ini terdeteksi lagi oleh satelit dalam ${days} hari terakhir: deteksi pertama dan terakhir di sana berselang ${AGAIN_HOURS} jam atau lebih. Yang pertama dalam daftar ada di ${at}${peatId}, terakhir terdeteksi ${last}.`)} ${
+            tr('That is a reason to check on the ground, not proof that the fire never went out. A hotspot is a detection of heat, not a confirmed fire, and this list is our own rule, not an official status.',
+              'Itu alasan untuk cek lapangan, bukan bukti apinya tidak pernah padam. Titik panas adalah deteksi panas, bukan kebakaran yang terkonfirmasi, dan daftar ini aturan kami sendiri, bukan status resmi.')}`,
         };
       }
       case 'peat': {

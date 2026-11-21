@@ -7,6 +7,7 @@
 // and in the browser's localStorage, by district and by day (lib/nowconsole.ts); the page works without storage.
 // The village thread is a demo that sends nothing: only the WhatsApp buttons send, by the reader's own hand.
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react';
+import { againSites } from '../lib/burnsites.ts';
 import { SENSOR_LABEL, districtTitle, pointMs, wib } from '../lib/now.ts';
 import {
   CONSOLE_TABS, accentRow, answerAlert, approveAlert, hashWith, holdAlert, hotspotId, localDay, markSent, nextRow, parseConsoleState,
@@ -14,11 +15,12 @@ import {
   type ConsoleState, type ConsoleTab, type Reply,
 } from '../lib/nowconsole.ts';
 import { aoiName } from '../lib/record.ts';
-import { classicHref } from '../lib/todayview.ts';
+import { classicHref, reportHref } from '../lib/todayview.ts';
 import { SiteHeader } from '../components/SiteHeader.tsx';
 import { AskAssistant, type AskFacts } from '../components/now/AskAssistant.tsx';
 import { DecisionQueue } from '../components/now/DecisionQueue.tsx';
 import { EvidenceList } from '../components/now/EvidenceList.tsx';
+import { StillBurning } from '../components/now/StillBurning.tsx';
 import { VillageThread } from '../components/now/VillageThread.tsx';
 import { NowMap, TABLE_ROWS, useNowModel, type MapFocus } from './Now.tsx';
 import '../styles/nowconsole.css';
@@ -113,7 +115,7 @@ function ConsoleDialog({ open, onClose, id, title, closeLabel, focusId, children
 export function CommandConsole() {
   const m = useNowModel({ hrefFor: (id) => hashWith(window.location.hash, { aoi: id }) });
   const {
-    tr, lang, hash, asked, districts, aoi, unknownAsked, aoiId, name, box, outline, setTick, liveState, liveData, nowMs, marked, counts,
+    tr, lang, hash, asked, districts, aoi, unknownAsked, aoiId, name, box, outline, setTick, liveState, liveData, nowMs, marked, counts, burn,
     photoKnown, photoDate, photoDay, sites, peatOutline, result, askFacts,
     q, setQ, lat, setLat, lon, setLon, coordNote, groups, go, findByCoord, num, place, levelName, whyText,
   } = m;
@@ -135,10 +137,14 @@ export function CommandConsole() {
     update((s) => restartConsole(s, Date.now()));
   };
 
+  // ---- the places detected again in the last seven days ("Still burning?"); null while the hotspots are not read
+  const again = useMemo(() => (burn ? againSites(burn) : null), [burn]);
+
   // ---- the queue, from the same facts and conditions as the classic page's "What to do now"
   const rows = queueRows({
     liveFailed: liveState.state === 'unavailable',
     newestId: counts?.newest ? hotspotId(counts.newest) : null,
+    againId: again?.[0]?.id ?? null,
     peatId: sites[0] ? peatSiteId(sites[0]) : null,
     level: result.level,
   }, state);
@@ -182,6 +188,7 @@ export function CommandConsole() {
   const [othersOpen, setOthersOpen] = useState(false);
   const openCrew = () => { setOthersOpen(true); setTab('village'); reveal('cmd-m-crew', true); };
   const openPeat = () => { setTab('evidence'); reveal('cmd-peat', true); };
+  const openAgain = () => reveal('cmd-again', true);
   const openThread = () => { setTab('village'); reveal('cmd-thread', true); };
   const openQueueRow = () => reveal('cmd-row-village', true);
 
@@ -210,7 +217,7 @@ export function CommandConsole() {
       {/* the same top bar as the classic page (components/SiteHeader.tsx) */}
       <SiteHeader current="now" />
 
-      {/* ---- the status strip: where, the level and its reason, the next step, three counters */}
+      {/* ---- the status strip: where, the level and its reason, the next step, four counters, the daily report */}
       <section className="cmd-strip" aria-label={tr('Status', 'Status')}>
         <div className="cmd-strip-lead">
         {/* the level, as on the classic page: its own badge, bordered by level (Watch, High), and a jump to the actions */}
@@ -246,8 +253,13 @@ export function CommandConsole() {
           <div><dt>{tr('waiting for a decision', 'menunggu keputusan')}</dt><dd>{aoi ? num(waiting) : '–'}</dd></div>
           <div><dt>{tr('hotspots, 24 hours', 'titik panas, 24 jam')}</dt><dd>{counts ? num(counts.total24) : <span title={tr('not read', 'tidak terbaca')}>–</span>}</dd></div>
           <div><dt>{tr('hotspots, 7 days', 'titik panas, 7 hari')}</dt><dd>{counts ? num(counts.total7) : <span title={tr('not read', 'tidak terbaca')}>–</span>}</dd></div>
+          {/* the places of "Still burning?" under the map: detected again in the 7 days (lib/burnsites.ts) */}
+          <div><dt>{tr('places detected again', 'lokasi terdeteksi lagi')}</dt><dd>{again ? num(again.length) : <span title={tr('not read', 'tidak terbaca')}>–</span>}</dd></div>
         </dl>
-        <button type="button" className="cmd-btn cmd-strip-pick" aria-haspopup="dialog" onClick={() => setPicker(true)}>{tr('Change district', 'Ganti kabupaten')}</button>
+        <div className="cmd-strip-pick">
+          {aoiId ? <a className="cmd-btn" href={reportHref(aoiId)}>{tr('Daily report', 'Laporan harian')}</a> : null}
+          <button type="button" className="cmd-btn" aria-haspopup="dialog" onClick={() => setPicker(true)}>{tr('Change district', 'Ganti kabupaten')}</button>
+        </div>
       </section>
 
       {aoi && box ? (
@@ -255,7 +267,8 @@ export function CommandConsole() {
           {/* ---- left: the decision queue */}
           <DecisionQueue m={m} state={state} rows={rows} accent={accent}
             onApprove={approve} onHold={hold} onDone={(id, done) => update((s) => setRowDone(s, id, done))} onRestart={restart}
-            onGuide={(hidden) => update((s) => setGuideHidden(s, hidden))} onShow={noMap ? null : showOnMap} onPeat={openPeat} onCrew={openCrew} onThread={openThread} />
+            onGuide={(hidden) => update((s) => setGuideHidden(s, hidden))} onShow={noMap ? null : showOnMap} onPeat={openPeat} onCrew={openCrew} onThread={openThread}
+            onAgain={openAgain} />
 
           {/* ---- centre: the map, then the last seven days and the newest hotspots */}
           <section className="cmd-centre" aria-label={tr('Map and hotspots', 'Peta dan titik panas')}>
@@ -323,6 +336,9 @@ export function CommandConsole() {
                     : tr('Not read: the hotspots of these days are unknown, not zero.', 'Tidak terbaca: titik panas pada hari-hari ini tidak diketahui, bukan nol.')}</p>
                 )}
               </section>
+
+              {/* "Still burning?": the places detected again in those seven days, as a ledger (components/now/StillBurning.tsx) */}
+              <StillBurning key={aoiId} m={m} onShow={noMap ? null : showOnMap} />
 
               {counts && counts.recent.length ? (
                 <details className="cmd-more cmd-recent">
@@ -404,6 +420,7 @@ export function CommandConsole() {
         ) : null}
         <span className="cmd-bar-item">{tr('Level: our own rule, not an official status', 'Tingkat: aturan kami sendiri, bukan status resmi')}</span>
         <span className="cmd-bar-end">
+          {aoiId ? <a className="cmd-link" href={reportHref(aoiId, 'plan')}>{tr('Field check plan', 'Rencana cek lapangan')}</a> : null}
           <button type="button" className="cmd-link" aria-haspopup="dialog" onClick={() => setFine(true)}>{tr('Fine print', 'Catatan penting')}</button>
           {aoiId ? <a className="cmd-link" href={classicHref(aoiId)}>{tr('Classic view', 'Tampilan klasik')}</a> : null}
         </span>

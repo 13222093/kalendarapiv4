@@ -9,13 +9,14 @@ A first visit plays a 29-second Story and rests on the home page; scroll for the
 | Page | What it answers |
 |---|---|
 | `#/now` Today in my district | What did the satellites detect in the last 24 hours and 7 days, is it normal, and what should I tell the village, the district disaster office and the fire crew? |
+| `#/report` Daily report and field check plan (added 21 November 2026) | The Today page as the two papers a disaster office works with, one A4 page each: a daily fire report (counts, the last 7 days, the places where fire was detected again, blanks for what satellites do not know) and a draft field check plan (targets in visiting order with coordinates and a sketch map). Print, copy as text, or open in WhatsApp |
 | `#/record` Indonesia record | When does my area usually burn, and is this month unusual, on one scale for MODIS and VIIRS? (34 provinces, 514 districts, a date range, downloads) |
 | `#/season` Play the season | Day by day in Central Kalimantan: where was a zero a day under cloud, when the satellite could not see? |
 | `#/zero` Zero inspector | One district, one day, cell by cell |
 | `#/brief` District brief | One printable page per area, in English or Bahasa Indonesia |
 | `#/method` About and method | What we count, how the one scale is made, what we checked and what failed |
 
-Credits and licences: [app/NOTICE.md](app/NOTICE.md). AI use, including the two AI features in the app: [AI_USE.md](AI_USE.md). Data provenance: [docs/DATA.md](docs/DATA.md). Project page text: [docs/submission/PROJECT_PAGE.md](docs/submission/PROJECT_PAGE.md).
+Credits and licences: [app/NOTICE.md](app/NOTICE.md). AI use, including the three AI features in the app: [AI_USE.md](AI_USE.md). Data provenance: [docs/DATA.md](docs/DATA.md). Project page text: [docs/submission/PROJECT_PAGE.md](docs/submission/PROJECT_PAGE.md).
 
 ## Research question
 

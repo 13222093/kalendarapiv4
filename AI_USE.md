@@ -15,6 +15,9 @@ should check that rule against the official guide before submitting; this file s
 - **Peat sites where fire comes back:** the team's summary of 13 November (section 8.3, the peat niche).
 - **"Today in my district"** (the condition now, a message to residents, the district disaster office and the village,
   advice drafted by AI): a team member's request on 15 November, after looking at FireLens and PeatForge.
+- **The daily report and the field check plan** (the Today page as the two papers a disaster office works with): a
+  team member's request on 21 November 2026, after talking that day with a practitioner in disaster management about
+  what such an office uses.
 - **The look** (which landing to keep, the palette, the home sections under the Story): the team's choices, made by
   looking at each build.
 
@@ -33,6 +36,8 @@ should check that rule against the official guide before submitting; this file s
   the code of that day: "Today in my district", the peat and district scripts, the home sections, the rebuilt Story,
   the interactive season player, the downloads, the brief, both languages, the colour palette and the tests. The
   files are listed in `app/NOTICE.md`.
+- **The two papers (21 November, after the deadline):** the same assistant wrote the page `#/report`, its library and
+  tests (`app/src/pages/FieldReport.tsx`, `app/src/lib/fieldreport.ts`) and the task mode of `app/public/api/ask.js`.
 - **Review:** two AI reviewers were asked to score the project as a science judge and as a local-impact judge
   would. Their findings (for example: say "under cloud: the satellite could not see", never "seen clearly"; lead with
   the 2017 to 2021 window; show the failed tests first) led to changes. They did not write the findings of the
@@ -42,7 +47,7 @@ should check that rule against the official guide before submitting; this file s
 
 ## AI inside the app
 
-Two features call an AI model while the app runs, both on "Today in my district". The button "Draft advice with AI" sends
+Three features call an AI model while the app runs, all of them on "Today in my district" and its two papers. The button "Draft advice with AI" sends
 the numbers already on the page (district, hotspot counts, the level, the cloud history, the peat count) to an OpenAI
 model (`gpt-6-luna`) through `app/public/api/advise.js`. Nothing about the visitor is sent. The model is told to use
 only those numbers, to add none of its own, to give no forecast and no cause, and never to say there is no fire. The
@@ -56,6 +61,18 @@ told to answer from those numbers only, to give no forecast and no cause, never 
 is safe, and to send anyone in danger to the village head or the district disaster office. Answers are labelled "AI
 assistant". Nothing is stored; the panel asks visitors not to type names, phone numbers or addresses.
 
+The two papers of that page (`#/report`: the daily fire report and the draft field check plan, added on 21 November
+2026, after the submission deadline) each offer a button "Write the summary with AI". It sends the same numbers, plus
+the places the paper lists (the places where fire was detected again in the last 7 days, or the plan's targets in
+visiting order: coordinates, first and last detection, and whether the place lies on the national peat map), to the
+same model through `app/public/api/ask.js`, with a task name in place of a question. The instruction of each task is
+fixed in that file, so nothing typed on the page goes to the model: no question, and none of the blanks the officer
+fills in. The model is told to write one paragraph from those facts only, to say "detected again" and never that a
+fire kept burning in between or is the same fire, and to add no routes, equipment, water sources or instructions.
+The paragraph is labelled "Summary (AI draft)" with the model's name, can be edited or removed before printing, is
+kept on the page only, and is dropped when the hotspots are read again. Each paper is complete without it: every
+table and number on the papers is computed by `app/src/lib/fieldreport.ts` from the page's own data, not by AI.
+
 ## AI in the demo video
 
 The picture is a recording of the app, rendered frame by frame. The narration of the submitted video is a
@@ -66,6 +83,6 @@ text-to-speech voice (Microsoft Edge's read-aloud voice "Andrew", made with the 
 - **No AI-generated numbers.** Every number on screen comes from NASA data (FIRMS, MODIS FireMask, GIBS imagery),
   Second Sight's deterministic pipeline, or the official SiPongi table, through code that can be rerun.
 - **No AI-generated images.** The photos are NASA GIBS true-colour imagery.
-- **No numbers from the AI draft or the AI assistant.** Both may only repeat numbers the page computed,
-  and it is shown apart from them, marked as AI.
+- **No numbers from the AI draft, the AI assistant or the AI summary.** All three may only repeat numbers the page
+  computed, and each is shown apart from them, marked as AI.
 - **No NASA logo or flag** appears in anything AI made.

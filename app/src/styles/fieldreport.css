@@ -1,0 +1,290 @@
+/* KalenderApi (new file): the two papers of "Today in my district" (#/report, pages/FieldReport.tsx): the daily fire
+   report and the draft field check plan. Design tokens only (styles/brand.css).
+   A paper, not a dashboard: a letterhead line over a double rule, a centred title, numbered sections, tables with
+   hairlines, mono numerals, blanks to write on. No cards, no shadows; corners are rounded on the tools only.
+   On screen it follows the site's theme (peat dark by default). On paper it is black on white, A4 portrait, the tools
+   and the site header gone, each paper made to fit one page when its list is short.
+   Widths: the paper is at most 860 px; under 640 px its side margins shrink and a table scrolls inside its own box. */
+.fr-page {
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+  overflow-x: clip;
+}
+.fr-page *, .fr-page *::before, .fr-page *::after { box-sizing: border-box; }
+.fr-page :where(p, h1, h2, ol, ul, dl, dd, figure, pre) { margin: 0; }
+.fr-page :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.fr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fr-small { font-size: 13px; line-height: 1.45; color: var(--text-3); }
+
+/* ---- the tools (screen only) */
+.fr-tools {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px;
+  max-width: 860px; margin: 0 auto; padding: 14px 16px 0;
+}
+.fr-tabs { display: flex; flex: 1 1 100%; gap: 4px; border-bottom: 1px solid var(--border-strong); }
+.fr-tabs a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
+  border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0;
+  color: var(--text-2); font: 600 14.5px/1.2 var(--font-sans); text-decoration: none;
+}
+.fr-tabs a:hover { color: var(--text); background: var(--surface-2); }
+.fr-tabs a[aria-current="page"] { border-color: var(--border-strong); background: var(--surface); color: var(--text); box-shadow: inset 0 2px 0 var(--accent); }
+.fr-actions { display: flex; flex: 1 1 420px; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fr-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--border-strong); border-radius: 6px; background: transparent; color: var(--text);
+  font: 600 13.5px/1.2 var(--font-sans); text-decoration: none; text-align: center; cursor: pointer;
+}
+.fr-btn:hover:not(:disabled) { border-color: var(--text); background: var(--surface-2); }
+.fr-btn:disabled { opacity: 0.5; cursor: default; }
+.fr-btn-accent { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.fr-btn-accent:hover:not(:disabled) { border-color: var(--accent-strong); background: var(--accent-strong); }
+.fr-link {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 4px; color: var(--text-2);
+  font: 600 13.5px/1.2 var(--font-sans); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px;
+}
+.fr-link:hover { color: var(--text); text-decoration-color: var(--text); }
+.fr-find { position: relative; flex: 0 1 260px; min-width: 200px; }
+.fr-find label { display: block; margin-bottom: 3px; font-size: 12.5px; color: var(--text-3); }
+.fr-find input {
+  width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px;
+}
+.fr-find input::placeholder { color: var(--text-3); opacity: 0.8; }
+.fr-results {
+  position: absolute; left: 0; right: 0; z-index: 5; margin: 4px 0 0; padding: 4px; list-style: none;
+  max-height: 260px; overflow-y: auto; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface-2);
+}
+.fr-results button {
+  display: flex; justify-content: space-between; gap: 10px; width: 100%; min-height: 40px; padding: 6px 8px;
+  border: 0; border-radius: 4px; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.fr-results button:hover { background: var(--accent-soft); }
+.fr-results small { color: var(--text-3); text-align: right; }
+.fr-tools-note { flex: 1 1 100%; min-height: 1.2em; }
+@media (pointer: coarse) { .fr-btn, .fr-link, .fr-find input, .fr-results button { min-height: 44px; } }
+
+/* ---- the paper */
+.fr-main { max-width: 860px; margin: 0 auto; padding: 8px 16px 56px; }
+.fr-alert { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--ka-up); border-radius: 4px; }
+.fr-paper {
+  margin-top: 6px; padding: 40px 48px 36px; min-width: 0;
+  border: 1px solid var(--border-strong); border-radius: 2px; background: var(--surface);
+  font-size: 14px; line-height: 1.5; color: var(--text);
+}
+.fr-paper b { font-weight: 700; }
+
+/* the head: a letterhead line over a double rule, then the title block, centred */
+.fr-org {
+  padding-bottom: 7px; border-bottom: 3px double var(--text);
+  font: 500 11.5px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2);
+}
+.fr-title {
+  margin-top: 18px; text-align: center; text-wrap: balance;
+  font-family: var(--font-display); font-weight: 650; font-size: clamp(24px, 4.4vw, 32px); line-height: 1.15; letter-spacing: -0.01em;
+}
+.fr-place { margin-top: 6px; text-align: center; font-size: 16px; font-weight: 650; }
+.fr-meta { margin-top: 4px; text-align: center; text-wrap: balance; font: 500 12px/1.5 var(--font-mono); color: var(--text-2); }
+.fr-meta + .fr-meta { margin-top: 0; }
+.fr-draft { margin-top: 8px; text-align: center; text-wrap: balance; font-size: 13px; font-style: italic; color: var(--text-2); }
+.fr-notice { margin-top: 14px; padding: 8px 12px; border: 1px solid var(--ka-up); border-left-width: 4px; font-weight: 650; }
+
+/* a numbered section */
+.fr-sec { margin-top: 22px; min-width: 0; }
+.fr-paper .fr-h {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border-strong);
+  font: 700 13.5px/1.3 var(--font-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.fr-h-n { font-family: var(--font-mono); font-weight: 600; color: var(--text-2); }
+.fr-sec > p { max-width: 80ch; }
+.fr-note { margin-top: 6px; font-size: 12.5px; line-height: 1.45; color: var(--text-3); }
+.fr-rule { margin-top: 8px; font-size: 13px; color: var(--text-2); }
+.fr-empty, .fr-missing { padding: 8px 0; font-weight: 600; }
+.fr-list { padding-left: 1.5em; }
+ol.fr-list { padding-left: 2.4em; }
+.fr-list li { margin-top: 2px; }
+ol.fr-list li::marker { font-family: var(--font-mono); color: var(--text-2); }
+
+/* section 1: labelled lines */
+.fr-facts { width: 100%; border-collapse: collapse; }
+.fr-facts :is(th, td) { padding: 5px 0; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.fr-facts th { width: 34%; padding-right: 14px; font-weight: 500; color: var(--text-2); }
+.fr-facts td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.fr-facts tr:first-child td b { font-family: var(--font-sans); }
+
+/* section 2: seven numbers, each over a small bar */
+.fr-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; padding: 0; list-style: none; border: 1px solid var(--border); }
+.fr-week li { display: grid; gap: 2px; min-width: 0; padding: 6px 8px; border-left: 1px solid var(--border); }
+.fr-week li:first-child { border-left: 0; }
+.fr-week-day { font: 500 11px/1.3 var(--font-mono); color: var(--text-3); }
+.fr-week-n { font: 600 20px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-3); }
+.fr-week li.has .fr-week-n { color: var(--text); }
+.fr-week-bar { display: block; height: 4px; background: var(--surface-3); }
+.fr-week-bar i { display: block; height: 100%; background: var(--accent); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* tables with hairlines; a wide one scrolls inside its own box */
+.fr-scroll { max-width: 100%; overflow-x: auto; }
+.fr-table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+.fr-table :is(th, td) { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.fr-table :is(th, td):last-child { padding-right: 2px; }
+.fr-table thead th { border-bottom-color: var(--text); font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--text-2); vertical-align: bottom; }
+.fr-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fr-table td.whole { white-space: nowrap; }
+/* a cell of words keeps a readable width; on a narrow screen the table then scrolls inside its box */
+.fr-table:not(.fr-grid) td:not(.num, .whole) { min-width: 190px; }
+.fr-table td.num { text-align: right; }
+.fr-table th.num { text-align: right; font-family: var(--font-sans); white-space: normal; }
+.fr-table a { color: var(--link); white-space: nowrap; }
+/* the crew's grid: every cell ruled, tall enough to write in */
+.fr-grid :is(th, td) { padding: 6px 8px; border: 1px solid var(--border-strong); }
+.fr-grid :is(th, td):last-child { padding-right: 8px; }
+.fr-grid thead th { border-bottom-color: var(--border-strong); }
+.fr-grid td { height: 36px; }
+.fr-grid td:last-child { width: 38%; }
+.fr-grid :is(th, td).num { text-align: center; }
+.fr-grid .fr-yn { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+
+/* the plan: the sketch on the left, the peat sites and the crew's grid on the right. Stacked on a narrow screen, when
+   the sketch needs two frames, and when there is no sketch (no target). */
+@media (min-width: 900px) {
+  .fr-pair { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 0 28px; align-items: start; }
+  .fr-pair:has(.fr-maps.is-two), .fr-pair:not(:has(.fr-sec-map)) { display: block; }
+}
+
+/* the sketch map */
+.fr-maps { display: grid; gap: 14px; grid-template-columns: minmax(0, 420px); }
+.fr-maps.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.fr-map svg { display: block; width: 100%; height: auto; }
+.fr-map figcaption { margin-top: 4px; font: 500 11.5px/1.4 var(--font-mono); color: var(--text-3); }
+.fr-map-sea { fill: none; stroke: var(--border-strong); stroke-width: 1; }
+.fr-map-land { fill: var(--surface-2); stroke: var(--text-2); stroke-width: 1.1; stroke-linejoin: round; }
+.fr-map-box { fill: none; stroke: var(--text); stroke-width: 1; stroke-dasharray: 4 3; }
+.fr-map-route { fill: none; stroke: var(--text); stroke-width: 1; stroke-linejoin: round; }
+.fr-map-lead { stroke: var(--text-2); stroke-width: 0.8; }
+.fr-map-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 1; }
+.fr-map-num { fill: var(--surface); stroke: var(--text); stroke-width: 1; }
+.fr-map-numtext { font: 600 10px var(--font-mono); fill: var(--text); }
+.fr-map-north path, .fr-map-scale path { fill: none; stroke: var(--text); stroke-width: 1.2; }
+.fr-map-north text, .fr-map-scale text { font: 500 10px var(--font-mono); fill: var(--text); }
+
+/* the blanks: an input on screen; on paper the typed text or a ruled line */
+.fr-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin-top: 8px; }
+.fr-field { display: grid; gap: 3px; min-width: 0; }
+.fr-field.is-long { grid-column: 1 / -1; }
+.fr-field label { font-size: 12.5px; color: var(--text-2); }
+.fr-field :is(input, textarea), .fr-sum textarea {
+  width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; line-height: 1.45;
+}
+.fr-field textarea, .fr-sum textarea { resize: vertical; }
+.fr-fill { display: none; }
+.fr-ai { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 16px; padding: 10px 0; border-top: 1px dashed var(--border-strong); border-bottom: 1px dashed var(--border-strong); }
+.fr-ai .fr-btn { flex: none; }
+.fr-ai .fr-small { flex: 1 1 280px; }
+.fr-ai .fr-small:empty { display: none; }
+.fr-sum-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+
+.fr-foot { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--border-strong); font-size: 12.5px; line-height: 1.45; color: var(--text-2); }
+.fr-foot p + p { margin-top: 3px; }
+.fr-url { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-3); overflow-wrap: anywhere; }
+
+/* the text version, under the paper (screen only) */
+.fr-text { margin-top: 18px; }
+.fr-text summary { min-height: 40px; padding: 8px 0; color: var(--text-2); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.fr-text pre {
+  max-height: 440px; overflow: auto; padding: 12px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface);
+  font: 12.5px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-2);
+}
+
+@media (max-width: 640px) {
+  .fr-tools { padding: 10px 12px 0; }
+  .fr-tabs a { flex: 1 1 0; justify-content: center; padding: 0 6px; font-size: 13.5px; text-align: center; }
+  .fr-actions .fr-btn { flex: 1 1 calc(50% - 4px); }
+  .fr-find { flex: 1 1 100%; }
+  .fr-main { padding: 6px 12px 40px; }
+  .fr-paper { padding: 20px 14px 18px; }
+  .fr-facts th { width: 40%; padding-right: 8px; }
+  .fr-week li { padding: 5px 3px; }
+  .fr-week-day { font-size: 9.5px; }
+  .fr-week-n { font-size: 16px; }
+  .fr-fields { grid-template-columns: minmax(0, 1fr); }
+  .fr-maps.is-two { grid-template-columns: minmax(0, 1fr); }
+  .fr-table { min-width: 560px; }
+  .fr-grid { min-width: 480px; }
+}
+
+/* ---- paper: A4 portrait, black on white, the tools and the site header gone. The named page keeps these margins
+   when another page's @page rule (the brief's) is also loaded. */
+@page { size: A4 portrait; margin: 14mm; }
+@page fr-a4 { size: A4 portrait; margin: 14mm; }
+@media print {
+  /* white paper to its edges: the page's own margins take the colour scheme's canvas, which is dark on this site */
+  :root { color-scheme: light !important; }
+  html, body { background: #fff !important; }
+  .fr-page {
+    --bg: #fff; --surface: #fff; --surface-2: #fff; --surface-3: #fff; --text: #000; --text-2: #000; --text-3: #1a1a1a;
+    --border: #8a8a8a; --border-strong: #000; --accent: #000; --accent-strong: #000; --link: #000; --ka-up: #000;
+    page: fr-a4; min-height: 0; background: #fff; color: #000; overflow: visible;
+  }
+  .fr-tools, .fr-noprint, .fr-page .ka-site-top { display: none !important; }
+  .fr-main { max-width: none; margin: 0; padding: 0; }
+  .fr-paper { margin: 0; padding: 0; border: 0; background: #fff; font-size: 8.6pt; line-height: 1.3; }
+  .fr-org { padding-bottom: 1.4mm; border-bottom-width: 2.4pt; font-size: 7pt; }
+  .fr-title { margin-top: 2.4mm; font-size: 16pt; }
+  .fr-place { margin-top: 0.8mm; font-size: 10.5pt; }
+  .fr-meta { margin-top: 0.6mm; font-size: 7.2pt; }
+  .fr-draft { margin-top: 1mm; font-size: 8pt; }
+  .fr-notice { margin-top: 2.5mm; padding: 1.2mm 2mm; border-width: 0.8pt; border-left-width: 2.4pt; }
+  .fr-sec { margin-top: 3mm; break-inside: avoid; }
+  .fr-paper .fr-h { gap: 1.6mm; margin-bottom: 1.2mm; padding-bottom: 0.6mm; border-bottom-width: 0.8pt; font-size: 8.6pt; break-after: avoid; }
+  .fr-sec > p { max-width: none; }
+  .fr-note { margin-top: 0.9mm; font-size: 7pt; line-height: 1.28; }
+  .fr-rule { margin-top: 1.2mm; font-size: 7.8pt; }
+  .fr-empty, .fr-missing { padding: 0.8mm 0; }
+  .fr-list li { margin-top: 0.2mm; }
+  .fr-facts :is(th, td) { padding: 0.7mm 0; border-bottom-width: 0.5pt; }
+  .fr-facts th { width: 30%; padding-right: 3mm; }
+  .fr-week { border-width: 0.5pt; }
+  .fr-week li { gap: 0.3mm; padding: 0.9mm 1.6mm; border-left-width: 0.5pt; }
+  .fr-week-day { font-size: 6.6pt; }
+  .fr-week-n { font-size: 12pt; }
+  .fr-week-bar { height: 1mm; background: #fff; border-bottom: 0.4pt solid #8a8a8a; }
+  .fr-scroll { overflow: visible; }
+  .fr-table { min-width: 0; font-size: 7.8pt; line-height: 1.25; }
+  .fr-table:not(.fr-grid) td:not(.num, .whole) { min-width: 0; }
+  .fr-table :is(th, td) { padding: 0.6mm 2.2mm 0.6mm 0; border-bottom-width: 0.5pt; }
+  .fr-table :is(th, td):last-child { padding-right: 0.4mm; }
+  .fr-pair { display: grid; grid-template-columns: 72mm minmax(0, 1fr); gap: 0 6mm; align-items: start; }
+  .fr-pair:not(:has(.fr-sec-map)) { display: block; }
+  .fr-pair .fr-maps { grid-template-columns: minmax(0, 1fr); }
+  /* a sketch of two frames takes two thirds of the width: the peat sites go beside it and the crew's grid under both */
+  .fr-pair:has(.fr-maps.is-two) { grid-template-columns: 126mm minmax(0, 1fr); grid-template-areas: "map peat" "crew crew"; }
+  .fr-pair:has(.fr-maps.is-two) .fr-pair-side { display: contents; }
+  .fr-pair:has(.fr-maps.is-two) .fr-sec-map { grid-area: map; }
+  .fr-pair:has(.fr-maps.is-two) .fr-sec-peat { grid-area: peat; }
+  .fr-pair:has(.fr-maps.is-two) .fr-sec-crew { grid-area: crew; }
+  .fr-pair .fr-maps.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fr-table thead th { border-bottom-width: 0.8pt; font-size: 7pt; }
+  .fr-table tr { break-inside: avoid; }
+  .fr-grid { min-width: 0; }
+  .fr-grid :is(th, td), .fr-grid :is(th, td):last-child { padding: 0.8mm 1.6mm; border-width: 0.5pt; }
+  .fr-grid td { height: 5.6mm; }
+  .fr-grid td:last-child { width: 34%; }
+  .fr-grid .fr-yn { font-size: 7pt; }
+  .fr-maps { gap: 4mm; grid-template-columns: minmax(0, 78mm); }
+  .fr-maps.is-two { grid-template-columns: repeat(2, minmax(0, 78mm)); }
+  .fr-map figcaption { margin-top: 0.6mm; font-size: 6.6pt; }
+  .fr-fields { gap: 1.4mm 6mm; margin-top: 1.2mm; }
+  .fr-field { gap: 0; grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: 2mm; }
+  .fr-field.is-long { grid-template-columns: minmax(0, 1fr); }
+  .fr-field label { font-size: 7.8pt; }
+  .fr-field :is(input, textarea), .fr-sum textarea { display: none; }
+  .fr-fill { display: block; min-height: 5mm; border-bottom: 0.5pt solid #000; white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 600; }
+  .fr-field.is-long .fr-fill.is-blank { min-height: 10mm; background: linear-gradient(#000, #000) 0 5mm / 100% 0.5pt no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fr-sum-fill { min-height: 0; border-bottom: 0; font-weight: 400; }
+  .fr-foot { margin-top: 3mm; padding-top: 1.2mm; border-top-width: 0.8pt; font-size: 7.2pt; line-height: 1.3; break-inside: avoid; }
+  .fr-foot p + p { margin-top: 0.4mm; }
+  .fr-url { font-size: 6.6pt; }
+  .fr-paper a { color: #000; text-decoration: none; }
+}
