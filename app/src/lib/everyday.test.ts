@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { emberStep } from './record';
 import {
-  DAILY_FORMAT, DAYS_CSV_COLUMNS, addDays, dateOfDoy, dayInfo, dayLabel, dayStep, daysCsv, daysInMonth, daysInYear, doyOf, fmtDay, isDate, isLeap,
+  DAILY_FORMAT, DAYS_CSV_COLUMNS, addDays, dateOfDoy, dayInfo, dayLabel, dayStep, daysCsv, daysInMonth, daysInYear, doyOf, findAreas, fmtDay, isDate, isLeap,
   lastValueDay, monthCode, monthGrid, monthSum, moveDay, noValueWords, prepareDays, rawSensor, seasonDayHref, weekdayMon0, weekdays, yearGrid,
   type DailyFile, type DailyIndex,
 } from './everyday';
@@ -396,5 +396,35 @@ describe('daysCsv', () => {
     expect(y26.rows[305]).toEqual(['2026-11-02', '12.345', 'VIIRS NOAA-20', '1', '80', 'VIIRS S-NPP', '9', '0', '80', '70', '1', '1', 'value']);
     expect(y26.rows[323]).toEqual(['2026-11-20', '', 'VIIRS NOAA-20', '0', '', 'VIIRS S-NPP', '', '', '', '', '1', '1', 'outside_record']);
     expect(y26.rows[364]![12]).toBe('outside_record');
+  });
+});
+
+describe('the area picker', () => {
+  // five areas as index.json names them (English and Indonesian); no numbers
+  const areas = [
+    { aoi_id: 'IDN', name: 'Indonesia', name_id: 'Indonesia', name_en: 'Indonesia', level: 'national', file: '' },
+    { aoi_id: 'region-sumatra', name: 'Sumatra', name_id: 'Sumatera', name_en: 'Sumatra', level: 'island_region', file: '' },
+    { aoi_id: 'prov-riau', name: 'Riau', name_id: 'Riau', name_en: 'Riau', level: 'province', file: '' },
+    { aoi_id: 'prov-kalimantan-tengah', name: 'Kalimantan Tengah', name_id: 'Kalimantan Tengah', name_en: 'Central Kalimantan', level: 'province', file: '' },
+    { aoi_id: 'prov-sumatera-selatan', name: 'Sumatera Selatan', name_id: 'Sumatera Selatan', name_en: 'South Sumatra', level: 'province', file: '' },
+  ];
+  const ids = (q: string, limit?: number) => findAreas(areas, q, limit).map((a) => a.aoi_id);
+  it('finds an area by its English or its Indonesian name, whatever the case', () => {
+    expect(ids('south sumatra')).toEqual(['prov-sumatera-selatan']);
+    expect(ids('SUMATERA SELATAN')).toEqual(['prov-sumatera-selatan']);
+    expect(ids('central')).toEqual(['prov-kalimantan-tengah']);
+    expect(ids('tengah')).toEqual(['prov-kalimantan-tengah']);
+    expect(ids('indo')).toEqual(['IDN']);
+  });
+  it('wants every word typed in one name, and puts names that start with the first word first', () => {
+    expect(ids('sumat')).toEqual(['region-sumatra', 'prov-sumatera-selatan']);
+    expect(ids('selatan sumatera')).toEqual(['prov-sumatera-selatan']);
+    expect(ids('sumatra tengah')).toEqual([]);
+    expect(ids('a', 2)).toHaveLength(2);
+  });
+  it('gives nothing for nothing typed or a name that is not there', () => {
+    expect(ids('')).toEqual([]);
+    expect(ids('  ')).toEqual([]);
+    expect(ids('ogan')).toEqual([]);
   });
 });

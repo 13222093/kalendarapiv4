@@ -9,12 +9,53 @@
 }
 @media (max-width: 560px) { .ka-days { padding: var(--sp-4) var(--sp-3); } }
 
-/* the year, the series switch, the download */
-.ka-days-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); }
+/* the area, the year, the series switch, the download. The area has a line of hint under it, so the row is aligned on
+   its top, and every control stands in a row of one height (--row: the series switch, the tallest of them) */
+.ka-days-bar { --row: calc(var(--ctl-sm) + 6px); display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-2) var(--sp-4); }
+.ka-days-bar > :is(.ka-days-year, .ui-segmented) { min-height: var(--row); }
 .ka-days-year { display: inline-flex; align-items: center; gap: var(--sp-1); }
 .ka-days-year .ka-rec-picker select { min-width: 5.5rem; }
-.ka-days-csv { margin-left: auto; }
-@media (max-width: 760px) { .ka-days-csv { margin-left: 0; } }
+.ka-days-csv { margin-block: calc((var(--row) - var(--ctl)) / 2); margin-left: auto; }
+@media (pointer: coarse), (max-width: 760px) {
+  .ka-days-bar { --row: calc(var(--ctl-touch) + 6px); }
+  .ka-days-csv { margin-block: calc((var(--row) - var(--ctl-touch)) / 2); }
+}
+@media (max-width: 1180px) { .ka-days-csv { margin-left: 0; } }
+
+/* the figure's own area picker (EveryDay.tsx DaysArea): a box that shows the area and takes a name typed into it,
+   drawn like the year's select beside it. Its list of matches is the district finder's (record.css .ka-rec-find-list) */
+.ka-days-area {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: minmax(var(--row), auto) auto;
+  align-items: center; gap: 0 var(--sp-2); min-width: 0;
+}
+.ka-days-area > label { color: var(--text-2); font-size: var(--fs-13); font-weight: 600; }
+.ka-days-area-box { position: relative; min-width: 0; }
+.ka-days-area-box input {
+  display: block; width: 16rem; max-width: 100%; min-height: var(--ctl); padding: 0 var(--sp-8) 0 var(--sp-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); background-color: var(--surface-2); color: var(--text);
+  font: inherit; font-size: var(--fs-14); font-weight: 500; text-overflow: ellipsis; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+  transition: border-color var(--t-fast) var(--ease-out);
+}
+.ka-days-area-box input:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong)); }
+.ka-days-area-box input:focus { cursor: text; }
+.ka-days-area-box input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ka-days-area-box input::placeholder { color: var(--text-3); font-weight: 400; }
+.ka-days-area-hint { grid-column: 1 / -1; margin: 0; color: var(--text-3); font-size: var(--fs-12); line-height: var(--lh-12); }
+/* the list is wider than a short box, and never wider than the window */
+.ka-days-area .ka-rec-find-list { right: auto; width: max(100%, 19rem); max-width: calc(100vw - 2 * var(--sp-8)); }
+.ka-days-area .ka-rec-find-opt[data-current] { color: var(--accent); font-weight: 600; }
+:root[data-theme="light"] .ka-days-area .ka-rec-find-opt[data-current] { color: var(--accent-strong); }
+@media (pointer: coarse), (max-width: 760px) { .ka-days-area-box input { min-height: var(--ctl-touch); } }
+/* on a phone the picker takes the whole row, and its list is as wide as the picker, label included */
+@media (max-width: 560px) {
+  .ka-days-area { position: relative; flex: 1 1 100%; }
+  .ka-days-area-box { position: static; }
+  .ka-days-area-box input { width: 100%; }
+  .ka-days-area .ka-rec-find-list { top: var(--row); right: 0; width: auto; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ka-days-area-box input { transition: none; } }
 
 /* twelve month blocks: six across on a wide screen, down to two on a phone */
 .ka-days-wrap { position: relative; min-width: 0; }

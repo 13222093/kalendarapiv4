@@ -5,7 +5,7 @@
 // "no value" and is never drawn as a zero.
 
 import { fmtNumber, locale, type Lang } from './lang';
-import { KALTENG, NOT_AREA, PROJECT_LINE, SENSOR_NAME, emberStep, fmtInt, getJson, type Series } from './record';
+import { KALTENG, NOT_AREA, PROJECT_LINE, SENSOR_NAME, emberStep, fmtInt, getJson, type AoiEntry, type Series } from './record';
 
 const BASE = import.meta.env.BASE_URL;
 export const DAILY_URL = `${BASE}ka-data/daily/`;
@@ -384,6 +384,26 @@ export function daysCsv(area: AreaDays, year: number, meta: DaysCsvMeta): string
     ].join(','));
   }
   return [...head.map((c) => `# ${oneLine(c)}`), DAYS_CSV_COLUMNS.join(','), ...body].join('\r\n') + '\r\n';
+}
+
+// ------------------------------------------------------------------------------------------------ the area picker
+
+const foldName = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/** The record's own areas (Indonesia, the island regions, the provinces) whose English or Indonesian name holds every
+ *  word typed, names that start with the first word first, otherwise in the order given. For the area picker inside
+ *  "Every day": a reader may type "South Sumatra" or "Sumatera Selatan". Districts are matched by lib/record.ts
+ *  searchDistricts. */
+export function findAreas(areas: AoiEntry[], query: string, limit = 8): AoiEntry[] {
+  const words = foldName(query).split(' ').filter(Boolean);
+  if (!words.length) return [];
+  const first: AoiEntry[] = [], rest: AoiEntry[] = [];
+  for (const a of areas) {
+    const names = [a.name_en, a.name_id, a.name].filter((n): n is string => !!n).map(foldName);
+    if (!names.some((n) => words.every((w) => n.includes(w)))) continue;
+    (names.some((n) => n.startsWith(words[0]!)) ? first : rest).push(a);
+  }
+  return [...first, ...rest].slice(0, limit);
 }
 
 // ------------------------------------------------------------------------------------------------ loading

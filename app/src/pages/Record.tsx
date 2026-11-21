@@ -6,7 +6,7 @@
 // is computed from the bundle (lib/record.ts); until public/ss-data/index.json exists every section says "not built yet".
 // "Every day" (sec=days, y=<year>) reads the days of the same record from public/ka-data/daily/ (lib/everyday.ts).
 // The page is in English, with Bahasa Indonesia as a switch (lib/lang.ts): every text is written in both, side by side.
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Callout, Card, Page, Section, Skeleton } from '../components/ui';
 import { IconPlay } from '../components/icons';
 import { BeforeAfterFigure } from '../components/record/BeforeAfter';
@@ -77,6 +77,44 @@ function useLoad<T>(make: (() => Promise<T>) | null, deps: unknown[]): [Load<T>,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt, ...deps]);
   return [load, () => setAttempt((a) => a + 1)];
+}
+
+/** Holds an element at the height of the window it is at now, while the page above it changes height: `keep` puts it
+ *  back (called after a redraw, and by itself whenever `watch` changes size), `end` lets go. The reader lets go too:
+ *  by the wheel, a finger, a key that is not typed into a box, or a press outside `within`. Used when an area is picked
+ *  inside "Every day": every section above it redraws for the new area. */
+function holdInPlace(selector: string, watch: Element | null, within: string): { keep: () => void; end: () => void } | null {
+  const find = () => document.querySelector<HTMLElement>(selector);
+  const at = find()?.getBoundingClientRect().top;
+  if (at == null) return null;
+  let done = false;
+  const keep = () => {
+    const now = done ? null : find()?.getBoundingClientRect().top;
+    if (now != null && Math.abs(now - at) >= 1) window.scrollBy({ top: now - at, behavior: 'instant' });
+  };
+  const watcher = watch && typeof ResizeObserver === 'function' ? new ResizeObserver(keep) : null;
+  const onKey = (e: KeyboardEvent) => {
+    const box = e.target instanceof HTMLElement && e.target.matches('input, textarea, select');
+    if (!box || e.key === 'PageUp' || e.key === 'PageDown') end();
+  };
+  const onPress = (e: Event) => { if (!(e.target instanceof Element) || !e.target.closest(within)) end(); };
+  const end = () => {
+    if (done) return;
+    done = true;
+    watcher?.disconnect();
+    window.clearTimeout(timer);
+    window.removeEventListener('wheel', end);
+    window.removeEventListener('touchmove', end);
+    window.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('pointerdown', onPress, true);
+  };
+  const timer = window.setTimeout(end, 20000);   // whatever happens, not for ever
+  if (watch) watcher?.observe(watch);
+  window.addEventListener('wheel', end, { passive: true });
+  window.addEventListener('touchmove', end, { passive: true });
+  window.addEventListener('keydown', onKey, true);
+  window.addEventListener('pointerdown', onPress, true);
+  return { keep, end };
 }
 
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
@@ -222,6 +260,24 @@ export function Record() {
   const setRange = (r: MonthRange | null) => set({ from: r?.from ?? null, to: r?.to ?? null });
   // a year picked in "Every day": the address then opens the page at that section (sec=days) and that year (y=)
   const setYear = (y: number) => { secWanted.current = 'days'; set({ y }); };
+  // an area picked in "Every day" (its own picker): the same change as the picker at the top, with the year on screen
+  // kept (y=) and the address opening at that section (sec=days). Every section above redraws for the new area and
+  // changes height, so the figure's row of controls is held where the reader left it until the new months are drawn.
+  const pageBox = useRef<HTMLDivElement>(null);
+  const daysHold = useRef<ReturnType<typeof holdInPlace>>(null);
+  const pickInDays = (id: string, y: number | null) => {
+    daysHold.current?.end();
+    daysHold.current = holdInPlace('#days .ka-days-bar', pageBox.current, '#days');
+    secWanted.current = 'days';
+    set({ aoi: id, m: null, y });
+  };
+  useLayoutEffect(() => { daysHold.current?.keep(); });
+  useEffect(() => {
+    if (monthly.state === 'loading') return undefined;
+    const timer = window.setTimeout(() => { daysHold.current?.end(); daysHold.current = null; }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [monthly.state, aoi?.aoi_id]);
+  useEffect(() => () => daysHold.current?.end(), []);
 
   const built = dateOnly(idx?.generated_at, lang);
   const version = shortVersion(idx?.data_version);
@@ -284,7 +340,7 @@ export function Record() {
 
   return (
     <Page>
-      <div className="ka-rec-page">
+      <div className="ka-rec-page" ref={pageBox}>
       <header className="ka-rec-head">
         {/* the top: the words on the left; on the right the two satellites and their pixel sizes, the reason the raw record jumps */}
         <div className="ka-rec-hero">
@@ -430,8 +486,11 @@ export function Record() {
       <Section id="days" title={tr('Every day', 'Setiap hari')}
         subtitle={tr('One year at a time, one square a day. The days of a month add up to the month above.', 'Tampil satu tahun, satu kotak untuk satu hari. Jumlah hari-hari dalam sebulan sama dengan bulan itu pada kalender di atas.')}>
         {aoi ? (
-          <EveryDay key={aoi.aoi_id} aoi={aoi} area={area} rows={rows} series={series} onSeries={(s) => set({ s })}
+          // no key by area: the figure stays while its area changes (it loads the new days itself), so its own area
+          // picker can hand the focus on
+          <EveryDay aoi={aoi} area={area} rows={rows} series={series} onSeries={(s) => set({ s })}
             year={query.y} onYear={setYear} seasons={seasons} source={source}
+            areas={idx?.aois} districts={offered} onArea={pickInDays}
             meta={{ area: aoiName(aoi), aoiId: aoi.aoi_id, dataVersion: idx?.data_version ?? null, notes: fileNotes }} />
         ) : (
           <ChartFrame title={tr(`${area}: every day`, `${area}: setiap hari`)}

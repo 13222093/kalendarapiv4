@@ -3,18 +3,20 @@
 // own log scale (lib/record.ts emberStep) so the two read alike. The days come from public/ka-data/daily/ (lib/
 // everyday.ts); the month's total beside each month's name is the monthly record's own number.
 // A day with no value (outside the record, the sensor silent, withheld) is drawn hollow, never as a zero.
+// The figure has its own area picker (DaysArea, below), beside the year: Indonesia, an island region, a province or
+// any district, found by typing part of its name, so a reader does not have to go back to the top of the page.
 // Texts are in English and Bahasa Indonesia, side by side (lib/lang.ts); the CSV file stays in English.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Segmented, Skeleton } from '../ui';
 import { IconChevronLeft, IconChevronRight, IconClose, IconDownload, IconPlay } from '../icons';
 import { useLang, useTr } from '../../lib/lang';
 import { fileSlug, saveText } from '../../lib/download';
 import {
-  cellValue, fmtCompact, fmtInt, isProvisional, monthsIn, settle, ym,
+  aoiGroups, aoiName, cellValue, fmtCompact, fmtInt, isProvisional, monthsIn, searchDistricts, settle, ym,
   type AoiEntry, type Load, type MonthRow, type Series,
 } from '../../lib/record';
 import {
-  countsList, dayInfo, dayLabel, dayStep, daysCsv, fmtDay, lastValueDay, loadAreaDays, longDate, monthSum, moveDay, noValueWords,
+  countsList, dayInfo, dayLabel, dayStep, daysCsv, findAreas, fmtDay, lastValueDay, loadAreaDays, longDate, monthSum, moveDay, noValueWords,
   provisionalWords, scaleWords, seasonDayHref, seriesDay, weekdays, yearGrid,
   type AreaDays, type DayInfo, type DaysCsvMeta,
 } from '../../lib/everyday';
@@ -33,6 +35,9 @@ function useAreaDays(aoiId: string): [Load<AreaDays>, () => void] {
   return [got?.key === want ? got.load : { state: 'loading' }, () => setAttempt((a) => a + 1)];
 }
 
+/** Whether the area picker drawn next should take the focus: asked for by a pick, answered by the next picker. */
+interface FocusBack { wanted: () => boolean; want: (on: boolean) => void }
+
 export interface EveryDayProps {
   aoi: AoiEntry;
   area: string;                         // the area's name in the page's language
@@ -43,17 +48,33 @@ export interface EveryDayProps {
   seasons: number[] | null;             // the season years Play the season holds
   source: string;
   meta: Omit<DaysCsvMeta, 'generated'>;
+  // the figure's own area picker: the areas of the record and the districts on offer, as the page's picker at the top
+  // has them. Picking one hands the page the area and the year on screen (null = the latest). No onArea, no picker.
+  areas?: AoiEntry[]; districts?: AoiEntry[];
+  onArea?: (aoiId: string, year: number | null) => void;
 }
 
 /** The section's figure: the area's daily file while it loads, when it is missing, when it failed, and when it is in. */
 export function EveryDay(p: EveryDayProps) {
   const tr = useTr();
   const [load, retry] = useAreaDays(p.aoi.aoi_id);
-  if (load.state === 'ok') return <DaysFigure {...p} days={load.data} />;
-  const title = tr(`${p.area}: every day`, `${p.area}: setiap hari`);
+  // the picker is drawn anew when the days of a picked area arrive: the focus goes back to it if it was there
+  const wantsFocus = useRef(false);
+  const back = useMemo<FocusBack>(() => ({ wanted: () => wantsFocus.current, want: (on) => { wantsFocus.current = on; } }), []);
+  if (load.state === 'ok') return <DaysFigure {...p} days={load.data} back={back} />;
+  const onArea = p.onArea;
   return (
     <figure className="ka-days ui-figure">
-      <figcaption className="ui-figure-head"><p className="ui-figure-title">{title}</p></figcaption>
+      {/* while the days load the head keeps its lines, so the controls under it stay where they were */}
+      {load.state === 'loading'
+        ? <DaysHead area={p.area} aoi={p.aoi} series={p.series} year={p.year} shown={null} />
+        : <figcaption className="ui-figure-head"><p className="ui-figure-title">{tr(`${p.area}: every day`, `${p.area}: setiap hari`)}</p></figcaption>}
+      {onArea ? (
+        <div className="ka-days-bar">
+          <DaysArea aoi={p.aoi} areas={p.areas ?? []} districts={p.districts ?? []} back={back} settled={load.state !== 'loading'}
+            onPick={(id) => onArea(id, p.year)} />
+        </div>
+      ) : null}
       {load.state === 'loading' ? (
         <div className="ka-rec-state" role="status">
           <p className="ka-rec-note">{tr(`Loading the days of ${p.area}…`, `Memuat data harian ${p.area}…`)}</p>
@@ -80,7 +101,34 @@ interface Pos { left: number; top?: number; bottom?: number }
 const GAP = 6;            // between a day and its readout
 const HEADER_ROOM = 72;   // the page's fixed header: the readout does not go under it
 
-function DaysFigure({ aoi, area, rows, series, onSeries, year, onYear, seasons, source, meta, days }: EveryDayProps & { days: AreaDays }) {
+/** The figure's title and its two lines on how to read it. `shown` is the year on screen: not known while the days
+ *  load (null), when the line about the first years goes by the year in the address. */
+function DaysHead({ area, aoi, series, year, shown }: { area: string; aoi: AoiEntry; series: Series; year: number | null; shown: number | null }) {
+  const tr = useTr();
+  const y = shown ?? year;
+  return (
+    <figcaption className="ui-figure-head">
+      <p className="ui-figure-title">
+        {shown != null ? tr(`${area}: every day of ${shown}`, `${area}: setiap hari pada ${shown}`) : tr(`${area}: every day`, `${area}: setiap hari`)}
+      </p>
+      <p className="ui-figure-subtitle">
+        {series === 'harm'
+          ? tr(`One square is one day: the fire cell-days in ${area} that day, on the Aqua MODIS scale.`,
+            `Satu kotak adalah satu hari: sel-hari api di ${area} pada hari itu, pada skala Aqua MODIS.`)
+          : tr(`One square is one day: the fire cell-days in ${area} that day, as the satellites recorded them (MODIS to 2011, VIIRS from 2012).`,
+            `Satu kotak adalah satu hari: sel-hari api di ${area} pada hari itu, sebagaimana dicatat satelit (MODIS sampai 2011, VIIRS sejak 2012).`)}
+      </p>
+      <p className="ui-figure-subtitle">
+        {tr('A zero means nothing was detected, not that nothing burned: cloud and smoke hide fires. From 2022 the days are approximate: VIIRS converted with one factor for the whole month.',
+          'Nol berarti tidak ada yang terdeteksi, bukan berarti tidak ada yang terbakar: awan dan asap menyembunyikan api. Sejak 2022 nilai harian adalah perkiraan: VIIRS dikonversi dengan satu faktor untuk sebulan penuh.')}
+        {y != null && y <= 2002 ? tr(' Before July 2002 they are converted from Terra in the same way.', ' Sebelum Juli 2002 nilainya dikonversi dari Terra dengan cara yang sama.') : ''}
+        {aoi.level === 'district' ? tr(' District values share their province\'s conversion.', ' Nilai kabupaten/kota memakai konversi provinsinya.') : ''}
+      </p>
+    </figcaption>
+  );
+}
+
+function DaysFigure({ aoi, area, rows, series, onSeries, year, onYear, seasons, source, meta, areas, districts, onArea, days, back }: EveryDayProps & { days: AreaDays; back: FocusBack }) {
   const tr = useTr();
   const lang = useLang();
   const first = days.firstYear, last = days.lastYear;
@@ -176,24 +224,12 @@ function DaysFigure({ aoi, area, rows, series, onSeries, year, onYear, seasons, 
 
   return (
     <figure className="ka-days ui-figure">
-      <figcaption className="ui-figure-head">
-        <p className="ui-figure-title">{tr(`${area}: every day of ${shown}`, `${area}: setiap hari pada ${shown}`)}</p>
-        <p className="ui-figure-subtitle">
-          {series === 'harm'
-            ? tr(`One square is one day: the fire cell-days in ${area} that day, on the Aqua MODIS scale.`,
-              `Satu kotak adalah satu hari: sel-hari api di ${area} pada hari itu, pada skala Aqua MODIS.`)
-            : tr(`One square is one day: the fire cell-days in ${area} that day, as the satellites recorded them (MODIS to 2011, VIIRS from 2012).`,
-              `Satu kotak adalah satu hari: sel-hari api di ${area} pada hari itu, sebagaimana dicatat satelit (MODIS sampai 2011, VIIRS sejak 2012).`)}
-        </p>
-        <p className="ui-figure-subtitle">
-          {tr('A zero means nothing was detected, not that nothing burned: cloud and smoke hide fires. From 2022 the days are approximate: VIIRS converted with one factor for the whole month.',
-            'Nol berarti tidak ada yang terdeteksi, bukan berarti tidak ada yang terbakar: awan dan asap menyembunyikan api. Sejak 2022 nilai harian adalah perkiraan: VIIRS dikonversi dengan satu faktor untuk sebulan penuh.')}
-          {shown <= 2002 ? tr(' Before July 2002 they are converted from Terra in the same way.', ' Sebelum Juli 2002 nilainya dikonversi dari Terra dengan cara yang sama.') : ''}
-          {aoi.level === 'district' ? tr(' District values share their province\'s conversion.', ' Nilai kabupaten/kota memakai konversi provinsinya.') : ''}
-        </p>
-      </figcaption>
+      <DaysHead area={area} aoi={aoi} series={series} year={year} shown={shown} />
 
       <div className="ka-days-bar">
+        {onArea ? (
+          <DaysArea aoi={aoi} areas={areas ?? []} districts={districts ?? []} back={back} settled onPick={(id) => onArea(id, shown)} />
+        ) : null}
         <div className="ka-days-year" role="group" aria-label={tr('Year', 'Tahun')}>
           <button type="button" className="ui-btn ui-btn-icon" disabled={shown <= first} onClick={() => onYear(shown - 1)}
             aria-label={tr(`Previous year, ${shown - 1}`, `Tahun sebelumnya, ${shown - 1}`)}><IconChevronLeft size={16} /></button>
@@ -291,6 +327,167 @@ function DaysFigure({ aoi, area, rows, series, onSeries, year, onYear, seasons, 
         <p className="ka-rec-dl-status" role="status">{saved ?? ''}</p>
       </div>
     </figure>
+  );
+}
+
+/** The figure's area picker: a box that shows the area on screen and takes a name typed into it. Opened, it lists the
+ *  districts of the province on screen and the areas of the page's own picker; typed in, the areas and the districts
+ *  whose name holds what was typed (lib/everyday.ts findAreas, lib/record.ts searchDistricts). The list looks like the
+ *  district finder's at the top of the page (AreaSearch.tsx, record.css .ka-rec-find-list). */
+function DaysArea({ aoi, areas, districts, onPick, back, settled }: {
+  aoi: AoiEntry;                  // the area on screen
+  areas: AoiEntry[];              // Indonesia, the island regions, the provinces
+  districts: AoiEntry[];          // the districts on offer (none until their index is in)
+  onPick: (aoiId: string) => void;
+  back: FocusBack;                // asked for by a pick: the picker drawn next takes the focus back
+  settled: boolean;               // the figure is done loading: no later picker will be drawn for this pick
+}) {
+  const tr = useTr();
+  const lang = useLang();
+  const id = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const [q, setQ] = useState<string | null>(null);   // what is typed; null = nothing yet, the box shows the area's name
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);          // the option the arrow keys are on; -1 = none yet
+  const byKey = useRef(false);
+  const byTouch = useRef(false);
+  const name = aoiName(aoi, lang);
+  const typed = (q ?? '').trim();
+
+  const groups = useMemo<{ label: string; items: AoiEntry[] }[]>(() => {
+    const t = (en: string, idn: string) => (lang === 'id' ? idn : en);
+    if (typed) {
+      const found = findAreas(areas, typed);
+      return [
+        ...(found.length ? [{ label: t('Indonesia, island regions, provinces', 'Indonesia, wilayah pulau, provinsi'), items: found }] : []),
+        ...searchDistricts(districts, typed, 30).map((g) => ({ label: g.province, items: g.items })),
+      ];
+    }
+    // nothing typed: the districts of the province on screen, then the areas of the page's own picker
+    const provId = aoi.level === 'district' ? aoi.province_aoi : aoi.level === 'province' ? aoi.aoi_id : null;
+    const near = provId ? districts.filter((d) => d.province_aoi === provId) : [];
+    const prov = provId ? areas.find((a) => a.aoi_id === provId) : null;
+    const provName = prov ? aoiName(prov, lang) : aoi.province ?? '';
+    return [
+      ...(near.length ? [{ label: t(`Districts of ${provName}`, `Kabupaten/kota di ${provName}`), items: near }] : []),
+      ...aoiGroups(areas, lang),
+    ];
+  }, [typed, areas, districts, aoi, lang]);
+  const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+
+  // drawn anew after a pick (the figure redraws for the new area): take the focus back, unless the reader has moved on
+  useLayoutEffect(() => {
+    const el = input.current;
+    if (back.wanted() && el && (!document.activeElement || document.activeElement === document.body)) el.focus({ preventScroll: true });
+  }, [back]);
+  useEffect(() => { if (settled) back.want(false); }, [settled, back]);
+  // the box shows the area's name again (a pick, Escape): select it, so the next letter typed replaces it
+  useLayoutEffect(() => {
+    if (q == null && document.activeElement === input.current) input.current?.select();
+  }, [q, name]);
+  // the arrow keys keep their option in view (inside the list only: the page does not move)
+  useEffect(() => {
+    if (!byKey.current) return;
+    byKey.current = false;
+    const box = list.current, el = box?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
+    if (!box || !el) return;
+    const top = el.offsetTop, bottom = top + el.offsetHeight;
+    if (active === 0) box.scrollTop = 0;
+    else if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  }, [active, open]);
+  // opened on a district with nothing typed: the list starts at that district, among its neighbours
+  useLayoutEffect(() => {
+    if (!open || typed || aoi.level !== 'district') return;
+    const box = list.current, el = box?.querySelector<HTMLElement>('[data-current]');
+    if (box && el) box.scrollTop = Math.max(0, el.offsetTop - (box.clientHeight - el.offsetHeight) / 2);
+  }, [open, typed, aoi.level]);
+
+  const shut = () => { setOpen(false); setQ(null); setActive(-1); };
+  const pick = (a: AoiEntry) => {
+    // a finger's pick puts the on-screen keyboard away, so the calendar is in view; otherwise the focus stays here
+    const stay = !byTouch.current;
+    byTouch.current = false;
+    shut();
+    if (!stay) input.current?.blur();
+    if (a.aoi_id === aoi.aoi_id) return;
+    back.want(stay);
+    onPick(a.aoi_id);
+  };
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); byKey.current = true;
+      setOpen(true); setActive((i) => Math.min(flat.length - 1, (open ? i : -1) + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault(); byKey.current = true;
+      if (open) setActive((i) => Math.max(0, i - 1));
+    } else if (e.key === 'Enter') {
+      const a = open ? flat[active] : undefined;
+      if (a) { e.preventDefault(); pick(a); }
+    } else if (e.key === 'Escape' && (open || q != null)) {
+      e.preventDefault(); shut();
+    } else if (e.key === 'Tab') {
+      shut();   // the list goes before the focus moves on, so Tab lands on the year, not on the list
+    }
+  };
+
+  return (
+    <div className="ka-days-area" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) shut(); }}>
+      <label htmlFor={`${id}-in`}>{tr('Area', 'Wilayah')}</label>
+      <div className="ka-days-area-box">
+        <input ref={input} id={`${id}-in`} type="text" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} enterKeyHint="search"
+          placeholder={tr('Type part of a name', 'Ketik sebagian nama')}
+          role="combobox" aria-expanded={open} aria-controls={open ? `${id}-list` : undefined} aria-autocomplete="list" aria-describedby={`${id}-hint`}
+          aria-activedescendant={open && flat[active] ? `${id}-o-${flat[active]!.aoi_id}` : undefined}
+          value={q ?? name}
+          onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(e.target.value.trim() ? 0 : -1); }}
+          onFocus={(e) => e.currentTarget.select()}
+          onClick={(e) => { setOpen(true); if (q == null) e.currentTarget.select(); }}
+          onKeyDown={onKey} />
+        {open ? (
+          // a press on the list leaves the focus in the box (so the list does not close under the pointer)
+          <div ref={list} className="ka-rec-find-list" id={`${id}-list`} role="listbox" tabIndex={-1} aria-label={tr('Areas', 'Wilayah')}
+            onPointerDown={(e) => { byTouch.current = e.pointerType === 'touch'; }} onMouseDown={(e) => e.preventDefault()}>
+            {!typed && districts.length ? (
+              <p className="ka-rec-find-none" aria-hidden="true">
+                {tr(`Type part of a name to find any of the ${districts.length} districts.`, `Ketik sebagian nama untuk mencari di antara ${districts.length} kabupaten/kota.`)}
+              </p>
+            ) : null}
+            {groups.map((g) => (
+              <div key={g.label} role="group" aria-label={g.label}>
+                <p className="ka-rec-find-prov" aria-hidden="true">{g.label}</p>
+                {g.items.map((a) => {
+                  const i = flat.indexOf(a);
+                  const current = a.aoi_id === aoi.aoi_id;
+                  return (
+                    <button key={a.aoi_id} type="button" role="option" id={`${id}-o-${a.aoi_id}`} tabIndex={-1}
+                      aria-selected={i === active} data-current={current ? '' : undefined} className="ka-rec-find-opt"
+                      onPointerMove={() => { if (i !== active) setActive(i); }} onClick={() => pick(a)}>
+                      {aoiName(a, lang)}
+                      {current ? <span className="ka-rec-find-tag">{tr('shown now', 'sedang tampil')}</span>
+                        : a.low_data ? <span className="ka-rec-find-tag">{tr('low data', 'data sedikit')}</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            {typed && !flat.length ? (
+              <p className="ka-rec-find-none" role="status">
+                {districts.length
+                  ? tr(`No area matches "${typed}". Try the name without "Kabupaten" or "Kota".`, `Tidak ada wilayah yang cocok dengan "${typed}". Coba nama tanpa "Kabupaten" atau "Kota".`)
+                  : tr(`No area matches "${typed}".`, `Tidak ada wilayah yang cocok dengan "${typed}".`)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      <p className="ka-days-area-hint" id={`${id}-hint`}>
+        {districts.length
+          ? tr('Any province or district (kabupaten/kota)', 'Provinsi atau kabupaten/kota mana pun')
+          : tr('Indonesia, an island region or a province', 'Indonesia, wilayah pulau, atau provinsi')}
+      </p>
+    </div>
   );
 }
 
